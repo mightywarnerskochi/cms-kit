@@ -1,0 +1,27 @@
+<?php
+
+namespace CMS\SiteManager\Http\Middleware;
+
+use Closure;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+
+class CmsAuthenticate
+{
+    /**
+     * Handle an incoming request.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  \Closure  $next
+     * @return mixed
+     */
+    public function handle(Request $request, Closure $next)
+    {
+        // Check if standard auth is logged in or custom session is set
+        if (Auth::check() || session('cms_authenticated')) {
+            return $next($request);
+        }
+
+        return redirect()->route('cms.login');
+    }
+}

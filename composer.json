@@ -1,0 +1,20 @@
+{
+    "name": "cms/site-manager",
+    "description": "Reusable CMS components for service websites",
+    "type": "library",
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "CMS\\SiteManager\\": "src/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "CMS\\SiteManager\\SiteManagerServiceProvider"
+            ]
+        }
+    },
+    "minimum-stability": "dev",
+    "require": {}
+}

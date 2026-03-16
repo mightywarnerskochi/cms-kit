@@ -7,8 +7,8 @@ use Illuminate\Database\Eloquent\Model;
 class Testimonial extends Model
 {
     protected $fillable = [
-        'section_image',
         'image',
+        'image_alt',
         'rating',
         'order_index',
         'status',

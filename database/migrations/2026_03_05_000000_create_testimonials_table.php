@@ -13,6 +13,7 @@ return new class extends Migration
             // Core fields (untranslated/shared)
             $table->string('section_image')->nullable();
             $table->string('image')->nullable();
+            $table->string('image_alt')->nullable();
             $table->integer('rating')->default(5);
             $table->integer('order_index')->default(0);
             $table->boolean('status')->default(true);

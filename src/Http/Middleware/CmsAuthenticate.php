@@ -17,8 +17,8 @@ class CmsAuthenticate
      */
     public function handle(Request $request, Closure $next)
     {
-        // Check if standard auth is logged in or custom session is set
-        if (Auth::check() || session('cms_authenticated')) {
+        if (Auth::guard('cms')->check()) {
+            Auth::shouldUse('cms');
             return $next($request);
         }
 

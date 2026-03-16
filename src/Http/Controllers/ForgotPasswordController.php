@@ -19,7 +19,7 @@ class ForgotPasswordController extends Controller
 
         // For this demo package, we'll just show a success message 
         // if the email matches the config admin email.
-        if ($request->email === config('cms-kit.auth.admin_email')) {
+        if ($request->email === config('cms-kit.common.auth.admin_email')) {
             return back()->with('status', 'A password reset link has been sent to your email.');
         }
 

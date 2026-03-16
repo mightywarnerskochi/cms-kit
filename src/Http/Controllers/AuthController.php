@@ -11,7 +11,7 @@ class AuthController extends Controller
 {
     public function showLoginForm()
     {
-        if (Auth::check()) {
+        if (\Illuminate\Support\Facades\Auth::guard('cms')->check()) {
             return redirect()->route('cms.testimonials.index');
         }
         return view('cms-kit::auth.login');
@@ -24,31 +24,19 @@ class AuthController extends Controller
             'password' => 'required',
         ]);
 
-        $configEmail = config('cms-kit.auth.admin_email');
-        $configPass = config('cms-kit.auth.admin_password');
-
-        // Simple auth check against config for demo/quick setup
-        // Ideally, in production, use standard Laravel guard/table.
-        if ($request->email === $configEmail && $request->password === $configPass) {
-            // For now, let's just use session to 'log in' if no guard is set up
-            session(['cms_authenticated' => true]);
-            return redirect()->route('cms.testimonials.index');
-        }
-
-        // Attempt standard eloquent auth if configured (future-proofing)
-        if (Auth::attempt($request->only('email', 'password'))) {
+        if (Auth::guard('cms')->attempt($request->only('email', 'password'), $request->filled('remember'))) {
+            $request->session()->regenerate();
             return redirect()->intended(route('cms.testimonials.index'));
         }
 
-        return back()->withErrors(['email' => 'Invalid credentials.']);
+        return back()->withErrors(['email' => 'Invalid credentials.'])->withInput($request->only('email'));
     }
 
     public function logout(Request $request)
     {
-        Auth::logout();
+        Auth::guard('cms')->logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
-        session()->forget('cms_authenticated');
         return redirect()->route('cms.login');
     }
 }

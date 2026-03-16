@@ -1,5 +1,5 @@
 {
-    "name": "cms/site-manager",
+    "name": "dev1kochi-crypto/cms",
     "description": "Reusable CMS components for service websites",
     "type": "library",
     "license": "MIT",
@@ -16,5 +16,9 @@
         }
     },
     "minimum-stability": "dev",
-    "require": {}
+    "require": {
+        "yajra/laravel-datatables-oracle": "^12.0",
+        "spatie/laravel-permission": "^6.0",
+        "spatie/laravel-sitemap": "^7.0"
+    }
 }

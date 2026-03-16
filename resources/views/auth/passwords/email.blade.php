@@ -3,64 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CMS Kit - Reset Password</title>
+    <title>{{ $siteInfo->company_name ?? config('cms-kit.common.name', 'CMS Kit') }} - Reset Password</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         :root {
             --primary-color: {{ config('cms-kit.theme.primary_color', '#dc3545') }};
             --bg-color: #f0f2f5;
         }
-
-        body {
-            background-color: var(--bg-color);
-            height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-family: 'Inter', sans-serif;
-        }
-
-        .login-card {
-            width: 100%;
-            max-width: 400px;
-            padding: 2.5rem;
-            border: none;
-            border-radius: 1.5rem;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
-            background: #ffffff;
-        }
-
-        .btn-primary {
-            background-color: var(--primary-color);
-            border: none;
-            padding: 0.8rem;
-            border-radius: 0.75rem;
-            font-weight: 600;
-        }
-
-        .btn-primary:hover {
-            opacity: 0.9;
-            background-color: var(--primary-color);
-        }
-
-        .form-control {
-            padding: 0.8rem 1rem;
-            border-radius: 0.75rem;
-            border: 1px solid #e1e5eb;
-        }
-
-        .logo h3 {
-            color: var(--primary-color);
-            font-weight: 800;
-            text-align: center;
-            margin-bottom: 2rem;
-        }
     </style>
+    <link rel="stylesheet" href="{{ asset('vendor/cms-kit/css/cms-auth.css') }}">
 </head>
 <body>
     <div class="login-card">
         <div class="logo">
-            <h3>CMS Kit</h3>
+            <h3>{{ $siteInfo->company_name ?? config('cms-kit.common.name', 'CMS Kit') }}</h3>
         </div>
 
         <h5 class="mb-3">Reset Password</h5>

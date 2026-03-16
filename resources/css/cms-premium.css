@@ -1,0 +1,302 @@
+/* CMS Premium Layout Styles */
+
+body {
+    background-color: var(--bg-color);
+    color: #495057;
+    font-family: 'Outfit', 'Inter', sans-serif;
+    overflow-x: hidden;
+}
+
+.sidebar {
+    background-color: var(--sidebar-color);
+    width: var(--sidebar-width);
+    height: 100vh;
+    overflow-y: auto;
+    color: white;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: fixed;
+    z-index: 1000;
+}
+
+.sidebar::-webkit-scrollbar {
+    width: 5px;
+}
+.sidebar::-webkit-scrollbar-track {
+    background: transparent;
+}
+.sidebar::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+}
+.sidebar::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.sidebar .brand {
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+
+.sidebar .brand h4 {
+    font-size: 1.2rem;
+    margin-bottom: 0.2rem !important;
+}
+
+.sidebar .nav-link {
+    color: rgba(255,255,255,0.6);
+    padding: 0.75rem 1.5rem;
+    display: flex;
+    align-items: center;
+    border-left: 4px solid transparent;
+    transition: all 0.2s;
+}
+
+.sidebar .nav-link:hover {
+    color: white;
+    background: rgba(255,255,255,0.05);
+}
+
+.sidebar .nav-link.active {
+    color: white;
+    background: linear-gradient(90deg, var(--primary-color) -150%, transparent 100%);
+    border-left-color: var(--primary-color);
+    box-shadow: inset 10px 0 20px -10px var(--primary-color);
+}
+
+.sidebar .nav-link i {
+    width: 20px;
+    font-size: 1rem;
+    margin-right: 12px;
+    opacity: 0.7;
+    transition: transform 0.3s, opacity 0.3s;
+}
+
+.sidebar .nav-link span {
+    font-size: 0.875rem;
+    font-weight: 400;
+}
+
+.sidebar .nav-link:hover i {
+    transform: translateX(3px);
+    opacity: 1;
+}
+
+.sidebar .nav-link.active i {
+    opacity: 1;
+}
+
+/* Dropdown / Collapse styling */
+.sidebar .collapse .nav-link {
+    padding: 0.65rem 1rem 0.65rem 1.5rem;
+    font-size: 0.85rem;
+    color: rgba(255,255,255,0.5);
+    border-left: none;
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.sidebar .collapse .nav-link::before {
+    content: '';
+    position: absolute;
+    left: -1px;
+    width: 6px;
+    height: 1px;
+    background: rgba(255,255,255,0.2);
+    transition: all 0.2s;
+}
+
+.sidebar .collapse .nav-link:hover {
+    color: white;
+    background: transparent;
+}
+
+.sidebar .collapse .nav-link:hover::before {
+    width: 12px;
+    background: white;
+}
+
+.sidebar .collapse .nav-link.active {
+    color: var(--primary-color);
+    background: transparent;
+    box-shadow: none;
+    font-weight: 600;
+}
+
+.sidebar .collapse .nav-link.active::before {
+    width: 15px;
+    background: var(--primary-color);
+}
+
+.sidebar .nav-item {
+    margin-bottom: 2px;
+}
+
+/* Fix for congested look - spacing between groups */
+.sidebar nav > .nav-link, 
+.sidebar nav > .nav-item {
+    margin-top: 0.25rem;
+}
+
+.main-wrapper {
+    margin-left: var(--sidebar-width);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    width: calc(100% - var(--sidebar-width));
+    background: radial-gradient(circle at top right, rgba(220, 53, 69, 0.03), transparent 400px);
+}
+
+.top-header {
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(20px);
+    padding: 0 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: sticky;
+    top: 0;
+    z-index: 900;
+    border-bottom: 1px solid rgba(0,0,0,0.06);
+    height: 70px;
+}
+
+.breadcrumb-item + .breadcrumb-item::before {
+    content: "\f105";
+    font-family: "Font Awesome 6 Free";
+    font-weight: 900;
+    font-size: 0.8rem;
+    color: #adb5bd;
+}
+
+.main-content {
+    padding: 1.5rem 2rem;
+    flex: 1;
+    overflow-x: hidden;
+}
+
+h2 {
+    font-size: 1.5rem;
+    letter-spacing: -0.01em;
+}
+
+.card {
+    border: 1px solid rgba(0,0,0,0.03);
+    box-shadow: 0 10px 40px rgba(0,0,0,0.04);
+    border-radius: 1.25rem;
+    overflow: hidden;
+    background: white;
+    transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.glass-card {
+    background: rgba(255, 255, 255, 0.75);
+    backdrop-filter: blur(25px);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+}
+
+.table-responsive {
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 transparent;
+}
+
+.table-responsive::-webkit-scrollbar {
+    height: 6px;
+}
+
+.table-responsive::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.table-responsive::-webkit-scrollbar-thumb {
+    background-color: #cbd5e1;
+    border-radius: 10px;
+}
+
+.premium-table {
+    width: 100% !important;
+    margin-bottom: 0 !important;
+    border-collapse: separate;
+    border-spacing: 0;
+    border-top: 1px solid #f1f5f9;
+}
+
+.premium-table thead th {
+    background-color: #fcfcfd;
+    text-transform: uppercase;
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: #94a3b8;
+    letter-spacing: 0.05em;
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid #f1f5f9;
+    white-space: nowrap;
+}
+
+.premium-table tbody td {
+    padding: 1rem 1.25rem;
+    vertical-align: middle;
+    border-bottom: 1px solid #f1f5f9;
+    font-size: 0.875rem;
+    color: #475569;
+}
+
+.btn-premium {
+    padding: 0.55rem 1.4rem;
+    border-radius: 0.75rem;
+    font-weight: 600;
+    transition: all 0.3s;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-view-site {
+    background: white;
+    border: 1px solid #e2e8f0;
+    color: #4a5568;
+}
+
+.btn-view-site:hover {
+    background: #f7fafc;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+.user-profile {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 5px 15px;
+    border-radius: 50px;
+    background: #f8f9fa;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.user-profile:hover {
+    background: #eef2f7;
+}
+
+.user-profile.dropdown-toggle::after {
+    color: #94a3b8;
+    margin-left: 10px;
+}
+
+.user-avatar {
+    width: 32px;
+    height: 32px;
+    background: var(--primary-color);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 0.8rem;
+}
+
+/* Metadata Specific */
+.badge { font-weight: 500; font-size: 0.75rem; }
+.bg-secondary { background-color: #e9ecef !important; color: #495057; }
+

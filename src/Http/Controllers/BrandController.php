@@ -77,6 +77,7 @@ class BrandController extends Controller
         }
 
         $order = $request->order_index ?? (Brand::max('order_index') + 1);
+        $data['order_index'] = $order;
         Brand::where('order_index', '>=', $order)->increment('order_index');
 
         Brand::create($data);

@@ -11,6 +11,9 @@
         <h5 class="mb-0">Edit Brand</h5>
     </div>
     <div class="card-body p-4">
+        <form action="{{ route('cms.brands.update', $brand->id) }}" method="POST" enctype="multipart/form-data">
+            @csrf
+            @method('PUT')
             <div class="alert alert-light border-start border-primary border-4 py-2 mb-4 shadow-sm" style="font-size: 0.9rem;">
                 <i class="fas fa-info-circle text-primary me-2"></i> 
                 <strong>Note:</strong> Update the brand logo and details. Required fields are marked with <span class="text-danger">*</span>.

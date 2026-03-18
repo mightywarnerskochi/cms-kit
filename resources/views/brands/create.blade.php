@@ -11,6 +11,8 @@
         <h5 class="mb-0">Add Brand</h5>
     </div>
     <div class="card-body p-4">
+        <form action="{{ route('cms.brands.store') }}" method="POST" enctype="multipart/form-data">
+            @csrf
             <div class="alert alert-light border-start border-primary border-4 py-2 mb-4 shadow-sm" style="font-size: 0.9rem;">
                 <i class="fas fa-info-circle text-primary me-2"></i> 
                 <strong>Note:</strong> Please upload a high-quality logo. Required fields are marked with <span class="text-danger">*</span>.

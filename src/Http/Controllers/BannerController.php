@@ -93,8 +93,9 @@ class BannerController extends Controller
             'banner_type' => $typeRule,
             'image' => 'nullable|required_if:banner_type,image|image|max:' . $mainImageConfig['max_size'],
             'google_avatars.*' => 'nullable|image|max:' . $avatarConfig['max_size'],
-            'video_url' => 'nullable|required_if:banner_type,video',
-            'video_file' => 'nullable|file|mimetypes:video/mp4,video/quicktime,video/x-msvideo|max:' . $videoMaxSize,
+            'video_source' => 'nullable|in:url,file',
+            'video_url' => 'nullable|required_if:video_source,url|url',
+            'video_file' => 'nullable|required_if:video_source,file|file|mimetypes:video/mp4,video/quicktime,video/x-msvideo|max:' . $videoMaxSize,
             'translations.*.line_1' => 'required',
         ]);
 
@@ -170,8 +171,9 @@ class BannerController extends Controller
             'banner_type' => $typeRule,
             'image' => 'nullable|image|max:' . $mainImageConfig['max_size'],
             'google_avatars.*' => 'nullable|image|max:' . $avatarConfig['max_size'],
-            'video_url' => 'nullable|required_if:banner_type,video',
-            'video_file' => 'nullable|file|mimetypes:video/mp4,video/quicktime,video/x-msvideo|max:' . $videoMaxSize,
+            'video_source' => 'nullable|in:url,file',
+            'video_url' => 'nullable|required_if:video_source,url|url',
+            'video_file' => 'nullable|required_if:video_source,file|file|mimetypes:video/mp4,video/quicktime,video/x-msvideo|max:' . $videoMaxSize,
             'translations.*.line_1' => 'required',
         ]);
 
@@ -290,6 +292,10 @@ class BannerController extends Controller
                     Storage::disk('public')->delete($banner->video_file);
                 $banner->delete();
             }
+        } elseif ($action === 'activate') {
+            Banner::whereIn('id', $ids)->update(['status' => true]);
+        } elseif ($action === 'deactivate') {
+            Banner::whereIn('id', $ids)->update(['status' => false]);
         }
 
         return response()->json(['success' => true]);

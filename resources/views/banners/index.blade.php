@@ -10,9 +10,17 @@
         <h5 class="mb-0">Home Banners</h5>
         <div class="d-flex gap-2">
             <div id="bulkActions" style="display: none;">
-                <button class="btn btn-outline-danger btn-sm" onclick="bulkAction('delete')">
-                    <i class="fas fa-trash"></i> Delete Selected (<span id="selectedCount">0</span>)
-                </button>
+                <div class="dropdown">
+                    <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                        <i class="fas fa-cogs"></i> Bulk Actions (<span id="selectedCount">0</span>)
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><button class="dropdown-item" onclick="bulkAction('activate')"><i class="fas fa-check-circle text-success me-2"></i> Activate Selected</button></li>
+                        <li><button class="dropdown-item" onclick="bulkAction('deactivate')"><i class="fas fa-times-circle text-secondary me-2"></i> Deactivate Selected</button></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><button class="dropdown-item text-danger" onclick="bulkAction('delete')"><i class="fas fa-trash me-2"></i> Delete Selected</button></li>
+                    </ul>
+                </div>
             </div>
             @if(($canAddBanner ?? true) && $cmsUser->can('banners.edit'))
             <a href="{{ route('cms.banners.create') }}" class="btn btn-primary btn-sm">
@@ -48,7 +56,7 @@
 
 <form id="bulkForm" action="{{ route('cms.banners.bulk-action') }}" method="POST" style="display: none;">
     @csrf
-    <input type="hidden" name="action" value="delete">
+    <input type="hidden" name="action" id="bulkActionInput">
     <div id="bulkIdsContainer"></div>
 </form>
 @endsection
@@ -129,12 +137,28 @@
         }
 
         window.bulkAction = function(action) {
-            if (confirm('Are you sure you want to perform this action on selected items?')) {
+            const checkedBoxes = $('.row-checkbox:checked');
+            if (checkedBoxes.length === 0) {
+                alert('Please select at least one banner.');
+                return;
+            }
+
+            let confirmMessage = 'Are you sure you want to ';
+            if (action === 'delete') {
+                confirmMessage += 'delete the selected banners?';
+            } else if (action === 'activate') {
+                confirmMessage += 'activate the selected banners?';
+            } else if (action === 'deactivate') {
+                confirmMessage += 'deactivate the selected banners?';
+            }
+
+            if (confirm(confirmMessage)) {
                 const container = $('#bulkIdsContainer');
                 container.empty();
-                $('.row-checkbox:checked').each(function() {
+                checkedBoxes.each(function() {
                     container.append(`<input type="hidden" name="ids[]" value="${$(this).val()}">`);
                 });
+                $('#bulkActionInput').val(action);
                 $('#bulkForm').submit();
             }
         };

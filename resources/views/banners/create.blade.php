@@ -49,6 +49,7 @@
                 @foreach($languages as $lang)
                 <div class="tab-pane fade {{ $loop->first ? 'show active' : '' }}" id="panel-{{ $lang->code }}" role="tabpanel">
                     <div class="row g-4">
+                        @if(config('cms-kit.database.banners.items.line_1', true))
                         <div class="col-12">
                             <label class="form-label fw-bold">Line 1 (Heading text) <span class="text-danger">*</span></label>
                             <input type="text" name="translations[{{ $lang->code }}][line_1]" class="form-control @error("translations.{$lang->code}.line_1") is-invalid @enderror" value="{{ old("translations.{$lang->code}.line_1") }}" required>
@@ -57,6 +58,9 @@
                             @enderror
                             <div class="form-text mt-1 text-muted">The main heading text displayed on the banner.</div>
                         </div>
+                        @endif
+
+                        @if(config('cms-kit.database.banners.items.line_2', true))
                         <div class="col-12">
                             <label class="form-label fw-bold">Line 2 (Sub-heading)</label>
                             <input type="text" name="translations[{{ $lang->code }}][line_2]" class="form-control @error("translations.{$lang->code}.line_2") is-invalid @enderror" value="{{ old("translations.{$lang->code}.line_2") }}">
@@ -65,6 +69,9 @@
                             @enderror
                             <div class="form-text mt-1 text-muted">A secondary line of text for additional impact.</div>
                         </div>
+                        @endif
+
+                        @if(config('cms-kit.database.banners.items.content', true))
                         <div class="col-12">
                             <label class="form-label fw-bold">Banner description</label>
                             <textarea name="translations[{{ $lang->code }}][content]" class="form-control @error("translations.{$lang->code}.content") is-invalid @enderror" rows="3">{{ old("translations.{$lang->code}.content") }}</textarea>
@@ -73,7 +80,9 @@
                             @enderror
                             <div class="form-text mt-1 text-muted">Short descriptive text appearing under the headings.</div>
                         </div>
+                        @endif
                         
+                        @if(config('cms-kit.database.banners.items.buttons', true))
                         <div class="col-12">
                             <label class="form-label fw-bold d-block mt-3 border-bottom pb-2">Action Buttons</label>
                             <div class="buttons-container-{{ $lang->code }} bg-light p-3 rounded-3 mb-2">
@@ -94,12 +103,15 @@
                             </button>
                             <div class="form-text mt-2">Add call-to-action buttons like "Book Now" or "Learn More".</div>
                         </div>
+                        @endif
 
+                        @if(config('cms-kit.database.banners.items.google_review_text', true))
                         <div class="col-12 mt-4">
                             <label class="form-label fw-bold">Social Proof (e.g., Google reviews text)</label>
                             <input type="text" name="translations[{{ $lang->code }}][google_review_text]" class="form-control" placeholder="e.g., Based on 500 Reviews" value="{{ old("translations.{$lang->code}.google_review_text") }}">
                             <div class="form-text mt-1 text-muted">Optional text to highlight positive client feedback.</div>
                         </div>
+                        @endif
                     </div>
                 </div>
                 @endforeach
@@ -109,11 +121,15 @@
                 <div class="card-body p-4">
                     <h6 class="fw-bold mb-3">Media & Settings</h6>
                     <div class="row g-4">
+                        @if(config('cms-kit.database.banners.items.image', true))
                         <div class="col-md-6 {{ !in_array('image', $allowedTypes) || (count($allowedTypes) > 1 && $allowedTypes[0] !== 'image') ? 'd-none' : '' }}" id="image-section">
                             <label class="form-label">Banner Image <span class="text-danger">*</span></label>
                             <input type="file" name="image" class="form-control">
                             <small class="text-muted">Recommended: {{ $mainImageConfig['width'] }}x{{ $mainImageConfig['height'] }}px (Max: {{ $mainImageConfig['max_size'] / 1024 }}MB)</small>
                         </div>
+                        @endif
+
+                        @if(config('cms-kit.database.banners.items.video_url', true) || config('cms-kit.database.banners.items.video_file', true))
                         <div class="col-md-12 {{ !in_array('video', $allowedTypes) || (count($allowedTypes) > 1 && $allowedTypes[0] !== 'video') ? 'd-none' : '' }}" id="video-section">
                             <div class="row g-3">
                                 <div class="col-12">
@@ -127,21 +143,29 @@
                                         <label class="form-check-label" for="video_file_source">Upload Video File</label>
                                     </div>
                                 </div>
+                                @if(config('cms-kit.database.banners.items.video_url', true))
                                 <div class="col-md-12" id="video-url-input">
                                     <label class="form-label">Video URL <span class="text-danger">*</span></label>
                                     <input type="text" name="video_url" class="form-control" placeholder="YouTube/Vimeo or self-hosted URL" value="{{ old('video_url') }}">
                                 </div>
+                                @endif
+                                @if(config('cms-kit.database.banners.items.video_file', true))
                                 <div class="col-md-12 d-none" id="video-file-input">
                                     <label class="form-label">Upload Video <span class="text-danger">*</span></label>
                                     <input type="file" name="video_file" class="form-control">
                                     <small class="text-muted">Max size: {{ config('cms-kit.images.banners.banner_video.max_size', 10240) / 1024 }}MB. Supported: mp4, mov, avi.</small>
                                 </div>
+                                @endif
                             </div>
                         </div>
+                        @endif
+
+                        @if(config('cms-kit.database.banners.items.image_alt', true))
                         <div class="col-md-6">
                             <label class="form-label">Image Alt Text</label>
                             <input type="text" name="image_alt" class="form-control">
                         </div>
+                        @endif
                     </div>
                 </div>
             </div>
@@ -150,23 +174,34 @@
                 <div class="card-body p-4">
                     <h6 class="fw-bold mb-3 text-primary"><i class="fab fa-google me-2"></i>Google Reviews Stats</h6>
                     <div class="row g-4">
+                        @if(config('cms-kit.database.banners.items.google_rating', true))
                         <div class="col-md-4">
                             <label class="form-label">Google Rating</label>
                             <input type="text" name="google_rating" class="form-control" placeholder="e.g. 5.0">
                         </div>
+                        @endif
+
+                        @if(config('cms-kit.database.banners.items.google_review_count', true))
                         <div class="col-md-4">
                             <label class="form-label">Trusted Clients Count</label>
                             <input type="text" name="google_review_count" class="form-control" placeholder="e.g. 8231">
                         </div>
+                        @endif
+
+                        @if(config('cms-kit.database.banners.items.google_avatars', true))
                         <div class="col-md-4">
                             <label class="form-label">Client Avatars (Multiple)</label>
                             <input type="file" name="google_avatars[]" class="form-control" multiple>
                             <small class="text-muted d-block mt-1">Recommended: {{ $avatarConfig['width'] }}x{{ $avatarConfig['height'] }}px (Max: {{ $avatarConfig['max_size'] }}KB)</small>
                         </div>
+                        @endif
+
+                        @if(config('cms-kit.database.banners.items.google_avatars_alt', true))
                         <div class="col-md-4">
                             <label class="form-label">Client Avatars Alt Text</label>
                             <input type="text" name="google_avatars_alt" class="form-control" placeholder="e.g. Happy Clients">
                         </div>
+                        @endif
                     </div>
                 </div>
             </div>
@@ -179,7 +214,7 @@
                 <div class="col-md-4">
                     <div class="form-check form-switch pt-4">
                         <input class="form-check-input" type="checkbox" name="status" id="statusSwitch" checked>
-                        <label class="form-check-label fw-bold" for="statusSwitch">Active Status</label>
+                        <label class="form-check-label fw-bold" for="statusSwitch">Status</label>
                     </div>
                 </div>
             </div>

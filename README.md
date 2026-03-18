@@ -40,7 +40,7 @@ If you are developing locally, add the package to your `composer.json` repositor
 ### 2. Install via Composer
 
 ```bash
-composer require dev1kochi-crypto/cms
+composer require dev1kochi-crypto/cms:dev-main
 ```
 
 ### 2. Publish Configuration and Assets
@@ -77,10 +77,26 @@ Define your primary colors and UI aesthetics:
 ],
 ```
 
-### Testimonials Customization
-Enable/disable columns or add extra dynamic fields:
+### Dynamic Fields / `extra_fields`
+Extra fields follow a shared structure across modules (Testimonials, Banners, Brands, etc.).
+
+Fields can be:
+- **Global** (same for every language)
+- **Translatable** (different per language)
+
+Each field config supports:
+- `type`: `text`, `textarea`, `number`, `email`, `select`, `file`
+- `label`: Human readable label
+- `placeholder`: Input placeholder
+- `helpText`: Description/hint shown in UI
+- `translatable`: `true` / `false` (default: `false`)
+- `required`: `true` / `false`
+- `options`: for `select` fields (array of `value => label`)
+
+Read the full reference in `docs/extra-fields.md`.
 
 ```php
+// Example: Testimonials (same structure can be used in banners, brands, etc.)
 'testimonials' => [
     'columns' => [
         'title' => true,
@@ -89,7 +105,22 @@ Enable/disable columns or add extra dynamic fields:
         // ...
     ],
     'extra_fields' => [
-        'designation' => ['type' => 'text', 'label' => 'Designation'],
+        'designation' => [
+            'type' => 'text',
+            'label' => 'Designation',
+            'placeholder' => 'e.g. Product Manager',
+            'translatable' => true,
+        ],
+        'company_size' => [
+            'type' => 'select',
+            'label' => 'Company Size',
+            'options' => [
+                'small' => '1-50',
+                'medium' => '51-200',
+                'large' => '200+',
+            ],
+            'translatable' => false,
+        ],
     ],
 ],
 ```
@@ -104,8 +135,3 @@ By default, the admin dashboard is available at `/admin/login`. You can customiz
 ### Middleware
 The package includes a `cms.auth` middleware to protect your routes. Ensure your admin user is authenticated to access protected paths.
 
----
-
-## 📄 License
-
-The MIT License (MIT). Please see [License File](LICENSE.md) for more information.

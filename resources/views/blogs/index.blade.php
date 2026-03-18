@@ -61,6 +61,12 @@
                                     @enderror
                                     <div class="form-text mt-1">Brief introductory text for the blog section.</div>
                                 </div>
+
+                                @include('cms-kit::partials.extra-fields-translatable', [
+                                    'configKey' => 'blogs.section',
+                                    'lang' => $lang,
+                                    'existingTranslations' => $section->translations ?? [],
+                                ])
                             </div>
                         </div>
                         @endforeach
@@ -85,6 +91,11 @@
                             </div>
                         </div>
                     </div>
+
+                    @include('cms-kit::partials.extra-fields-global', [
+                        'configKey' => 'blogs.section',
+                        'existingValues' => $section->extra_fields ?? [],
+                    ])
 
                     <div class="col-12 border-top pt-4">
                         <button type="submit" class="btn btn-primary px-4 shadow-sm">

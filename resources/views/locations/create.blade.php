@@ -114,35 +114,10 @@
                     </div>
                 </div>
 
-                <!-- Extra Fields -->
-                @php
-                    $locItemsConfig = config('cms-kit.database.locations.items', []);
-                    $extraFields = $locItemsConfig['extra_fields'] ?? [];
-                @endphp
-
-                @if(!empty($extraFields))
-                    <div class="col-12 mt-4">
-                        <h6 class="text-muted border-bottom pb-2 mb-3">Additional Information</h6>
-                        <div class="row g-3">
-                            @foreach($extraFields as $key => $field)
-                                <div class="col-md-6">
-                                    <label class="form-label">{{ $field['label'] ?? ucfirst($key) }}</label>
-                                    @if(($field['type'] ?? 'text') === 'textarea')
-                                        <textarea name="extra_fields[{{ $key }}]" class="form-control" rows="3">{{ old("extra_fields.{$key}") }}</textarea>
-                                    @elseif(($field['type'] ?? 'text') === 'select')
-                                        <select name="extra_fields[{{ $key }}]" class="form-select">
-                                            @foreach($field['options'] ?? [] as $optVal => $optLabel)
-                                                <option value="{{ $optVal }}" {{ old("extra_fields.{$key}") == $optVal ? 'selected' : '' }}>{{ $optLabel }}</option>
-                                            @endforeach
-                                        </select>
-                                    @else
-                                        <input type="text" name="extra_fields[{{ $key }}]" class="form-control" value="{{ old("extra_fields.{$key}") }}">
-                                    @endif
-                                </div>
-                            @endforeach
-                        </div>
-                    </div>
-                @endif
+                @include('cms-kit::partials.extra-fields-global', [
+                    'configKey' => 'locations.items',
+                    'existingValues' => [],
+                ])
             </div>
 
 

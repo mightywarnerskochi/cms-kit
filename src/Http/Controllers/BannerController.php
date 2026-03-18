@@ -102,12 +102,14 @@ class BannerController extends Controller
         $data = $request->only(['banner_type', 'video_url', 'order_index', 'status']);
         $data['status'] = $request->has('status');
 
-        // Handle translations (including JSON fields like buttons)
+        // Handle translations (including JSON fields like buttons and translatable extra_fields)
         $translations = $request->input('translations');
         foreach ($translations as $lang => $fields) {
             if (isset($fields['buttons'])) {
                 $translations[$lang]['buttons'] = array_values(array_filter($fields['buttons'], fn($b) => !empty($b['label'])));
             }
+            // Keep translatable extra_fields in translations
+            // No need to remove them, they'll be stored as is
         }
         $data['translations'] = $translations;
 
@@ -123,8 +125,13 @@ class BannerController extends Controller
             $data['video_url'] = null; // Clear URL if file is uploaded
         }
 
-        // Handle Extra Fields (Social Proof)
+        // Handle Extra Fields (Social Proof + Config Extra Fields)
         $extraFields = $request->only(['google_rating', 'google_review_count', 'google_avatars_alt']);
+
+        // Merge any additional fields from config
+        if ($request->has('extra_fields')) {
+            $extraFields = array_merge($extraFields, $request->input('extra_fields'));
+        }
 
         // Handle Multiple Avatars
         if ($request->hasFile('google_avatars')) {
@@ -185,6 +192,8 @@ class BannerController extends Controller
             if (isset($fields['buttons'])) {
                 $translations[$lang]['buttons'] = array_values(array_filter($fields['buttons'], fn($b) => !empty($b['label'])));
             }
+            // Keep translatable extra_fields in translations
+            // No need to remove them, they'll be stored as is
         }
         $data['translations'] = $translations;
 
@@ -209,8 +218,14 @@ class BannerController extends Controller
 
         $data['image_alt'] = $request->input('image_alt');
 
-        // Social Proof Extra Fields
+        // Social Proof Extra Fields + Config Extra Fields
         $extraFields = $request->only(['google_rating', 'google_review_count', 'google_avatars_alt']);
+        
+        // Merge any additional fields from config
+        if ($request->has('extra_fields')) {
+            $extraFields = array_merge($extraFields, $request->input('extra_fields'));
+        }
+        
         $existingExtra = $banner->extra_fields ?? [];
 
         if ($request->hasFile('google_avatars')) {

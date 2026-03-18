@@ -53,6 +53,12 @@
                                     @enderror
                                     <div class="form-text mt-1">A brief introductory text for the locations section.</div>
                                 </div>
+
+                                @include('cms-kit::partials.extra-fields-translatable', [
+                                    'configKey' => 'locations.section',
+                                    'lang' => $lang,
+                                    'existingTranslations' => $section->translations ?? [],
+                                ])
                             </div>
                         </div>
                         @endforeach
@@ -62,28 +68,14 @@
                         <div class="card-body p-4">
                             <h6 class="fw-bold mb-3">Additional Settings</h6>
                             <div class="row g-4">
-                                @php
-                                    $sectionConfig = config('cms-kit.database.locations.section', []);
-                                @endphp
-
-                                @foreach($sectionConfig['extra_fields'] ?? [] as $key => $field)
-                                <div class="col-md-6">
-                                    <label class="form-label fw-bold">{{ $field['label'] ?? ucfirst($key) }}</label>
-                                    @if(($field['type'] ?? 'text') === 'textarea')
-                                        <textarea name="extra_fields[{{ $key }}]" class="form-control">{{ old("extra_fields.{$key}", $section->extra_fields[$key] ?? '') }}</textarea>
-                                    @elseif(($field['type'] ?? 'text') === 'checkbox')
-                                        <div class="form-check form-switch mt-2">
-                                            <input class="form-check-input" type="checkbox" name="extra_fields[{{ $key }}]" {{ old("extra_fields.{$key}", $section->extra_fields[$key] ?? false) ? 'checked' : '' }}>
-                                        </div>
-                                    @else
-                                        <input type="text" name="extra_fields[{{ $key }}]" class="form-control" value="{{ old("extra_fields.{$key}", $section->extra_fields[$key] ?? '') }}">
-                                    @endif
-                                </div>
-                                @endforeach
+                                @include('cms-kit::partials.extra-fields-global', [
+                                    'configKey' => 'locations.section',
+                                    'existingValues' => $section->extra_fields ?? [],
+                                ])
 
                                 <div class="col-md-12">
                                     <div class="form-check form-switch">
-                                        <input class="form-check-input" type="checkbox" name="status" id="sectionStatus" {{ old('status', $section->extra_fields['status'] ?? true) ? 'checked' : '' }}>
+                                        <input class="form-check-input" type="checkbox" name="status" id="sectionStatus" {{ old('status', $section->status ?? true) ? 'checked' : '' }}>
                                         <label class="form-check-label fw-bold" for="sectionStatus">Status</label>
                                     </div>
                                 </div>

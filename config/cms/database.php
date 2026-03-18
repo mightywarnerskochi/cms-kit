@@ -1,5 +1,14 @@
 <?php
 
+/**
+ * CMS KIT DATABASE CONFIGURATION
+ *
+ * Extra-field field reference moved to:
+ *   docs/extra-fields.md
+ *
+ * Add/modify banner extra fields in:
+ *   config/cms/database.php -> banners.items.extra_fields
+ */
 return [
     'enquiries' => [
         'columns' => [
@@ -55,6 +64,7 @@ return [
             'content' => true,
             'image' => true,
             'video_url' => true, // New: for video banners
+            'video_file' => true, // New: for video file uploads
             'image_alt' => true,
             'buttons' => true, // New: JSON array of buttons
             'google_review_text' => true, // New

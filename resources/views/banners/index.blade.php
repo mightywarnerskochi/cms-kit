@@ -54,11 +54,6 @@
     </div>
 </div>
 
-<form id="bulkForm" action="{{ route('cms.banners.bulk-action') }}" method="POST" style="display: none;">
-    @csrf
-    <input type="hidden" name="action" id="bulkActionInput">
-    <div id="bulkIdsContainer"></div>
-</form>
 @endsection
 
 @push('scripts')
@@ -144,22 +139,70 @@
             }
 
             let confirmMessage = 'Are you sure you want to ';
+            let successMessage = '';
             if (action === 'delete') {
                 confirmMessage += 'delete the selected banners?';
+                successMessage = 'Banners deleted successfully!';
             } else if (action === 'activate') {
                 confirmMessage += 'activate the selected banners?';
+                successMessage = 'Banners activated successfully!';
             } else if (action === 'deactivate') {
                 confirmMessage += 'deactivate the selected banners?';
+                successMessage = 'Banners deactivated successfully!';
             }
 
             if (confirm(confirmMessage)) {
-                const container = $('#bulkIdsContainer');
-                container.empty();
-                checkedBoxes.each(function() {
-                    container.append(`<input type="hidden" name="ids[]" value="${$(this).val()}">`);
+                const ids = checkedBoxes.map(function() {
+                    return $(this).val();
+                }).get();
+
+                $.ajax({
+                    url: "{{ route('cms.banners.bulk-action') }}",
+                    type: 'POST',
+                    data: {
+                        _token: '{{ csrf_token() }}',
+                        ids: ids,
+                        action: action
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            // Show toast notification
+                            const toastHtml = `
+                                <div class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+                                    <div class="toast-header bg-success text-white">
+                                        <i class="fas fa-check-circle me-2"></i>
+                                        <strong class="me-auto">Success</strong>
+                                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast"></button>
+                                    </div>
+                                    <div class="toast-body">
+                                        ${successMessage}
+                                    </div>
+                                </div>
+                            `;
+                            const toastContainer = $('<div class="position-fixed top-0 end-0 p-3" style="z-index: 11"></div>');
+                            toastContainer.append(toastHtml);
+                            $('body').append(toastContainer);
+                            
+                            const toast = new bootstrap.Toast(toastContainer.find('.toast')[0]);
+                            toast.show();
+                            
+                            toastContainer.on('hidden.bs.toast', function() {
+                                toastContainer.remove();
+                            });
+
+                            // Reload table
+                            table.ajax.reload(null, false);
+                            
+                            // Uncheck all checkboxes
+                            $('#selectAll').prop('checked', false);
+                            $('.row-checkbox').prop('checked', false);
+                            updateBulkVisibility();
+                        }
+                    },
+                    error: function() {
+                        alert('An error occurred. Please try again.');
+                    }
                 });
-                $('#bulkActionInput').val(action);
-                $('#bulkForm').submit();
             }
         };
     });

@@ -51,10 +51,21 @@
                             @enderror
                             <div class="form-text mt-1 text-muted">Short introduction for the FAQ section.</div>
                         </div>
+
+                        @include('cms-kit::partials.extra-fields-translatable', [
+                            'configKey' => 'faqs.section',
+                            'lang' => $lang,
+                            'existingTranslations' => $section->translations ?? [],
+                        ])
                     </div>
                 </div>
                 @endforeach
             </div>
+
+            @include('cms-kit::partials.extra-fields-global', [
+                'configKey' => 'faqs.section',
+                'existingValues' => $section->extra_fields ?? [],
+            ])
 
             <div class="mt-4 pt-4 border-top d-flex justify-content-between align-items-center">
                 <div class="form-check form-switch py-0">

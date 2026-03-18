@@ -56,33 +56,11 @@
                     </div>
                 </div>
 
-                {{-- Dynamic Extra Fields --}}
-                @php
-                    $extraFields = config('cms-kit.database.brands.items.extra_fields', []);
-                @endphp
-                @if(!empty($extraFields))
-                    <div class="col-12 mt-4">
-                        <h6 class="text-muted border-bottom pb-2 mb-3">Additional Information</h6>
-                        <div class="row g-3">
-                            @foreach($extraFields as $name => $field)
-                                @php
-                                    $value = old('extra_fields.' . $name, $brand->extra_fields[$name] ?? '');
-                                @endphp
-                                <div class="col-md-6">
-                                    <label class="form-label fw-bold">{{ $field['label'] }} @if($field['required'] ?? false) <span class="text-danger">*</span> @endif</label>
-                                    @if(($field['type'] ?? 'text') === 'textarea')
-                                        <textarea name="extra_fields[{{ $name }}]" class="form-control @error("extra_fields.{$name}") is-invalid @enderror" rows="3" {{ ($field['required'] ?? false) ? 'required' : '' }}>{{ $value }}</textarea>
-                                    @else
-                                        <input type="{{ $field['type'] ?? 'text' }}" name="extra_fields[{{ $name }}]" class="form-control @error("extra_fields.{$name}") is-invalid @enderror" value="{{ $value }}" {{ ($field['required'] ?? false) ? 'required' : '' }}>
-                                    @endif
-                                    @error("extra_fields.{$name}")
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
-                                </div>
-                            @endforeach
-                        </div>
-                    </div>
-                @endif
+                @include('cms-kit::partials.extra-fields-global', [
+                    'configKey' => 'brands.items',
+                    'existingValues' => $brand->extra_fields ?? [],
+                ])
+
             </div>
 
             <div class="mt-4 d-flex gap-2">

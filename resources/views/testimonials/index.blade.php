@@ -75,6 +75,12 @@
                             @enderror
                         </div>
                         @endif
+
+                        @include('cms-kit::partials.extra-fields-translatable', [
+                            'configKey' => 'testimonials.section',
+                            'lang' => $lang,
+                            'existingTranslations' => $section->translations ?? [],
+                        ])
                     </div>
                 </div>
                 @endforeach
@@ -133,22 +139,10 @@
                     @endif
                 </div>
 
-                <!-- Section Extra Fields -->
-                @php $sectionExtra = config('cms-kit.database.testimonials.section.extra_fields', []); @endphp
-                @if(count($sectionExtra) > 0)
-                <div class="row g-3 mb-3">
-                    @foreach($sectionExtra as $key => $field)
-                    <div class="col-md-4">
-                        <label class="form-label">{{ $field['label'] ?? $key }}</label>
-                        @if(($field['type'] ?? 'text') == 'textarea')
-                            <textarea name="extra_fields[{{ $key }}]" class="form-control" rows="2">{{ $section->extra_fields[$key] ?? '' }}</textarea>
-                        @else
-                            <input type="text" name="extra_fields[{{ $key }}]" class="form-control" value="{{ $section->extra_fields[$key] ?? '' }}">
-                        @endif
-                    </div>
-                    @endforeach
-                </div>
-                @endif
+                @include('cms-kit::partials.extra-fields-global', [
+                    'configKey' => 'testimonials.section',
+                    'existingValues' => $section->extra_fields ?? [],
+                ])
 
                 <button type="submit" class="btn btn-primary">Update Section</button>
             </div>
@@ -262,6 +256,12 @@
                                     @enderror
                                 </div>
                                 @endif
+
+                                @include('cms-kit::partials.extra-fields-translatable', [
+                                    'configKey' => 'testimonials.items',
+                                    'lang' => $lang,
+                                    'existingTranslations' => $item->translations ?? [],
+                                ])
                             </div>
                             @endforeach
                         </div>
@@ -307,6 +307,11 @@
                         </div>
 
                         <div class="row align-items-center mt-4 pt-3 border-top">
+                            @include('cms-kit::partials.extra-fields-global', [
+                                'configKey' => 'testimonials.items',
+                                'existingValues' => $item->extra_fields ?? [],
+                            ])
+
                             <div class="col-md-4">
                                 <label class="form-label fw-bold">Order Index</label>
                                 <input type="number" name="order_index" value="{{ old('order_index', $item->order_index) }}" class="form-control shadow-sm">
@@ -385,6 +390,12 @@
                 @enderror
             </div>
             @endif
+
+            @include('cms-kit::partials.extra-fields-translatable', [
+                'configKey' => 'testimonials.items',
+                'lang' => $lang,
+                'existingTranslations' => [],
+            ])
         </div>
         @endforeach
     </div>
@@ -423,22 +434,10 @@
         @endif
     </div>
 
-    <!-- Extra Dynamic Fields -->
-    @php $itemExtra = config('cms-kit.database.testimonials.items.extra_fields', []); @endphp
-    @if(count($itemExtra) > 0)
-    <div class="row g-3 mt-3">
-        @foreach($itemExtra as $key => $field)
-        <div class="col-md-6">
-            <label class="form-label fw-bold">{{ $field['label'] ?? $key }}</label>
-            @if(($field['type'] ?? 'text') == 'textarea')
-                <textarea name="extra_fields[{{ $key }}]" class="form-control shadow-sm" rows="2">{{ old("extra_fields.{$key}") }}</textarea>
-            @else
-                <input type="text" name="extra_fields[{{ $key }}]" class="form-control shadow-sm" value="{{ old("extra_fields.{$key}") }}">
-            @endif
-        </div>
-        @endforeach
-    </div>
-    @endif
+    @include('cms-kit::partials.extra-fields-global', [
+        'configKey' => 'testimonials.items',
+        'existingValues' => [],
+    ])
 
     <div class="row align-items-center mt-4 pt-3 border-top">
         <div class="col-md-4">

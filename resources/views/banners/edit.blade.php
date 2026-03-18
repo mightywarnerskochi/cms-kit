@@ -122,6 +122,12 @@
                             <div class="form-text mt-1 text-muted">Optional text to highlight positive client feedback.</div>
                         </div>
                         @endif
+
+                        @include('cms-kit::partials.extra-fields-translatable', [
+                            'configKey' => 'banners.items',
+                            'lang' => $lang,
+                            'existingTranslations' => $banner->translations ?? [],
+                        ])
                     </div>
                 </div>
                 @endforeach
@@ -179,6 +185,7 @@
                                     @endif
                                     <small class="text-muted d-block mt-1">Max size: {{ config('cms-kit.images.banners.banner_video.max_size', 10240) / 1024 }}MB. Supported: mp4, mov, avi.</small>
                                 </div>
+                                @endif
                             </div>
                         </div>
                         @endif
@@ -235,6 +242,11 @@
                     </div>
                 </div>
             </div>
+
+            @include('cms-kit::partials.extra-fields-global', [
+                'configKey' => 'banners.items',
+                'existingValues' => $banner->extra_fields ?? [],
+            ])
 
             <div class="row align-items-center">
                 <div class="col-md-4">

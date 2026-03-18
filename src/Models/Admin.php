@@ -22,6 +22,14 @@ class Admin extends Authenticatable
     ];
 
     /**
+     * Send the password reset notification.
+     */
+    public function sendPasswordResetNotification($token)
+    {
+        $this->notify(new \CMS\SiteManager\Notifications\ResetPasswordNotification($token));
+    }
+
+    /**
      * Check if admin is a superadmin
      */
     public function isSuperAdmin()

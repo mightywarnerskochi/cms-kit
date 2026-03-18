@@ -59,7 +59,7 @@
             <div class="mt-4 pt-4 border-top d-flex justify-content-between align-items-center">
                 <div class="form-check form-switch py-0">
                     <input class="form-check-input h5 mb-0" type="checkbox" name="status" id="sectionStatus" {{ ($section->status ?? true) ? 'checked' : '' }}>
-                    <label class="form-check-label fw-bold ms-2 mt-1" for="sectionStatus">Section ON</label>
+                    <label class="form-check-label fw-bold ms-2 mt-1" for="sectionStatus">Status</label>
                 </div>
                 <button type="submit" class="btn btn-primary px-4 py-2 shadow-sm">
                     <i class="fas fa-save me-2"></i>Update Section Settings

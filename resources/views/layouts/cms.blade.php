@@ -9,11 +9,11 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
-            --primary-color: {{ config('cms-kit.theme.primary_color', '#dc3545') }};
-            --secondary-color: {{ config('cms-kit.theme.secondary_color', '#212529') }};
-            --bg-color: {{ config('cms-kit.theme.background_color', '#f4f7f6') }};
-            --sidebar-color: {{ config('cms-kit.theme.sidebar_color', '#1a1d21') }};
-            --text-color: {{ config('cms-kit.theme.text_color', '#495057') }};
+            --primary-color: {{ config('cms-kit.common.theme.primary_color', '#dc3545') }};
+            --secondary-color: {{ config('cms-kit.common.secondary_color', '#212529') }};
+            --bg-color: {{ config('cms-kit.common.background_color', '#f4f7f6') }};
+            --sidebar-color: {{ config('cms-kit.common.sidebar_color', '#1a1d21') }};
+            --text-color: {{ config('cms-kit.common.text_color', '#495057') }};
             --card-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
             --header-bg: rgba(255, 255, 255, 0.8);
             --sidebar-width: 280px;

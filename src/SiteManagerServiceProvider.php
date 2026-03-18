@@ -97,6 +97,12 @@ class SiteManagerServiceProvider extends ServiceProvider
                 'driver' => 'eloquent',
                 'model' => \CMS\SiteManager\Models\Admin::class,
             ],
+            'auth.passwords.cms_admins' => [
+                'provider' => 'cms_admins',
+                'table' => 'password_resets',
+                'expire' => 60,
+                'throttle' => 60,
+            ],
         ]);
     }
 

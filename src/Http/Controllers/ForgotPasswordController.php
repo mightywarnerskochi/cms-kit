@@ -8,21 +8,28 @@ use Illuminate\Support\Facades\Password;
 
 class ForgotPasswordController extends Controller
 {
+    /**
+     * Display the form to request a password reset link.
+     */
     public function showLinkRequestForm()
     {
         return view('cms-kit::auth.passwords.email');
     }
 
+    /**
+     * Send a reset link to the given admin email.
+     */
     public function sendResetLinkEmail(Request $request)
     {
         $request->validate(['email' => 'required|email']);
 
-        // For this demo package, we'll just show a success message 
-        // if the email matches the config admin email.
-        if ($request->email === config('cms-kit.common.auth.admin_email')) {
-            return back()->with('status', 'A password reset link has been sent to your email.');
-        }
+        // Use Laravel's password reset broker for the 'cms' guard
+        $status = Password::broker('cms_admins')->sendResetLink(
+            $request->only('email')
+        );
 
-        return back()->withErrors(['email' => 'No admin found with that email address.']);
+        return $status === Password::RESET_LINK_SENT
+            ? back()->with('status', __($status))
+            : back()->withErrors(['email' => __($status)]);
     }
 }

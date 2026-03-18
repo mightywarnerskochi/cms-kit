@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use CMS\SiteManager\Http\Controllers\TestimonialController;
 use CMS\SiteManager\Http\Controllers\AuthController;
 use CMS\SiteManager\Http\Controllers\ForgotPasswordController;
+use CMS\SiteManager\Http\Controllers\ResetPasswordController;
 use CMS\SiteManager\Http\Controllers\LanguageController;
 use CMS\SiteManager\Http\Controllers\MetadataController;
 use CMS\SiteManager\Http\Controllers\BannerController;
@@ -17,6 +18,8 @@ Route::middleware(['web'])->group(function () {
 
         Route::get('/password/reset', [ForgotPasswordController::class, 'showLinkRequestForm'])->name('cms.password.request');
         Route::post('/password/email', [ForgotPasswordController::class, 'sendResetLinkEmail'])->name('cms.password.email');
+        Route::get('/password/reset/{token}', [ResetPasswordController::class, 'showResetForm'])->name('cms.password.reset');
+        Route::post('/password/reset', [ResetPasswordController::class, 'reset'])->name('cms.password.update');
 
         // Protected Routes
         Route::middleware(['cms.auth'])->group(function () {

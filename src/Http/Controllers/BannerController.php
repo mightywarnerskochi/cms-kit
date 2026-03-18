@@ -83,20 +83,42 @@ class BannerController extends Controller
         }
 
         $allowedTypes = config('cms-kit.database.banners.allowed_types', ['image', 'video']);
+        $resolvedBannerType = count($allowedTypes) === 1
+            ? $allowedTypes[0]
+            : $request->input('banner_type');
+        $request->merge(['banner_type' => $resolvedBannerType]);
+        $videoMaxSize = config('cms-kit.images.banners.banner_video.max_size', 10240);
         $typeRule = 'required|in:' . implode(',', $allowedTypes);
+        $videoSourceRule = in_array('video', $allowedTypes, true) ? 'nullable|in:url,file' : 'nullable';
+        $videoUrlRule = in_array('video', $allowedTypes, true)
+            ? 'nullable|required_if:banner_type,video|required_if:video_source,url|url'
+            : 'nullable';
+        $videoFileRule = in_array('video', $allowedTypes, true)
+            ? 'nullable|required_if:banner_type,video|required_if:video_source,file|file|mimetypes:video/mp4,video/quicktime,video/x-msvideo|max:' . $videoMaxSize
+            : 'nullable';
 
         $mainImageConfig = config('cms-kit.images.banners.main_image', ['max_size' => 2048, 'width' => 1920, 'height' => 800]);
         $avatarConfig = config('cms-kit.images.banners.client_avatar', ['max_size' => 512, 'width' => 100, 'height' => 100]);
-
-        $videoMaxSize = config('cms-kit.images.banners.banner_video.max_size', 10240);
         $request->validate([
             'banner_type' => $typeRule,
             'image' => 'nullable|required_if:banner_type,image|image|max:' . $mainImageConfig['max_size'],
             'google_avatars.*' => 'nullable|image|max:' . $avatarConfig['max_size'],
-            'video_source' => 'nullable|in:url,file',
-            'video_url' => 'nullable|required_if:video_source,url|url',
-            'video_file' => 'nullable|required_if:video_source,file|file|mimetypes:video/mp4,video/quicktime,video/x-msvideo|max:' . $videoMaxSize,
+            'video_source' => $videoSourceRule,
+            'video_url' => $videoUrlRule,
+            'video_file' => $videoFileRule,
             'translations.*.line_1' => 'required',
+        ], [
+            'image.required_if' => 'Banner image is required when banner type is image.',
+            'image.image' => 'Banner image must be a valid image file.',
+            'image.max' => 'Banner image size must not exceed ' . ($mainImageConfig['max_size'] ?? 2048) . ' KB.',
+            'google_avatars.*.image' => 'Each client avatar must be a valid image file.',
+            'google_avatars.*.max' => 'Each client avatar must not exceed ' . ($avatarConfig['max_size'] ?? 512) . ' KB.',
+            'video_url.required_if' => 'Video URL is required when URL source is selected.',
+            'video_url.url' => 'Video URL must be a valid URL.',
+            'video_file.required_if' => 'Video file is required when file source is selected.',
+            'video_file.mimetypes' => 'Video file must be an MP4, MOV, or AVI file.',
+            'video_file.max' => 'Video file size must not exceed ' . $videoMaxSize . ' KB.',
+            'translations.*.line_1.required' => 'Banner heading is required in every language.',
         ]);
 
         $data = $request->only(['banner_type', 'video_url', 'order_index', 'status']);
@@ -120,9 +142,12 @@ class BannerController extends Controller
         }
 
         // Handle Video File
-        if ($request->hasFile('video_file')) {
+        if ($resolvedBannerType === 'video' && $request->hasFile('video_file')) {
             $data['video_file'] = $request->file('video_file')->store('banners/videos', 'public');
             $data['video_url'] = null; // Clear URL if file is uploaded
+        } elseif ($resolvedBannerType !== 'video') {
+            $data['video_file'] = null;
+            $data['video_url'] = null;
         }
 
         // Handle Extra Fields (Social Proof + Config Extra Fields)
@@ -157,6 +182,9 @@ class BannerController extends Controller
         $banner = Banner::findOrFail($id);
         $languages = Language::where('status', true)->get();
         $allowedTypes = config('cms-kit.database.banners.allowed_types', ['image', 'video']);
+        if (count($allowedTypes) === 1) {
+            $banner->banner_type = $allowedTypes[0];
+        }
         $mainImageConfig = config('cms-kit.images.banners.main_image', ['max_size' => 2048, 'width' => 1920, 'height' => 800]);
         $avatarConfig = config('cms-kit.images.banners.client_avatar', ['max_size' => 512, 'width' => 100, 'height' => 100]);
 
@@ -168,20 +196,41 @@ class BannerController extends Controller
         $banner = Banner::findOrFail($id);
 
         $allowedTypes = config('cms-kit.database.banners.allowed_types', ['image', 'video']);
+        $resolvedBannerType = count($allowedTypes) === 1
+            ? $allowedTypes[0]
+            : $request->input('banner_type');
+        $request->merge(['banner_type' => $resolvedBannerType]);
+        $videoMaxSize = config('cms-kit.images.banners.banner_video.max_size', 10240);
         $typeRule = 'required|in:' . implode(',', $allowedTypes);
+        $videoSourceRule = in_array('video', $allowedTypes, true) ? 'nullable|in:url,file' : 'nullable';
+        $videoUrlRule = in_array('video', $allowedTypes, true)
+            ? 'nullable|required_if:banner_type,video|required_if:video_source,url|url'
+            : 'nullable';
+        $videoFileRule = in_array('video', $allowedTypes, true)
+            ? 'nullable|required_if:banner_type,video|required_if:video_source,file|file|mimetypes:video/mp4,video/quicktime,video/x-msvideo|max:' . $videoMaxSize
+            : 'nullable';
 
         $mainImageConfig = config('cms-kit.images.banners.main_image', ['max_size' => 2048, 'width' => 1920, 'height' => 800]);
         $avatarConfig = config('cms-kit.images.banners.client_avatar', ['max_size' => 512, 'width' => 100, 'height' => 100]);
-
-        $videoMaxSize = config('cms-kit.images.banners.banner_video.max_size', 10240);
         $request->validate([
             'banner_type' => $typeRule,
             'image' => 'nullable|image|max:' . $mainImageConfig['max_size'],
             'google_avatars.*' => 'nullable|image|max:' . $avatarConfig['max_size'],
-            'video_source' => 'nullable|in:url,file',
-            'video_url' => 'nullable|required_if:video_source,url|url',
-            'video_file' => 'nullable|required_if:video_source,file|file|mimetypes:video/mp4,video/quicktime,video/x-msvideo|max:' . $videoMaxSize,
+            'video_source' => $videoSourceRule,
+            'video_url' => $videoUrlRule,
+            'video_file' => $videoFileRule,
             'translations.*.line_1' => 'required',
+        ], [
+            'image.image' => 'Banner image must be a valid image file.',
+            'image.max' => 'Banner image size must not exceed ' . ($mainImageConfig['max_size'] ?? 2048) . ' KB.',
+            'google_avatars.*.image' => 'Each client avatar must be a valid image file.',
+            'google_avatars.*.max' => 'Each client avatar must not exceed ' . ($avatarConfig['max_size'] ?? 512) . ' KB.',
+            'video_url.required_if' => 'Video URL is required when URL source is selected.',
+            'video_url.url' => 'Video URL must be a valid URL.',
+            'video_file.required_if' => 'Video file is required when file source is selected.',
+            'video_file.mimetypes' => 'Video file must be an MP4, MOV, or AVI file.',
+            'video_file.max' => 'Video file size must not exceed ' . $videoMaxSize . ' KB.',
+            'translations.*.line_1.required' => 'Banner heading is required in every language.',
         ]);
 
         $data = $request->only(['banner_type', 'video_url', 'order_index', 'status']);
@@ -204,16 +253,22 @@ class BannerController extends Controller
         }
 
         // Handle Video File
-        if ($request->hasFile('video_file')) {
+        if ($resolvedBannerType === 'video' && $request->hasFile('video_file')) {
             if ($banner->video_file)
                 Storage::disk('public')->delete($banner->video_file);
             $data['video_file'] = $request->file('video_file')->store('banners/videos', 'public');
             $data['video_url'] = null; // Clear URL if file is uploaded
-        } elseif ($request->input('video_url')) {
+        } elseif ($resolvedBannerType === 'video' && $request->input('video_url')) {
             if ($banner->video_file) {
                 Storage::disk('public')->delete($banner->video_file);
                 $data['video_file'] = null;
             }
+        } else {
+            if ($banner->video_file) {
+                Storage::disk('public')->delete($banner->video_file);
+            }
+            $data['video_file'] = null;
+            $data['video_url'] = null;
         }
 
         $data['image_alt'] = $request->input('image_alt');

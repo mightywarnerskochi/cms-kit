@@ -27,7 +27,7 @@
                 </div>
             </div>
             @else
-            <input type="hidden" name="banner_type" id="banner_type" value="{{ $banner->banner_type }}">
+            <input type="hidden" name="banner_type" id="banner_type" value="{{ $allowedTypes[0] }}">
             @endif
 
             <div class="alert alert-light border-start border-primary border-4 py-2 mb-4 shadow-sm" style="font-size: 0.9rem;">
@@ -140,7 +140,10 @@
                         @if(config('cms-kit.database.banners.items.image', true))
                         <div class="col-md-6 {{ $banner->banner_type !== 'image' ? 'd-none' : '' }} {{ !in_array('image', $allowedTypes) ? 'd-none' : '' }}" id="image-section">
                             <label class="form-label">Banner Image</label>
-                            <input type="file" name="image" class="form-control">
+                            <input type="file" name="image" class="form-control @error('image') is-invalid @enderror">
+                            @error('image')
+                                <div class="invalid-feedback d-block">{{ $message }}</div>
+                            @enderror
                             @if($banner->image)
                             <div class="mt-2 p-2 border rounded d-inline-block bg-white">
                                 <img src="{{ asset('storage/' . $banner->image) }}" style="height: 80px;">
@@ -222,7 +225,10 @@
                         @if(config('cms-kit.database.banners.items.google_avatars', true))
                         <div class="col-md-4">
                             <label class="form-label">Client Avatars (Multiple)</label>
-                            <input type="file" name="google_avatars[]" class="form-control" multiple>
+                            <input type="file" name="google_avatars[]" class="form-control @error('google_avatars.*') is-invalid @enderror" multiple>
+                            @error('google_avatars.*')
+                                <div class="invalid-feedback d-block">{{ $message }}</div>
+                            @enderror
                             @if(!empty($avatars))
                             <div class="mt-2 d-flex gap-2 flex-wrap">
                                 @foreach($avatars as $avatar)

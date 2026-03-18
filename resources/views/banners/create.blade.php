@@ -130,7 +130,10 @@
                         @if(config('cms-kit.database.banners.items.image', true))
                         <div class="col-md-6 {{ !in_array('image', $allowedTypes) || (count($allowedTypes) > 1 && $allowedTypes[0] !== 'image') ? 'd-none' : '' }}" id="image-section">
                             <label class="form-label">Banner Image <span class="text-danger">*</span></label>
-                            <input type="file" name="image" class="form-control">
+                            <input type="file" name="image" class="form-control @error('image') is-invalid @enderror">
+                            @error('image')
+                                <div class="invalid-feedback d-block">{{ $message }}</div>
+                            @enderror
                             <small class="text-muted">Recommended: {{ $mainImageConfig['width'] }}x{{ $mainImageConfig['height'] }}px (Max: {{ $mainImageConfig['max_size'] / 1024 }}MB)</small>
                         </div>
                         @endif
@@ -197,7 +200,10 @@
                         @if(config('cms-kit.database.banners.items.google_avatars', true))
                         <div class="col-md-4">
                             <label class="form-label">Client Avatars (Multiple)</label>
-                            <input type="file" name="google_avatars[]" class="form-control" multiple>
+                            <input type="file" name="google_avatars[]" class="form-control @error('google_avatars.*') is-invalid @enderror" multiple>
+                            @error('google_avatars.*')
+                                <div class="invalid-feedback d-block">{{ $message }}</div>
+                            @enderror
                             <small class="text-muted d-block mt-1">Recommended: {{ $avatarConfig['width'] }}x{{ $avatarConfig['height'] }}px (Max: {{ $avatarConfig['max_size'] }}KB)</small>
                         </div>
                         @endif

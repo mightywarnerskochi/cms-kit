@@ -32,6 +32,8 @@
         </div>
     </div>
     <div class="card-body p-4">
+        <div id="bannerToastArea" class="mb-3"></div>
+
         <div class="table-responsive">
             <table class="table premium-table mb-0 w-100">
                 <thead>
@@ -131,6 +133,41 @@
             $('#selectAll').prop('checked', checkedCount > 0 && checkedCount === $('.row-checkbox').length);
         }
 
+        function showBannerToast(message) {
+            const toastId = `banner-toast-${Date.now()}`;
+            const toastHtml = `
+                <div id="${toastId}" class="toast align-items-center border-0 shadow-sm w-100" role="alert" aria-live="assertive" aria-atomic="true">
+                    <div class="d-flex bg-white rounded">
+                        <div class="toast-body d-flex align-items-center gap-2 text-success fw-medium">
+                            <i class="fas fa-check-circle"></i>
+                            <span>${message}</span>
+                        </div>
+                        <button type="button" class="btn-close me-3 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                    </div>
+                </div>
+            `;
+
+            const toastArea = $('#bannerToastArea');
+            toastArea.html(`
+                <div class="d-flex justify-content-end">
+                    <div style="max-width: 420px; width: 100%;">
+                        ${toastHtml}
+                    </div>
+                </div>
+            `);
+
+            const toastEl = document.getElementById(toastId);
+            const toast = new bootstrap.Toast(toastEl, {
+                delay: 3000
+            });
+
+            toastEl.addEventListener('hidden.bs.toast', function() {
+                toastArea.empty();
+            });
+
+            toast.show();
+        }
+
         window.bulkAction = function(action) {
             const checkedBoxes = $('.row-checkbox:checked');
             if (checkedBoxes.length === 0) {
@@ -166,34 +203,10 @@
                     },
                     success: function(response) {
                         if (response.success) {
-                            // Show toast notification
-                            const toastHtml = `
-                                <div class="toast" role="alert" aria-live="assertive" aria-atomic="true">
-                                    <div class="toast-header bg-success text-white">
-                                        <i class="fas fa-check-circle me-2"></i>
-                                        <strong class="me-auto">Success</strong>
-                                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast"></button>
-                                    </div>
-                                    <div class="toast-body">
-                                        ${successMessage}
-                                    </div>
-                                </div>
-                            `;
-                            const toastContainer = $('<div class="position-fixed top-0 end-0 p-3" style="z-index: 11"></div>');
-                            toastContainer.append(toastHtml);
-                            $('body').append(toastContainer);
-                            
-                            const toast = new bootstrap.Toast(toastContainer.find('.toast')[0]);
-                            toast.show();
-                            
-                            toastContainer.on('hidden.bs.toast', function() {
-                                toastContainer.remove();
-                            });
+                            showBannerToast(successMessage);
 
-                            // Reload table
                             table.ajax.reload(null, false);
-                            
-                            // Uncheck all checkboxes
+
                             $('#selectAll').prop('checked', false);
                             $('.row-checkbox').prop('checked', false);
                             updateBulkVisibility();

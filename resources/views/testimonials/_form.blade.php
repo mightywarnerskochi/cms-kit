@@ -5,7 +5,7 @@
 @endphp
 
 <div class="alert alert-light border-start border-primary border-4 py-2 mb-4 shadow-sm" style="font-size: 0.85rem;">
-    <i class="fas fa-info-circle text-primary me-2"></i> <strong>Note:</strong> Please ensure all required fields <span class="text-danger">(*)</span> are filled@if($showLanguageUi) across all language tabs@endif.
+    <i class="fas fa-info-circle text-primary me-2"></i> <strong>Note:</strong> Please ensure all required fields <span class="text-danger">(*)</span> are filled{{ $showLanguageUi ? ' across all language tabs' : '' }}.
 </div>
 
 @if($showLanguageUi)
@@ -25,14 +25,14 @@
     @php $trans = $item->translations[$lang->code] ?? []; @endphp
     <div class="tab-pane fade {{ $loop->first ? 'show active' : '' }}" id="testimonial-{{ $lang->code }}" role="tabpanel">
         <div class="mb-3">
-            <label class="form-label fw-bold">Name@if($showLanguageUi) ({{ strtoupper($lang->code) }})@endif {!! in_array('name', $itemRequired) ? '<span class="text-danger">*</span>' : '' !!}</label>
+            <label class="form-label fw-bold">Name{{ $showLanguageUi ? ' (' . strtoupper($lang->code) . ')' : '' }} {!! in_array('name', $itemRequired) ? '<span class="text-danger">*</span>' : '' !!}</label>
             <input type="text" name="translations[{{ $lang->code }}][name]" class="form-control @error("translations.{$lang->code}.name") is-invalid @enderror" value="{{ old("translations.{$lang->code}.name", $trans['name'] ?? '') }}" {{ in_array('name', $itemRequired) ? 'required' : '' }}>
             @error("translations.{$lang->code}.name")
                 <div class="invalid-feedback">{{ $message }}</div>
             @enderror
         </div>
         <div class="mb-3">
-            <label class="form-label fw-bold">Designation@if($showLanguageUi) ({{ strtoupper($lang->code) }})@endif {!! in_array('designation', $itemRequired) ? '<span class="text-danger">*</span>' : '' !!}</label>
+            <label class="form-label fw-bold">Designation{{ $showLanguageUi ? ' (' . strtoupper($lang->code) . ')' : '' }} {!! in_array('designation', $itemRequired) ? '<span class="text-danger">*</span>' : '' !!}</label>
             <input type="text" name="translations[{{ $lang->code }}][designation]" class="form-control @error("translations.{$lang->code}.designation") is-invalid @enderror" value="{{ old("translations.{$lang->code}.designation", $trans['designation'] ?? '') }}" {{ in_array('designation', $itemRequired) ? 'required' : '' }}>
             @error("translations.{$lang->code}.designation")
                 <div class="invalid-feedback">{{ $message }}</div>
@@ -40,7 +40,7 @@
         </div>
         @if(config('cms-kit.database.testimonials.items.content'))
         <div class="mb-3">
-            <label class="form-label fw-bold">Content@if($showLanguageUi) ({{ strtoupper($lang->code) }})@endif {!! in_array('content', $itemRequired) ? '<span class="text-danger">*</span>' : '' !!}</label>
+            <label class="form-label fw-bold">Content{{ $showLanguageUi ? ' (' . strtoupper($lang->code) . ')' : '' }} {!! in_array('content', $itemRequired) ? '<span class="text-danger">*</span>' : '' !!}</label>
             <textarea name="translations[{{ $lang->code }}][content]" class="form-control tinymce-editor @error("translations.{$lang->code}.content") is-invalid @enderror" rows="4">{{ old("translations.{$lang->code}.content", $trans['content'] ?? '') }}</textarea>
             @error("translations.{$lang->code}.content")
                 <div class="invalid-feedback d-block">{{ $message }}</div>

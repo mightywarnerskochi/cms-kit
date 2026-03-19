@@ -51,7 +51,7 @@
             <div class="col-md-8">
                 <div class="card mb-4 border-0 shadow-sm">
                     <div class="card-header bg-white py-3 border-bottom">
-                        <h5 class="mb-0 fw-bold text-primary">Language Content</h5>
+                        <h5 class="mb-0 fw-bold text-primary">{{ $showLanguageUi ? 'Company & Legal Content by Language' : 'Company & Legal Content' }}</h5>
                     </div>
                     <div class="card-body">
                         @if($showLanguageUi)

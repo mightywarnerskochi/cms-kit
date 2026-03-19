@@ -11,6 +11,15 @@ use Illuminate\Support\Str;
 
 class CmsRolesPermissionsSeeder extends Seeder
 {
+    protected function filterExistingPermissions(array $permissions): array
+    {
+        $existingPermissions = Permission::where('guard_name', 'cms')
+            ->pluck('name')
+            ->all();
+
+        return array_values(array_intersect($permissions, $existingPermissions));
+    }
+
     public function run()
     {
         // Reset cached roles and permissions
@@ -33,9 +42,9 @@ class CmsRolesPermissionsSeeder extends Seeder
 
         // 2. Create extra permissions for UI management
         $extraPermissions = [
-            'user.create', 'users.view', 'users.edit', 'user.delete', 
-            'role.create', 'roles.view', 'roles.edit', 'role.delete', 
-            'permission.create', 'permissions.view', 'permissions.edit', 'permissions.delete', 
+            'users.create', 'users.view', 'users.edit', 'users.delete', 
+            'roles.create', 'roles.view', 'roles.edit', 'roles.delete', 
+            'permissions.create', 'permissions.view', 'permissions.edit', 'permissions.delete', 
             'sitemap.view', 'sitemap.edit',
             'banners.view', 'banners.edit', 'banners.create', 'banners.delete', 
             'faqs.view', 'faqs.edit', 'faqs.create', 'faqs.delete', 
@@ -62,7 +71,7 @@ class CmsRolesPermissionsSeeder extends Seeder
                 $role->syncPermissions(Permission::where('guard_name', 'cms')->get());
             }
             else {
-                $role->syncPermissions($roleData['permissions']);
+                $role->syncPermissions($this->filterExistingPermissions($roleData['permissions']));
             }
         }
 

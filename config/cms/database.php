@@ -64,6 +64,7 @@ return [
             'video_file' => true, // New: for video file uploads
             'image_alt' => true,
             'buttons' => true, // New: JSON array of buttons
+            'additional_buttons'=> true, // New: toggle for additional buttons
             'google_review_text' => true, // New
             'google_rating' => true, // New
             'google_review_count' => true, // New

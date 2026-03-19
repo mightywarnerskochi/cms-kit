@@ -192,7 +192,7 @@
                                 @php $field = "phone_$i"; @endphp
                                 @if($siteInfoConfig[$field] ?? true)
                                 <div class="mb-3">
-                                    <label class="form-label small fw-bold">Phone {{ $i }} @if(in_array($field, $siteInfoRequired)) <span class="text-danger">*</span> @endif</label>
+                                    <label class="form-label small fw-bold">Phone {{ $i }} {!! in_array($field, $siteInfoRequired) ? '<span class="text-danger">*</span>' : '' !!}</label>
                                     <input type="text" name="{{ $field }}" class="form-control @error($field) is-invalid @enderror" value="{{ old($field, $siteInfo->$field) }}" {{ in_array($field, $siteInfoRequired) ? 'required' : '' }}>
                                     @error($field)
                                         <div class="invalid-feedback">{{ $message }}</div>
@@ -209,7 +209,7 @@
                                 @php $field = "email_$i"; @endphp
                                 @if($siteInfoConfig[$field] ?? true)
                                 <div class="mb-3">
-                                    <label class="form-label small fw-bold">Email {{ $i }} @if(in_array($field, $siteInfoRequired)) <span class="text-danger">*</span> @endif</label>
+                                    <label class="form-label small fw-bold">Email {{ $i }} {!! in_array($field, $siteInfoRequired) ? '<span class="text-danger">*</span>' : '' !!}</label>
                                     <input type="email" name="{{ $field }}" class="form-control @error($field) is-invalid @enderror" value="{{ old($field, $siteInfo->$field) }}" {{ in_array($field, $siteInfoRequired) ? 'required' : '' }}>
                                     @error($field)
                                         <div class="invalid-feedback">{{ $message }}</div>

@@ -23,14 +23,14 @@
 @if($lang && $translatableFields->count())
 <div class="mb-4">
     @php $showLanguageUi = config('cms-kit.common.modules.languages', true); @endphp
-    <h6 class="fw-bold mb-3">Additional Fields@if($showLanguageUi) ({{ strtoupper($lang->code) }})@endif</h6>
+    <h6 class="fw-bold mb-3">Additional Fields{{ $showLanguageUi ? ' (' . strtoupper($lang->code) . ')' : '' }}</h6>
     <div class="row g-3">
         @foreach($translatableFields as $fieldName => $fieldConfig)
             @php
                 $fieldValue = old("translations.{$lang->code}.extra_fields.{$fieldName}", $values[$fieldName] ?? '');
             @endphp
             <div class="col-md-6">
-                <label class="form-label">{{ $fieldConfig['label'] ?? ucfirst(str_replace('_', ' ', $fieldName)) }} @if($fieldConfig['required'] ?? false)<span class="text-danger">*</span>@endif</label>
+                <label class="form-label">{{ $fieldConfig['label'] ?? ucfirst(str_replace('_', ' ', $fieldName)) }} {!! ($fieldConfig['required'] ?? false) ? '<span class="text-danger">*</span>' : '' !!}</label>
 
                 @php $fieldType = $fieldConfig['type'] ?? 'text'; @endphp
 

@@ -44,7 +44,7 @@
 
             <div class="alert alert-light border-start border-primary border-4 py-2 mb-4 shadow-sm" style="font-size: 0.9rem;">
                 <i class="fas fa-info-circle text-primary me-2"></i> 
-                <strong>Note:</strong> Please ensure all required fields <span class="text-danger">(*)</span> are filled@if($showLanguageUi) across all language tabs@endif.
+                <strong>Note:</strong> Please ensure all required fields <span class="text-danger">(*)</span> are filled{{ $showLanguageUi ? ' across all language tabs' : '' }}.
             </div>
 
             @if($showLanguageUi)

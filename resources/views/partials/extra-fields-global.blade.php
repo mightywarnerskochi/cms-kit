@@ -27,7 +27,7 @@
                 $fieldType = $fieldConfig['type'] ?? 'text';
             @endphp
             <div class="col-md-6">
-                <label class="form-label">{{ $fieldConfig['label'] ?? ucfirst(str_replace('_', ' ', $fieldName)) }} @if($fieldConfig['required'] ?? false)<span class="text-danger">*</span>@endif</label>
+                <label class="form-label">{{ $fieldConfig['label'] ?? ucfirst(str_replace('_', ' ', $fieldName)) }} {!! ($fieldConfig['required'] ?? false) ? '<span class="text-danger">*</span>' : '' !!}</label>
 
                 @if($fieldType === 'textarea')
                     <textarea name="extra_fields[{{ $fieldName }}]" class="form-control @error("extra_fields.{$fieldName}") is-invalid @enderror" rows="3" placeholder="{{ $fieldConfig['placeholder'] ?? '' }}" {{ ($fieldConfig['required'] ?? false) ? 'required' : '' }}>{{ $fieldValue }}</textarea>

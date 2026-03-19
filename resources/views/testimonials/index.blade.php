@@ -17,7 +17,7 @@
             @csrf
 
             <div class="alert alert-info py-2 mb-3">
-                <i class="fas fa-info-circle me-1"></i> Please ensure all required fields are filled@if($showLanguageUi) across all language tabs@endif before saving.
+                <i class="fas fa-info-circle me-1"></i> Please ensure all required fields are filled{{ $showLanguageUi ? ' across all language tabs' : '' }} before saving.
             </div>
 
             @if($showLanguageUi)
@@ -38,7 +38,7 @@
                     <div class="row g-3">
                         @if(config('cms-kit.database.testimonials.section.title'))
                         <div class="col-md-4">
-                            <label class="form-label fw-bold">Title@if($showLanguageUi) ({{ strtoupper($lang->code) }})@endif {!! in_array('title', $sectionRequired) ? '<span class="text-danger">*</span>' : '' !!}</label>
+                            <label class="form-label fw-bold">Title{{ $showLanguageUi ? ' (' . strtoupper($lang->code) . ')' : '' }} {!! in_array('title', $sectionRequired) ? '<span class="text-danger">*</span>' : '' !!}</label>
                             <input type="text" name="translations[{{ $lang->code }}][section_title]" class="form-control @error("translations.{$lang->code}.section_title") is-invalid @enderror" value="{{ old("translations.{$lang->code}.section_title", $section->translations[$lang->code]['section_title'] ?? '') }}" {{ in_array('title', $sectionRequired) ? 'required' : '' }}>
                             @error("translations.{$lang->code}.section_title")
                                 <div class="invalid-feedback">{{ $message }}</div>
@@ -68,7 +68,7 @@
 
                         @if(config('cms-kit.database.testimonials.section.description'))
                         <div class="col-12 mt-3">
-                            <label class="form-label fw-bold">Description@if($showLanguageUi) ({{ strtoupper($lang->code) }})@endif {!! in_array('description', $sectionRequired) ? '<span class="text-danger">*</span>' : '' !!}</label>
+                            <label class="form-label fw-bold">Description{{ $showLanguageUi ? ' (' . strtoupper($lang->code) . ')' : '' }} {!! in_array('description', $sectionRequired) ? '<span class="text-danger">*</span>' : '' !!}</label>
                             <textarea name="description[{{ $lang->code }}]" class="form-control tinymce-editor @error("description.{$lang->code}") is-invalid @enderror" rows="3">{{ old("description.{$lang->code}", $section->description[$lang->code] ?? '') }}</textarea>
                             @error("description.{$lang->code}")
                                 <div class="invalid-feedback d-block">{{ $message }}</div>

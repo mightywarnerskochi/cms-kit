@@ -37,7 +37,7 @@
                 <div class="tab-pane fade {{ $loop->first ? 'show active' : '' }}" id="section-{{ $lang->code }}" role="tabpanel">
                     <div class="row g-4">
                         <div class="col-md-6">
-                            <label class="form-label fw-bold">Section Title@if($showLanguageUi) ({{ strtoupper($lang->code) }})@endif <span class="text-danger">*</span></label>
+                            <label class="form-label fw-bold">Section Title{{ $showLanguageUi ? ' (' . strtoupper($lang->code) . ')' : '' }} <span class="text-danger">*</span></label>
                             <input type="text" name="translations[{{ $lang->code }}][title]" class="form-control @error("translations.{$lang->code}.title") is-invalid @enderror" value="{{ $section->translations[$lang->code]['title'] ?? '' }}" required>
                             @error("translations.{$lang->code}.title")
                                 <div class="invalid-feedback">{{ $message }}</div>
@@ -46,7 +46,7 @@
                         </div>
                         
                         <div class="col-12 mt-3">
-                            <label class="form-label fw-bold">Section Description@if($showLanguageUi) ({{ strtoupper($lang->code) }})@endif</label>
+                            <label class="form-label fw-bold">Section Description{{ $showLanguageUi ? ' (' . strtoupper($lang->code) . ')' : '' }}</label>
                             <textarea name="translations[{{ $lang->code }}][description]" class="form-control @error("translations.{$lang->code}.description") is-invalid @enderror" rows="2">{{ $section->translations[$lang->code]['description'] ?? '' }}</textarea>
                             @error("translations.{$lang->code}.description")
                                 <div class="invalid-feedback">{{ $message }}</div>

@@ -12,6 +12,54 @@ use Illuminate\Routing\Controller;
 
 class LocationController extends Controller
 {
+    protected function getLocationItemValidationRules(bool $isUpdate = false): array
+    {
+        $imageConfig = config('cms-kit.images.locations.main_image');
+        $flagConfig = config('cms-kit.images.locations.flag');
+        $itemConfig = config('cms-kit.database.locations.items', []);
+        $requiredFields = $itemConfig['required'] ?? [];
+        $languages = Language::where('status', true)->get();
+        $rules = [
+            'order_index' => 'nullable|integer|min:1',
+        ];
+
+        foreach ($languages as $lang) {
+            foreach (['title', 'address', 'country'] as $field) {
+                if (($itemConfig[$field] ?? true) && in_array($field, $requiredFields)) {
+                    $rules["translations.{$lang->code}.{$field}"] = 'required';
+                }
+            }
+        }
+
+        if ($itemConfig['image'] ?? true) {
+            $rules['image'] = (in_array('image', $requiredFields) && !$isUpdate ? 'required' : 'nullable') . '|image|max:' . ($imageConfig['max_size'] ?? 2048);
+        }
+
+        if ($itemConfig['flag'] ?? true) {
+            $rules['flag'] = (in_array('flag', $requiredFields) && !$isUpdate ? 'required' : 'nullable') . '|image|max:' . ($flagConfig['max_size'] ?? 1024);
+        }
+
+        return $rules;
+    }
+
+    protected function getLocationSectionValidationRules(): array
+    {
+        $languages = Language::where('status', true)->get();
+        $sectionConfig = config('cms-kit.database.locations.section', []);
+        $requiredFields = $sectionConfig['required'] ?? [];
+        $rules = [];
+
+        foreach ($languages as $lang) {
+            foreach (['title', 'description'] as $field) {
+                if (($sectionConfig[$field] ?? true) && in_array($field, $requiredFields)) {
+                    $rules["translations.{$lang->code}.{$field}"] = 'required';
+                }
+            }
+        }
+
+        return $rules;
+    }
+
     protected function mergeLocationTranslatableExtraFields(array $translations): array
     {
         $fieldConfig = config('cms-kit.database.locations.items.extra_fields', []);
@@ -99,17 +147,7 @@ class LocationController extends Controller
 
     public function store(Request $request)
     {
-        $imageConfig = config('cms-kit.images.locations.main_image');
-        $flagConfig = config('cms-kit.images.locations.flag');
-
-        $request->validate([
-            'translations.*.title' => 'required',
-            'translations.*.address' => 'required',
-            'translations.*.country' => 'required',
-            'image' => 'nullable|image|max:' . ($imageConfig['max_size'] ?? 2048),
-            'flag' => 'nullable|image|max:' . ($flagConfig['max_size'] ?? 1024),
-            'order_index' => 'nullable|integer|min:1',
-        ]);
+        $request->validate($this->getLocationItemValidationRules());
 
         $data = $request->except(['image', 'flag', 'status', 'emails', 'extra_fields']);
         $data['status'] = $request->has('status');
@@ -158,17 +196,7 @@ class LocationController extends Controller
     public function update(Request $request, $id)
     {
         $location = Location::findOrFail($id);
-        $imageConfig = config('cms-kit.images.locations.main_image');
-        $flagConfig = config('cms-kit.images.locations.flag');
-
-        $request->validate([
-            'translations.*.title' => 'required',
-            'translations.*.address' => 'required',
-            'translations.*.country' => 'required',
-            'image' => 'nullable|image|max:' . ($imageConfig['max_size'] ?? 2048),
-            'flag' => 'nullable|image|max:' . ($flagConfig['max_size'] ?? 1024),
-            'order_index' => 'nullable|integer|min:1',
-        ]);
+        $request->validate($this->getLocationItemValidationRules(true));
 
         $data = $request->except(['image', 'flag', 'status', 'emails', 'extra_fields']);
         $data['status'] = $request->has('status');
@@ -256,14 +284,8 @@ class LocationController extends Controller
 
     public function updateSection(Request $request)
     {
-        $languages = Language::where('status', true)->get();
         $sectionConfig = config('cms-kit.database.locations.section', []);
-        
-        $rules = [];
-        foreach ($languages as $lang) {
-            $rules["translations.{$lang->code}.title"] = 'required';
-        }
-        $request->validate($rules);
+        $request->validate($this->getLocationSectionValidationRules());
 
         $translations = $this->mergeSectionTranslatableExtraFields($request->input('translations', []));
         

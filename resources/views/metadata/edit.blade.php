@@ -13,83 +13,66 @@
     <div class="card-body p-4">
         <div class="alert alert-light border-start border-primary border-4 py-2 mb-4 shadow-sm" style="font-size: 0.9rem;">
             <i class="fas fa-info-circle text-primary me-2"></i> 
-            <strong>Note:</strong> Manage SEO settings across all supported languages. Required fields are marked with <span class="text-danger">*</span>.
+            <strong>Note:</strong> Manage SEO settings in English. Required fields are marked with <span class="text-danger">*</span>.
         </div>
 
         <form action="{{ route('cms.metadata.update', $metadata->id) }}" method="POST" enctype="multipart/form-data">
             @csrf
             @method('PUT')
 
-            <!-- Improved Language Switcher -->
-            <ul class="nav nav-pills mb-4 bg-light p-2 rounded-3" id="languageTabs" role="tablist">
-                @foreach($languages as $lang)
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link {{ $loop->first ? 'active' : '' }} px-4 py-2 fw-medium" id="tab-{{ $lang->code }}" data-bs-toggle="tab" data-bs-target="#panel-{{ $lang->code }}" type="button" role="tab">
-                        <i class="fas fa-language me-2 opacity-75"></i>{{ $lang->name }}
-                    </button>
-                </li>
-                @endforeach
-            </ul>
+            <div class="row g-4 mb-4">
+                <div class="col-12">
+                    <label class="form-label fw-bold">Canonical URL {!! in_array('canonical_url', config('cms-kit.database.metadata.required', [])) ? '<span class="text-danger">*</span>' : '' !!}</label>
+                    <input type="url" name="canonical_url[en]" class="form-control @error('canonical_url.en') is-invalid @enderror" value="{{ old('canonical_url.en', $metadata->canonical_url['en'] ?? '') }}" placeholder="https://example.com/page">
+                    @error('canonical_url.en') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                    <div class="form-text text-muted small">Optional. Full URL of the preferred version of this page for search engines.</div>
+                </div>
 
-            <div class="tab-content mb-4">
-                @foreach($languages as $lang)
-                <div class="tab-pane fade {{ $loop->first ? 'show active' : '' }}" id="panel-{{ $lang->code }}" role="tabpanel">
-                    <div class="row g-4">
-                        <div class="col-12">
-                            <label class="form-label fw-bold">Canonical URL {!! in_array('canonical_url', config('cms-kit.database.metadata.required', [])) ? '<span class="text-danger">*</span>' : '' !!}</label>
-                            <input type="url" name="canonical_url[{{ $lang->code }}]" class="form-control @error("canonical_url.{$lang->code}") is-invalid @enderror" value="{{ old("canonical_url.{$lang->code}", $metadata->canonical_url[$lang->code] ?? '') }}" placeholder="https://example.com/page">
-                            @error("canonical_url.{$lang->code}") <div class="invalid-feedback">{{ $message }}</div> @enderror
-                            <div class="form-text text-muted small">Optional. Full URL of the preferred version of this page for search engines.</div>
-                        </div>
+                <div class="col-12">
+                    <label class="form-label d-flex justify-content-between fw-bold">
+                        <span>Meta Title {!! in_array('meta_title', config('cms-kit.database.metadata.required', [])) ? '<span class="text-danger">*</span>' : '' !!}</span>
+                        <span class="char-count text-muted small" data-target="meta_title_en">0/60</span>
+                    </label>
+                    <input type="text" name="meta_title[en]" id="meta_title_en" class="form-control counter-input @error('meta_title.en') is-invalid @enderror" data-max="60" value="{{ old('meta_title.en', $metadata->meta_title['en'] ?? '') }}" placeholder="Page title for search engines (max 60 chars)">
+                    @error('meta_title.en') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                </div>
 
-                        <div class="col-12">
-                            <label class="form-label d-flex justify-content-between fw-bold">
-                                <span>Meta Title {!! in_array('meta_title', config('cms-kit.database.metadata.required', [])) ? '<span class="text-danger">*</span>' : '' !!}</span>
-                                <span class="char-count text-muted small" data-target="meta_title_{{ $lang->code }}">0/60</span>
-                            </label>
-                            <input type="text" name="meta_title[{{ $lang->code }}]" id="meta_title_{{ $lang->code }}" class="form-control counter-input @error("meta_title.{$lang->code}") is-invalid @enderror" data-max="60" value="{{ old("meta_title.{$lang->code}", $metadata->meta_title[$lang->code] ?? '') }}" placeholder="Page title for search engines (max 60 chars)">
-                            @error("meta_title.{$lang->code}") <div class="invalid-feedback">{{ $message }}</div> @enderror
-                        </div>
+                <div class="col-12">
+                    <label class="form-label d-flex justify-content-between fw-bold">
+                        <span>Meta Description {!! in_array('meta_description', config('cms-kit.database.metadata.required', [])) ? '<span class="text-danger">*</span>' : '' !!}</span>
+                        <span class="char-count text-muted small" data-target="meta_description_en">0/160</span>
+                    </label>
+                    <textarea name="meta_description[en]" id="meta_description_en" class="form-control counter-input @error('meta_description.en') is-invalid @enderror" data-max="160" rows="3" placeholder="Page description for search results (max 160 chars)">{{ old('meta_description.en', $metadata->meta_description['en'] ?? '') }}</textarea>
+                    @error('meta_description.en') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                </div>
 
-                        <div class="col-12">
-                            <label class="form-label d-flex justify-content-between fw-bold">
-                                <span>Meta Description {!! in_array('meta_description', config('cms-kit.database.metadata.required', [])) ? '<span class="text-danger">*</span>' : '' !!}</span>
-                                <span class="char-count text-muted small" data-target="meta_description_{{ $lang->code }}">0/160</span>
-                            </label>
-                            <textarea name="meta_description[{{ $lang->code }}]" id="meta_description_{{ $lang->code }}" class="form-control counter-input @error("meta_description.{$lang->code}") is-invalid @enderror" data-max="160" rows="3" placeholder="Page description for search results (max 160 chars)">{{ old("meta_description.{$lang->code}", $metadata->meta_description[$lang->code] ?? '') }}</textarea>
-                            @error("meta_description.{$lang->code}") <div class="invalid-feedback">{{ $message }}</div> @enderror
-                        </div>
+                <div class="col-12">
+                    <label class="form-label fw-bold">Meta Keywords {!! in_array('meta_keywords', config('cms-kit.database.metadata.required', [])) ? '<span class="text-danger">*</span>' : '' !!}</label>
+                    <input type="text" name="meta_keywords[en]" class="form-control @error('meta_keywords.en') is-invalid @enderror" value="{{ old('meta_keywords.en', $metadata->meta_keywords['en'] ?? '') }}" placeholder="comma separated: keyword1, keyword2">
+                    @error('meta_keywords.en') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                </div>
 
-                        <div class="col-12">
-                            <label class="form-label fw-bold">Meta Keywords {!! in_array('meta_keywords', config('cms-kit.database.metadata.required', [])) ? '<span class="text-danger">*</span>' : '' !!}</label>
-                            <input type="text" name="meta_keywords[{{ $lang->code }}]" class="form-control @error("meta_keywords.{$lang->code}") is-invalid @enderror" value="{{ old("meta_keywords.{$lang->code}", $metadata->meta_keywords[$lang->code] ?? '') }}" placeholder="comma separated: keyword1, keyword2">
-                            @error("meta_keywords.{$lang->code}") <div class="invalid-feedback">{{ $message }}</div> @enderror
-                        </div>
-
-                        <div class="col-12">
-                            <div class="bg-light p-3 rounded-3 mt-2">
-                                <h6 class="fw-bold mb-3 text-secondary"><i class="fas fa-share-alt me-2"></i>Open Graph (Social Sharing)</h6>
-                                <div class="row g-3">
-                                    <div class="col-12">
-                                        <label class="form-label fw-medium small">OG Title</label>
-                                        <input type="text" name="og_title[{{ $lang->code }}]" class="form-control form-control-sm" value="{{ $metadata->og_title[$lang->code] ?? '' }}" placeholder="Title for social media sharing">
-                                    </div>
-                                    <div class="col-12">
-                                        <label class="form-label fw-medium small">OG Description</label>
-                                        <textarea name="og_description[{{ $lang->code }}]" class="form-control form-control-sm" rows="2" placeholder="Description for social media sharing">{{ $metadata->og_description[$lang->code] ?? '' }}</textarea>
-                                    </div>
-                                </div>
+                <div class="col-12">
+                    <div class="bg-light p-3 rounded-3 mt-2">
+                        <h6 class="fw-bold mb-3 text-secondary"><i class="fas fa-share-alt me-2"></i>Open Graph (Social Sharing)</h6>
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <label class="form-label fw-medium small">OG Title</label>
+                                <input type="text" name="og_title[en]" class="form-control form-control-sm" value="{{ old('og_title.en', $metadata->og_title['en'] ?? '') }}" placeholder="Title for social media sharing">
                             </div>
-                        </div>
-
-                        <div class="col-12">
-                            <label class="form-label fw-bold">Other Meta Tags</label>
-                            <textarea name="other_meta_tags[{{ $lang->code }}]" class="form-control" rows="2" placeholder='e.g. <meta name="robots" content="index, follow" />'>{{ $metadata->other_meta_tags[$lang->code] ?? '' }}</textarea>
-                            <div class="form-text text-muted small">Raw HTML tags to inject in &lt;head&gt;.</div>
+                            <div class="col-12">
+                                <label class="form-label fw-medium small">OG Description</label>
+                                <textarea name="og_description[en]" class="form-control form-control-sm" rows="2" placeholder="Description for social media sharing">{{ old('og_description.en', $metadata->og_description['en'] ?? '') }}</textarea>
+                            </div>
                         </div>
                     </div>
                 </div>
-                @endforeach
+
+                <div class="col-12">
+                    <label class="form-label fw-bold">Other Meta Tags</label>
+                    <textarea name="other_meta_tags[en]" class="form-control" rows="2" placeholder='e.g. <meta name="robots" content="index, follow" />'>{{ old('other_meta_tags.en', $metadata->other_meta_tags['en'] ?? '') }}</textarea>
+                    <div class="form-text text-muted small">Raw HTML tags to inject in &lt;head&gt;.</div>
+                </div>
             </div>
 
             <hr class="my-4">

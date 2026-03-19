@@ -11,6 +11,19 @@ use Illuminate\Routing\Controller;
 
 class BrandController extends Controller
 {
+    protected function getValidationRules(bool $isUpdate = false): array
+    {
+        $imageConfig = config('cms-kit.images.brands.logo');
+        $brandConfig = config('cms-kit.database.brands.items', []);
+        $requiredFields = $brandConfig['required'] ?? [];
+
+        return [
+            'image' => (in_array('image', $requiredFields) && !$isUpdate ? 'required' : 'nullable') . '|image|max:' . ($imageConfig['max_size'] ?? 512),
+            'image_alt' => in_array('image_alt', $requiredFields) ? 'required|string|max:255' : 'nullable|string|max:255',
+            'order_index' => 'nullable|integer|min:1',
+        ];
+    }
+
     protected function buildBrandTranslations(Request $request): array
     {
         $languages = Language::active()->get();
@@ -80,13 +93,7 @@ class BrandController extends Controller
 
     public function store(Request $request)
     {
-        $imageConfig = config('cms-kit.images.brands.logo');
-
-        $request->validate([
-            'image' => 'required|image|max:' . ($imageConfig['max_size'] ?? 512),
-            'image_alt' => 'required|string|max:255',
-            'order_index' => 'nullable|integer|min:1',
-        ]);
+        $request->validate($this->getValidationRules());
 
         $data = $request->only(['image_alt', 'order_index', 'extra_fields']);
         $data['status'] = $request->has('status');
@@ -116,13 +123,7 @@ class BrandController extends Controller
     public function update(Request $request, $id)
     {
         $brand = Brand::findOrFail($id);
-        $imageConfig = config('cms-kit.images.brands.logo');
-
-        $request->validate([
-            'image' => 'nullable|image|max:' . ($imageConfig['max_size'] ?? 512),
-            'image_alt' => 'required|string|max:255',
-            'order_index' => 'nullable|integer|min:1',
-        ]);
+        $request->validate($this->getValidationRules(true));
 
         $data = $request->only(['image_alt', 'order_index', 'extra_fields']);
         $data['status'] = $request->has('status');

@@ -7,6 +7,8 @@
 
 @section('content')
 @php
+    $brandConfig = config('cms-kit.database.brands.items', []);
+    $brandRequired = $brandConfig['required'] ?? [];
     $brandExtraFields = config('cms-kit.database.brands.items.extra_fields', []);
     $hasTranslatableExtraFields = collect($brandExtraFields)->contains(fn($field) => $field['translatable'] ?? false);
 @endphp
@@ -48,6 +50,7 @@
             @endif
 
             <div class="row g-4">
+                @if($brandConfig['image'] ?? true)
                 <div class="col-12">
                     <label class="form-label fw-bold">Current Logo</label>
                     <div class="mb-3">
@@ -60,15 +63,19 @@
                     @enderror
                     <small class="text-muted d-block mt-1">Recommended size: {{ $imageConfig['width'] }}x{{ $imageConfig['height'] }} px. Max: {{ $imageConfig['max_size'] }} KB.</small>
                 </div>
+                @endif
 
+                @if($brandConfig['image_alt'] ?? true)
                 <div class="col-12">
-                    <label class="form-label fw-bold">Image ALT Text <span class="text-danger">*</span></label>
-                    <input type="text" name="image_alt" class="form-control @error('image_alt') is-invalid @enderror" value="{{ old('image_alt', $brand->image_alt) }}" required>
+                    <label class="form-label fw-bold">Image ALT Text {!! in_array('image_alt', $brandRequired) ? '<span class="text-danger">*</span>' : '' !!}</label>
+                    <input type="text" name="image_alt" class="form-control @error('image_alt') is-invalid @enderror" value="{{ old('image_alt', $brand->image_alt) }}" {{ in_array('image_alt', $brandRequired) ? 'required' : '' }}>
                     @error('image_alt')
                         <div class="invalid-feedback">{{ $message }}</div>
                     @enderror
                 </div>
+                @endif
 
+                @if($brandConfig['order'] ?? true)
                 <div class="col-md-6">
                     <label class="form-label fw-bold">Sort Order</label>
                     <input type="number" name="order_index" class="form-control @error('order_index') is-invalid @enderror" value="{{ old('order_index', $brand->order_index) }}" min="1">
@@ -76,13 +83,16 @@
                         <div class="invalid-feedback">{{ $message }}</div>
                     @enderror
                 </div>
+                @endif
 
+                @if($brandConfig['status'] ?? true)
                 <div class="col-md-6 d-flex align-items-end pb-2">
                     <div class="form-check form-switch mb-0">
                         <input class="form-check-input" type="checkbox" name="status" id="brandStatus" {{ $brand->status ? 'checked' : '' }}>
                         <label class="form-check-label fw-bold" for="brandStatus">Active Status</label>
                     </div>
                 </div>
+                @endif
 
                 @include('cms-kit::partials.extra-fields-global', [
                     'configKey' => 'brands.items',

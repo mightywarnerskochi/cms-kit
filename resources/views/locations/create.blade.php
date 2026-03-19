@@ -6,6 +6,10 @@
 @endsection
 
 @section('content')
+@php
+    $locationConfig = config('cms-kit.database.locations.items', []);
+    $locationRequired = $locationConfig['required'] ?? [];
+@endphp
 <div class="card">
     <div class="card-header bg-white py-3">
         <h5 class="mb-0">Add Location</h5>
@@ -33,27 +37,33 @@
                 @foreach($languages as $lang)
                 <div class="tab-pane fade {{ $loop->first ? 'show active' : '' }}" id="{{ $lang->code }}-content" role="tabpanel">
                     <div class="row g-4">
+                        @if($locationConfig['country'] ?? true)
                         <div class="col-md-6">
-                            <label class="form-label fw-bold">Country <span class="text-danger">*</span></label>
-                            <input type="text" name="translations[{{ $lang->code }}][country]" class="form-control @error("translations.{$lang->code}.country") is-invalid @enderror" value="{{ old("translations.{$lang->code}.country") }}" placeholder="e.g. United Arab Emirates" required>
+                            <label class="form-label fw-bold">Country {!! in_array('country', $locationRequired) ? '<span class="text-danger">*</span>' : '' !!}</label>
+                            <input type="text" name="translations[{{ $lang->code }}][country]" class="form-control @error("translations.{$lang->code}.country") is-invalid @enderror" value="{{ old("translations.{$lang->code}.country") }}" placeholder="e.g. United Arab Emirates" {{ in_array('country', $locationRequired) ? 'required' : '' }}>
                             @error("translations.{$lang->code}.country")
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
+                        @endif
+                        @if($locationConfig['title'] ?? true)
                         <div class="col-md-6">
-                            <label class="form-label fw-bold">Title/City <span class="text-danger">*</span></label>
-                            <input type="text" name="translations[{{ $lang->code }}][title]" class="form-control @error("translations.{$lang->code}.title") is-invalid @enderror" value="{{ old("translations.{$lang->code}.title") }}" placeholder="e.g. Deira, Dubai, UAE." required>
+                            <label class="form-label fw-bold">Title/City {!! in_array('title', $locationRequired) ? '<span class="text-danger">*</span>' : '' !!}</label>
+                            <input type="text" name="translations[{{ $lang->code }}][title]" class="form-control @error("translations.{$lang->code}.title") is-invalid @enderror" value="{{ old("translations.{$lang->code}.title") }}" placeholder="e.g. Deira, Dubai, UAE." {{ in_array('title', $locationRequired) ? 'required' : '' }}>
                             @error("translations.{$lang->code}.title")
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
+                        @endif
+                        @if($locationConfig['address'] ?? true)
                         <div class="col-12">
-                            <label class="form-label fw-bold">Address <span class="text-danger">*</span></label>
-                            <textarea name="translations[{{ $lang->code }}][address]" class="form-control @error("translations.{$lang->code}.address") is-invalid @enderror" rows="3" required>{{ old("translations.{$lang->code}.address") }}</textarea>
+                            <label class="form-label fw-bold">Address {!! in_array('address', $locationRequired) ? '<span class="text-danger">*</span>' : '' !!}</label>
+                            <textarea name="translations[{{ $lang->code }}][address]" class="form-control @error("translations.{$lang->code}.address") is-invalid @enderror" rows="3" {{ in_array('address', $locationRequired) ? 'required' : '' }}>{{ old("translations.{$lang->code}.address") }}</textarea>
                             @error("translations.{$lang->code}.address")
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
+                        @endif
 
                         @include('cms-kit::partials.extra-fields-translatable', [
                             'configKey' => 'locations.items',
@@ -69,58 +79,74 @@
 
             <div class="row g-4">
                 <!-- Images -->
+                @if($locationConfig['image'] ?? true)
                 <div class="col-md-6">
                     <label class="form-label d-block">Location Image</label>
                     <small class="text-muted d-block mb-1">Recommended size: {{ $imageConfig['width'] }}x{{ $imageConfig['height'] }}px, Max: {{ $imageConfig['max_size'] }}KB</small>
                     <input type="file" name="image" class="form-control">
                     <input type="text" name="image_alt" class="form-control mt-2" placeholder="Image ALT text">
                 </div>
+                @endif
+                @if($locationConfig['flag'] ?? true)
                 <div class="col-md-6">
                     <label class="form-label d-block">Flag Image</label>
                     <small class="text-muted d-block mb-1">Recommended size: {{ $flagConfig['width'] }}x{{ $flagConfig['height'] }}px, Max: {{ $flagConfig['max_size'] }}KB</small>
                     <input type="file" name="flag" class="form-control">
                     <input type="text" name="flag_alt" class="form-control mt-2" placeholder="Flag ALT text">
                 </div>
+                @endif
 
                 <!-- Contact info -->
+                @if($locationConfig['phone'] ?? true)
                 <div class="col-md-4">
                     <label class="form-label">Phone</label>
                     <input type="text" name="phone" class="form-control" value="{{ old('phone') }}" placeholder="+971 4 123 4567">
                 </div>
+                @endif
+                @if($locationConfig['whatsapp'] ?? true)
                 <div class="col-md-4">
                     <label class="form-label">WhatsApp</label>
                     <input type="text" name="whatsapp" class="form-control" value="{{ old('whatsapp') }}" placeholder="+971 50 123 4567">
                 </div>
+                @endif
+                @if($locationConfig['fax'] ?? true)
                 <div class="col-md-4">
                     <label class="form-label">Fax</label>
                     <input type="text" name="fax" class="form-control" value="{{ old('fax') }}">
                 </div>
+                @endif
 
+                @if($locationConfig['emails'] ?? true)
                 <div class="col-12">
                     <label class="form-label">Emails (multiple)</label>
                     <textarea name="emails" class="form-control" rows="3" placeholder="One email per line">{{ old('emails') }}</textarea>
                     <small class="text-muted">Enter one email per line. Comma or semicolon also accepted.</small>
                 </div>
-
-
+                @endif
 
                 <!-- Map -->
+                @if($locationConfig['map_link'] ?? true)
                 <div class="col-12">
                     <label class="form-label">Google Map Link / Embed URL</label>
                     <input type="text" name="map_link" class="form-control" value="{{ old('map_link') }}" placeholder="https://maps.google.com/...">
                 </div>
+                @endif
 
                 <!-- Settings -->
+                @if($locationConfig['order'] ?? true)
                 <div class="col-md-4">
                     <label class="form-label">Sort Order</label>
                     <input type="number" name="order_index" class="form-control" value="{{ old('order_index', 1) }}" min="1">
                 </div>
+                @endif
+                @if($locationConfig['status'] ?? true)
                 <div class="col-md-4 d-flex align-items-end pb-2">
                     <div class="form-check form-switch mb-0">
                         <input class="form-check-input" type="checkbox" name="status" id="locationStatus" checked>
                         <label class="form-check-label" for="locationStatus">Active</label>
                     </div>
                 </div>
+                @endif
 
                 @include('cms-kit::partials.extra-fields-global', [
                     'configKey' => 'locations.items',

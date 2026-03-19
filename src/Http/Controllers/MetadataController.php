@@ -3,7 +3,6 @@
 namespace CMS\SiteManager\Http\Controllers;
 
 use CMS\SiteManager\Models\Metadata;
-use CMS\SiteManager\Models\Language;
 use Illuminate\Http\Request;
 use Yajra\DataTables\Facades\DataTables;
 use Illuminate\Support\Facades\Storage;
@@ -56,25 +55,17 @@ class MetadataController extends Controller
     public function edit($id)
     {
         $metadata = Metadata::findOrFail($id);
-        $languages = Language::all();
-        return view('cms-kit::metadata.edit', compact('metadata', 'languages'));
+        return view('cms-kit::metadata.edit', compact('metadata'));
     }
 
     public function update(Request $request, $id)
     {
         $metadata = Metadata::findOrFail($id);
         $requiredFields = config('cms-kit.database.metadata.required', []);
-        $languages = Language::all();
 
         $rules = [];
-        foreach ($languages as $lang) {
-            foreach ($requiredFields as $field) {
-                // If it's a required field, at least the default language might be required
-                // or all languages might be required. Let's follow the common pattern.
-                if ($lang->code === 'en') {
-                    $rules["{$field}.{$lang->code}"] = 'required';
-                }
-            }
+        foreach ($requiredFields as $field) {
+            $rules["{$field}.en"] = 'required';
         }
 
         $request->validate($rules);

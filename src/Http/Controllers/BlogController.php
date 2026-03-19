@@ -13,6 +13,63 @@ use Illuminate\Support\Str;
 
 class BlogController extends Controller
 {
+    protected function getBlogValidationRules(bool $isUpdate = false): array
+    {
+        $imagesConfig = config('cms-kit.images.blogs');
+        $blogConfig = config('cms-kit.database.blogs.items', []);
+        $requiredFields = $blogConfig['required'] ?? [];
+        $languages = Language::where('status', true)->get();
+        $rules = [
+            'order_index' => 'nullable|integer|min:1',
+        ];
+
+        foreach ($languages as $lang) {
+            if (($blogConfig['title'] ?? true) && in_array('title', $requiredFields)) {
+                $rules["translations.{$lang->code}.title"] = 'required';
+            }
+            if (($blogConfig['content'] ?? true) && in_array('content', $requiredFields)) {
+                $rules["translations.{$lang->code}.content"] = 'required';
+            }
+        }
+
+        if ($blogConfig['published_at'] ?? true) {
+            $rules['published_at'] = in_array('published_at', $requiredFields) ? 'required|date' : 'nullable|date';
+        }
+
+        foreach (['feature_image', 'detail_image', 'banner_image', 'image_3', 'image_4'] as $field) {
+            if (!($blogConfig[$field] ?? true)) {
+                continue;
+            }
+
+            $presence = in_array($field, $requiredFields) && !$isUpdate ? 'required' : 'nullable';
+            $rules[$field] = $presence . '|image|max:' . ($imagesConfig[$field]['max_size'] ?? 1024);
+        }
+
+        return $rules;
+    }
+
+    protected function getBlogSectionValidationRules(): array
+    {
+        $languages = Language::where('status', true)->get();
+        $sectionConfig = config('cms-kit.database.blogs.section', []);
+        $requiredFields = $sectionConfig['required'] ?? [];
+        $rules = [];
+
+        foreach ($languages as $lang) {
+            if (($sectionConfig['title'] ?? true) && in_array('title', $requiredFields)) {
+                $rules["translations.{$lang->code}.title"] = 'required';
+            }
+            if (($sectionConfig['listing_title'] ?? true) && in_array('listing_title', $requiredFields)) {
+                $rules["translations.{$lang->code}.listing_title"] = 'required';
+            }
+            if (($sectionConfig['description'] ?? true) && in_array('description', $requiredFields)) {
+                $rules["translations.{$lang->code}.description"] = 'required';
+            }
+        }
+
+        return $rules;
+    }
+
     protected function mergeBlogTranslatableExtraFields(array $translations): array
     {
         $fieldConfig = config('cms-kit.database.blogs.items.extra_fields', []);
@@ -104,18 +161,7 @@ class BlogController extends Controller
     public function store(Request $request)
     {
         $imagesConfig = config('cms-kit.images.blogs');
-
-        $request->validate([
-            'translations.*.title' => 'required',
-            'translations.*.content' => 'required',
-            'published_at' => 'required|date',
-            'feature_image' => 'required|image|max:' . ($imagesConfig['feature_image']['max_size'] ?? 1024),
-            'detail_image' => 'required|image|max:' . ($imagesConfig['detail_image']['max_size'] ?? 1024),
-            'banner_image' => 'nullable|image|max:' . ($imagesConfig['banner_image']['max_size'] ?? 1024),
-            'image_3' => 'nullable|image|max:' . ($imagesConfig['image_3']['max_size'] ?? 1024),
-            'image_4' => 'nullable|image|max:' . ($imagesConfig['image_4']['max_size'] ?? 1024),
-            'order_index' => 'nullable|integer|min:1',
-        ]);
+        $request->validate($this->getBlogValidationRules());
 
         $data = $request->except(['feature_image', 'detail_image', 'banner_image', 'image_3', 'image_4', 'status', 'display_home', 'slug']);
         $data['status'] = $request->has('status');
@@ -162,17 +208,7 @@ class BlogController extends Controller
         $blog = Blog::findOrFail($id);
         $imagesConfig = config('cms-kit.images.blogs');
 
-        $request->validate([
-            'translations.*.title' => 'required',
-            'translations.*.content' => 'required',
-            'published_at' => 'required|date',
-            'feature_image' => 'nullable|image|max:' . ($imagesConfig['feature_image']['max_size'] ?? 1024),
-            'detail_image' => 'nullable|image|max:' . ($imagesConfig['detail_image']['max_size'] ?? 1024),
-            'banner_image' => 'nullable|image|max:' . ($imagesConfig['banner_image']['max_size'] ?? 1024),
-            'image_3' => 'nullable|image|max:' . ($imagesConfig['image_3']['max_size'] ?? 1024),
-            'image_4' => 'nullable|image|max:' . ($imagesConfig['image_4']['max_size'] ?? 1024),
-            'order_index' => 'nullable|integer|min:1',
-        ]);
+        $request->validate($this->getBlogValidationRules(true));
 
         $data = $request->except(['feature_image', 'detail_image', 'banner_image', 'image_3', 'image_4', 'status', 'display_home', 'slug']);
         $data['status'] = $request->has('status');
@@ -273,9 +309,7 @@ class BlogController extends Controller
 
     public function updateSection(Request $request)
     {
-        $request->validate([
-            'translations.*.title' => 'required',
-        ]);
+        $request->validate($this->getBlogSectionValidationRules());
 
         SectionLabel::updateOrCreate(
             ['section_key' => 'blogs'],

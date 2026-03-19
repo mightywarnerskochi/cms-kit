@@ -6,6 +6,17 @@
 @endsection
 
 @section('content')
+@php
+    $blogConfig = config('cms-kit.database.blogs.items', []);
+    $blogRequired = $blogConfig['required'] ?? [];
+    $blogImageLabels = [
+        'feature_image' => 'Feature Image (Listing)',
+        'detail_image' => 'Detail Image (Hero)',
+        'banner_image' => 'Banner Image',
+        'image_3' => 'Image 3',
+        'image_4' => 'Image 4',
+    ];
+@endphp
 <div class="card">
     <div class="card-header bg-white py-3">
         <h5 class="mb-0">Add New Blog Post</h5>
@@ -15,14 +26,18 @@
             @csrf
             
             <div class="row mb-4">
+                @if($blogConfig['slug'] ?? true)
                 <div class="col-md-6">
                     <label class="form-label">Slug (Optional)</label>
                     <input type="text" name="slug" class="form-control" placeholder="auto-generated if empty">
                 </div>
+                @endif
+                @if($blogConfig['published_at'] ?? true)
                 <div class="col-md-6">
-                    <label class="form-label">Published Date <span class="text-danger">*</span></label>
-                    <input type="date" name="published_at" class="form-control" value="{{ date('Y-m-d') }}" required>
+                    <label class="form-label">Published Date {!! in_array('published_at', $blogRequired) ? '<span class="text-danger">*</span>' : '' !!}</label>
+                    <input type="date" name="published_at" class="form-control" value="{{ date('Y-m-d') }}" {{ in_array('published_at', $blogRequired) ? 'required' : '' }}>
                 </div>
+                @endif
             </div>
 
             <div class="alert alert-light border-start border-primary border-4 py-2 mb-4 shadow-sm" style="font-size: 0.9rem;">
@@ -45,20 +60,24 @@
                 @foreach($languages as $lang)
                 <div class="tab-pane fade {{ $loop->first ? 'show active' : '' }}" id="panel-{{ $lang->code }}" role="tabpanel">
                     <div class="row g-4">
+                        @if($blogConfig['title'] ?? true)
                         <div class="col-12">
-                            <label class="form-label fw-bold">Blog Title <span class="text-danger">*</span></label>
-                            <input type="text" name="translations[{{ $lang->code }}][title]" class="form-control @error("translations.{$lang->code}.title") is-invalid @enderror" value="{{ old("translations.{$lang->code}.title") }}" required>
+                            <label class="form-label fw-bold">Blog Title {!! in_array('title', $blogRequired) ? '<span class="text-danger">*</span>' : '' !!}</label>
+                            <input type="text" name="translations[{{ $lang->code }}][title]" class="form-control @error("translations.{$lang->code}.title") is-invalid @enderror" value="{{ old("translations.{$lang->code}.title") }}" {{ in_array('title', $blogRequired) ? 'required' : '' }}>
                             @error("translations.{$lang->code}.title")
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
+                        @endif
+                        @if($blogConfig['content'] ?? true)
                         <div class="col-12">
-                            <label class="form-label fw-bold">Content <span class="text-danger">*</span></label>
+                            <label class="form-label fw-bold">Content {!! in_array('content', $blogRequired) ? '<span class="text-danger">*</span>' : '' !!}</label>
                             <textarea name="translations[{{ $lang->code }}][content]" class="form-control tinymce-editor @error("translations.{$lang->code}.content") is-invalid @enderror" rows="10">{{ old("translations.{$lang->code}.content") }}</textarea>
                             @error("translations.{$lang->code}.content")
                                 <div class="invalid-feedback d-block">{{ $message }}</div>
                             @enderror
                         </div>
+                        @endif
 
                         @include('cms-kit::partials.extra-fields-translatable', [
                             'configKey' => 'blogs.items',
@@ -74,55 +93,22 @@
                 <div class="card-body p-4">
                     <h6 class="fw-bold mb-3">Images</h6>
                     <div class="row g-4">
-                        <div class="col-md-6">
-                            <label class="form-label">Feature Image (Listing) <span class="text-danger">*</span></label>
-                            <input type="file" name="feature_image" class="form-control" required>
-                            <small class="text-muted">Recommended: {{ $imagesConfig['feature_image']['width'] }}x{{ $imagesConfig['feature_image']['height'] }}px</small>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Feature Image ALT text</label>
-                            <input type="text" name="feature_image_alt" class="form-control">
-                        </div>
-                        
-                        <div class="col-md-6">
-                            <label class="form-label">Detail Image (Hero) <span class="text-danger">*</span></label>
-                            <input type="file" name="detail_image" class="form-control" required>
-                            <small class="text-muted">Recommended: {{ $imagesConfig['detail_image']['width'] }}x{{ $imagesConfig['detail_image']['height'] }}px</small>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Detail Image ALT text</label>
-                            <input type="text" name="detail_image_alt" class="form-control">
-                        </div>
-
-                        <div class="col-md-6">
-                            <label class="form-label">Banner Image (Optional)</label>
-                            <input type="file" name="banner_image" class="form-control">
-                            <small class="text-muted">Recommended: {{ $imagesConfig['banner_image']['width'] }}x{{ $imagesConfig['banner_image']['height'] }}px</small>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Banner ALT text</label>
-                            <input type="text" name="banner_alt" class="form-control">
-                        </div>
-
-                        <div class="col-md-6">
-                            <label class="form-label">Image 3 (Optional)</label>
-                            <input type="file" name="image_3" class="form-control">
-                            <small class="text-muted">Recommended: {{ $imagesConfig['image_3']['width'] }}x{{ $imagesConfig['image_3']['height'] }}px</small>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Image 3 ALT text</label>
-                            <input type="text" name="image_3_alt" class="form-control">
-                        </div>
-
-                        <div class="col-md-6">
-                            <label class="form-label">Image 4 (Optional)</label>
-                            <input type="file" name="image_4" class="form-control">
-                            <small class="text-muted">Recommended: {{ $imagesConfig['image_4']['width'] }}x{{ $imagesConfig['image_4']['height'] }}px</small>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Image 4 ALT text</label>
-                            <input type="text" name="image_4_alt" class="form-control">
-                        </div>
+                        @foreach($blogImageLabels as $field => $label)
+                            @if($blogConfig[$field] ?? true)
+                            <div class="col-md-6">
+                                <label class="form-label">{{ $label }} {!! in_array($field, $blogRequired) ? '<span class="text-danger">*</span>' : '' !!}</label>
+                                <input type="file" name="{{ $field }}" class="form-control" {{ in_array($field, $blogRequired) ? 'required' : '' }}>
+                                <small class="text-muted">Recommended: {{ $imagesConfig[$field]['width'] }}x{{ $imagesConfig[$field]['height'] }}px</small>
+                            </div>
+                            @endif
+                            @php $altField = $field === 'banner_image' ? 'banner_alt' : $field . '_alt'; @endphp
+                            @if($blogConfig[$altField] ?? true)
+                            <div class="col-md-6">
+                                <label class="form-label">{{ $label }} ALT text</label>
+                                <input type="text" name="{{ $altField }}" class="form-control">
+                            </div>
+                            @endif
+                        @endforeach
                     </div>
                 </div>
             </div>

@@ -14,11 +14,67 @@ class SiteInformationController extends Controller
         'company_name',
         'address',
         'country',
+        'po_box',
+        'fax',
         'privacy_policy',
         'terms_and_conditions',
         'disclaimer',
         'footer_description',
     ];
+
+    protected function getValidationRules(bool $hasExistingRecord = false): array
+    {
+        $siteInfoConfig = config('cms-kit.database.site-information', []);
+        $requiredFields = $siteInfoConfig['required'] ?? [];
+        $languages = Language::active()->get();
+        $rules = [
+            'extra_fields' => 'nullable|array',
+            'translations' => 'nullable|array',
+        ];
+
+        foreach ([
+            'phone_1', 'phone_2', 'phone_3', 'phone_4',
+            'whatsapp_number',
+            'email_1', 'email_2', 'email_3', 'email_4',
+            'receipt_email',
+            'logo_alt', 'footer_logo_alt',
+            'facebook', 'twitter', 'linkedin', 'instagram', 'tiktok', 'snapchat',
+            'pinterest', 'youtube', 'skype', 'whatsapp_social', 'vimeo',
+            'gtag'
+        ] as $field) {
+            if ($siteInfoConfig[$field] ?? true) {
+                $prefix = in_array($field, $requiredFields) ? 'required' : 'nullable';
+                $rules[$field] = $prefix . '|string|max:255';
+            }
+        }
+
+        foreach (['custom_head_script', 'custom_body_script'] as $field) {
+            if ($siteInfoConfig[$field] ?? true) {
+                $rules[$field] = in_array($field, $requiredFields) ? 'required|string' : 'nullable|string';
+            }
+        }
+
+        foreach (['logo' => 2048, 'favicon' => 1024, 'footer_logo' => 2048] as $field => $maxSize) {
+            if ($siteInfoConfig[$field] ?? true) {
+                $needsFile = in_array($field, $requiredFields) && !$hasExistingRecord;
+                $rules[$field] = ($needsFile ? 'required' : 'nullable') . '|image|max:' . $maxSize;
+            }
+        }
+
+        foreach ($languages as $lang) {
+            foreach ($this->translatableFields as $field) {
+                if ($siteInfoConfig[$field] ?? true) {
+                    $prefix = in_array($field, $requiredFields) ? 'required' : 'nullable';
+                    $rules["translations.{$lang->code}.{$field}"] = in_array($field, ['privacy_policy', 'terms_and_conditions', 'disclaimer']) ? $prefix . '|string' : $prefix . '|string|max:255';
+                    if (in_array($field, ['address', 'footer_description'])) {
+                        $rules["translations.{$lang->code}.{$field}"] = $prefix . '|string';
+                    }
+                }
+            }
+        }
+
+        return $rules;
+    }
 
     protected function mergeTranslatableExtraFields(array $translations): array
     {
@@ -56,48 +112,7 @@ class SiteInformationController extends Controller
         $siteInfo = SiteInformation::first() ?? new SiteInformation();
         $defaultLanguageCode = $this->getDefaultLanguageCode();
 
-        $data = $request->validate([
-            'company_name' => 'nullable|string|max:255',
-            'address' => 'nullable|string',
-            'country' => 'nullable|string|max:255',
-            'po_box' => 'nullable|string|max:255',
-            'fax' => 'nullable|string|max:255',
-            'phone_1' => 'nullable|string|max:255',
-            'phone_2' => 'nullable|string|max:255',
-            'phone_3' => 'nullable|string|max:255',
-            'phone_4' => 'nullable|string|max:255',
-            'whatsapp_number' => 'nullable|string|max:255',
-            'email_1' => 'nullable|string|max:255',
-            'email_2' => 'nullable|string|max:255',
-            'email_3' => 'nullable|string|max:255',
-            'email_4' => 'nullable|string|max:255',
-            'receipt_email' => 'nullable|string|max:255',
-            'privacy_policy' => 'nullable|string',
-            'terms_and_conditions' => 'nullable|string',
-            'disclaimer' => 'nullable|string',
-            'logo' => 'nullable|image|max:2048',
-            'logo_alt' => 'nullable|string|max:255',
-            'favicon' => 'nullable|image|max:1024',
-            'footer_logo' => 'nullable|image|max:2048',
-            'footer_logo_alt' => 'nullable|string|max:255',
-            'footer_description' => 'nullable|string',
-            'facebook' => 'nullable|string|max:255',
-            'twitter' => 'nullable|string|max:255',
-            'linkedin' => 'nullable|string|max:255',
-            'instagram' => 'nullable|string|max:255',
-            'tiktok' => 'nullable|string|max:255',
-            'snapchat' => 'nullable|string|max:255',
-            'pinterest' => 'nullable|string|max:255',
-            'youtube' => 'nullable|string|max:255',
-            'skype' => 'nullable|string|max:255',
-            'whatsapp_social' => 'nullable|string|max:255',
-            'vimeo' => 'nullable|string|max:255',
-            'gtag' => 'nullable|string|max:255',
-            'custom_head_script' => 'nullable|string',
-            'custom_body_script' => 'nullable|string',
-            'extra_fields' => 'nullable|array',
-            'translations' => 'nullable|array',
-        ]);
+        $data = $request->validate($this->getValidationRules($siteInfo->exists));
 
         // Handle File Uploads
         if ($request->hasFile('logo')) {

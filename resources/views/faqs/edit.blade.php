@@ -6,6 +6,10 @@
 @endsection
 
 @section('content')
+@php
+    $faqConfig = config('cms-kit.database.faqs.items', []);
+    $faqRequired = $faqConfig['required'] ?? [];
+@endphp
 <div class="card">
     <div class="card-header bg-white py-3">
         <h5 class="mb-0">Edit FAQ</h5>
@@ -44,22 +48,26 @@
                 @foreach($languages as $lang)
                 @php $trans = $faq->translations[$lang->code] ?? []; @endphp
                 <div class="tab-pane fade {{ $loop->first ? 'show active' : '' }}" id="{{ $lang->code }}" role="tabpanel">
+                    @if($faqConfig['question'] ?? true)
                     <div class="mb-3">
-                        <label class="form-label fw-bold">Question ({{ strtoupper($lang->code) }}) <span class="text-danger">*</span></label>
-                        <input type="text" name="translations[{{ $lang->code }}][question]" class="form-control @error("translations.{$lang->code}.question") is-invalid @enderror" value="{{ old("translations.{$lang->code}.question", $trans['question'] ?? '') }}" required>
+                        <label class="form-label fw-bold">Question ({{ strtoupper($lang->code) }}) {!! in_array('question', $faqRequired) ? '<span class="text-danger">*</span>' : '' !!}</label>
+                        <input type="text" name="translations[{{ $lang->code }}][question]" class="form-control @error("translations.{$lang->code}.question") is-invalid @enderror" value="{{ old("translations.{$lang->code}.question", $trans['question'] ?? '') }}" {{ in_array('question', $faqRequired) ? 'required' : '' }}>
                         @error("translations.{$lang->code}.question")
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
                         <div class="form-text mt-1 text-muted">Enter the question for this FAQ item.</div>
                     </div>
+                    @endif
+                    @if($faqConfig['answer'] ?? true)
                     <div class="mb-3">
-                        <label class="form-label fw-bold">Answer ({{ strtoupper($lang->code) }}) <span class="text-danger">*</span></label>
+                        <label class="form-label fw-bold">Answer ({{ strtoupper($lang->code) }}) {!! in_array('answer', $faqRequired) ? '<span class="text-danger">*</span>' : '' !!}</label>
                         <textarea name="translations[{{ $lang->code }}][answer]" class="form-control tinymce-editor @error("translations.{$lang->code}.answer") is-invalid @enderror" rows="5">{{ old("translations.{$lang->code}.answer", $trans['answer'] ?? '') }}</textarea>
                         @error("translations.{$lang->code}.answer")
                             <div class="invalid-feedback d-block">{{ $message }}</div>
                         @enderror
                         <div class="form-text mt-1 text-muted">Provide a detailed answer for the question above.</div>
                     </div>
+                    @endif
 
                     @include('cms-kit::partials.extra-fields-translatable', [
                         'configKey' => 'faqs.items',
@@ -73,16 +81,20 @@
             <hr>
 
             <div class="row g-3">
+                @if($faqConfig['order'] ?? true)
                 <div class="col-md-4">
                     <label class="form-label">Order Index</label>
                     <input type="number" name="order_index" value="{{ $faq->order_index }}" class="form-control" min="1">
                 </div>
+                @endif
+                @if($faqConfig['status'] ?? true)
                 <div class="col-md-4 d-flex align-items-end">
                     <div class="form-check form-switch mb-2">
                         <input class="form-check-input" type="checkbox" name="status" {{ $faq->status ? 'checked' : '' }} id="statusSwitch">
                         <label class="form-check-label" for="statusSwitch">Active Status</label>
                     </div>
                 </div>
+                @endif
             </div>
 
             @include('cms-kit::partials.extra-fields-global', [

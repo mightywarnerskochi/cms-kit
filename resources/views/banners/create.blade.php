@@ -128,7 +128,7 @@
                     <h6 class="fw-bold mb-3">Media & Settings</h6>
                     <div class="row g-4">
                         @if(config('cms-kit.database.banners.items.image', true))
-                        <div class="col-md-6 {{ !in_array('image', $allowedTypes) || (count($allowedTypes) > 1 && $allowedTypes[0] !== 'image') ? 'd-none' : '' }}" id="image-section">
+                        <div class="col-md-6 {{ !in_array('image', $allowedTypes) || (count($allowedTypes) > 1 && old('banner_type', $allowedTypes[0]) !== 'image') ? 'd-none' : '' }}" id="image-section">
                             <label class="form-label">Banner Image <span class="text-danger">*</span></label>
                             <input type="file" name="image" class="form-control @error('image') is-invalid @enderror">
                             @error('image')
@@ -139,29 +139,38 @@
                         @endif
 
                         @if(config('cms-kit.database.banners.items.video_url', true) || config('cms-kit.database.banners.items.video_file', true))
-                        <div class="col-md-12 {{ !in_array('video', $allowedTypes) || (count($allowedTypes) > 1 && $allowedTypes[0] !== 'video') ? 'd-none' : '' }}" id="video-section">
+                        <div class="col-md-12 {{ !in_array('video', $allowedTypes) || (count($allowedTypes) > 1 && old('banner_type', $allowedTypes[0]) !== 'video') ? 'd-none' : '' }}" id="video-section">
                             <div class="row g-3">
                                 <div class="col-12">
                                     <label class="form-label d-block fw-bold">Video Source</label>
                                     <div class="form-check form-check-inline">
-                                        <input class="form-check-input video-source-toggle" type="radio" name="video_source" id="video_url_source" value="url" checked>
+                                        <input class="form-check-input video-source-toggle @error('video_source') is-invalid @enderror" type="radio" name="video_source" id="video_url_source" value="url" {{ old('video_source', 'url') === 'url' ? 'checked' : '' }}>
                                         <label class="form-check-label" for="video_url_source">Video URL (YouTube/Vimeo)</label>
                                     </div>
                                     <div class="form-check form-check-inline">
-                                        <input class="form-check-input video-source-toggle" type="radio" name="video_source" id="video_file_source" value="file">
+                                        <input class="form-check-input video-source-toggle @error('video_source') is-invalid @enderror" type="radio" name="video_source" id="video_file_source" value="file" {{ old('video_source') === 'file' ? 'checked' : '' }}>
                                         <label class="form-check-label" for="video_file_source">Upload Video File</label>
                                     </div>
+                                    @error('video_source')
+                                        <div class="invalid-feedback d-block">{{ $message }}</div>
+                                    @enderror
                                 </div>
                                 @if(config('cms-kit.database.banners.items.video_url', true))
-                                <div class="col-md-12" id="video-url-input">
+                                <div class="col-md-12 {{ old('video_source', 'url') === 'file' ? 'd-none' : '' }}" id="video-url-input">
                                     <label class="form-label">Video URL <span class="text-danger">*</span></label>
-                                    <input type="text" name="video_url" class="form-control" placeholder="YouTube/Vimeo or self-hosted URL" value="{{ old('video_url') }}">
+                                    <input type="text" name="video_url" class="form-control @error('video_url') is-invalid @enderror" placeholder="YouTube/Vimeo or self-hosted URL" value="{{ old('video_url') }}">
+                                    @error('video_url')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
                                 </div>
                                 @endif
                                 @if(config('cms-kit.database.banners.items.video_file', true))
-                                <div class="col-md-12 d-none" id="video-file-input">
+                                <div class="col-md-12 {{ old('video_source') === 'file' ? '' : 'd-none' }}" id="video-file-input">
                                     <label class="form-label">Upload Video <span class="text-danger">*</span></label>
-                                    <input type="file" name="video_file" class="form-control">
+                                    <input type="file" name="video_file" class="form-control @error('video_file') is-invalid @enderror" accept=".mp4,.mov,.avi,video/mp4,video/quicktime,video/x-msvideo">
+                                    @error('video_file')
+                                        <div class="invalid-feedback d-block">{{ $message }}</div>
+                                    @enderror
                                     <small class="text-muted">Max size: {{ config('cms-kit.images.banners.banner_video.max_size', 10240) / 1024 }}MB. Supported: mp4, mov, avi.</small>
                                 </div>
                                 @endif
@@ -179,6 +188,14 @@
                 </div>
             </div>
 
+            @php
+                $hasGoogleReviewFields =
+                    config('cms-kit.database.banners.items.google_rating', true) ||
+                    config('cms-kit.database.banners.items.google_review_count', true) ||
+                    config('cms-kit.database.banners.items.google_avatars', true) ||
+                    config('cms-kit.database.banners.items.google_avatars_alt', true);
+            @endphp
+            @if($hasGoogleReviewFields)
             <div class="card border-primary border-opacity-25 mb-4">
                 <div class="card-body p-4">
                     <h6 class="fw-bold mb-3 text-primary"><i class="fab fa-google me-2"></i>Google Reviews Stats</h6>
@@ -217,6 +234,7 @@
                     </div>
                 </div>
             </div>
+            @endif
 
             @include('cms-kit::partials.extra-fields-global', [
                 'configKey' => 'banners.items',
@@ -226,7 +244,7 @@
             <div class="row align-items-center">
                 <div class="col-md-4">
                     <label class="form-label">Display Order</label>
-                    <input type="number" name="order_index" class="form-control" value="1">
+                    <input type="number" name="order_index" class="form-control" value="1" min="1">
                 </div>
                 <div class="col-md-4">
                     <div class="form-check form-switch pt-4">

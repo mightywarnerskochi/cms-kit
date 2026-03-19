@@ -3,21 +3,58 @@
 namespace CMS\SiteManager\Http\Controllers;
 
 use CMS\SiteManager\Models\SiteInformation;
+use CMS\SiteManager\Models\Language;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Storage;
 
 class SiteInformationController extends Controller
 {
+    protected array $translatableFields = [
+        'company_name',
+        'address',
+        'country',
+        'privacy_policy',
+        'terms_and_conditions',
+        'disclaimer',
+        'footer_description',
+    ];
+
+    protected function mergeTranslatableExtraFields(array $translations): array
+    {
+        $fieldConfig = config('cms-kit.database.site-information.extra_fields', []);
+        $translatableFields = collect($fieldConfig)->filter(fn ($field) => $field['translatable'] ?? false)->keys();
+
+        foreach ($translations as $lang => $values) {
+            $translations[$lang]['extra_fields'] = [];
+            foreach ($translatableFields as $fieldName) {
+                $translations[$lang]['extra_fields'][$fieldName] = data_get($values, "extra_fields.{$fieldName}");
+            }
+        }
+
+        return $translations;
+    }
+
+    protected function getDefaultLanguageCode()
+    {
+        $defaultLanguage = Language::active()->where('is_default', true)->first();
+
+        return $defaultLanguage?->code
+            ?? Language::active()->orderByDesc('is_default')->value('code')
+            ?? config('app.fallback_locale');
+    }
+
     public function index()
     {
         $siteInfo = SiteInformation::first() ?? new SiteInformation();
-        return view('cms-kit::site-information.index', compact('siteInfo'));
+        $languages = Language::active()->get();
+        return view('cms-kit::site-information.index', compact('siteInfo', 'languages'));
     }
 
     public function update(Request $request)
     {
         $siteInfo = SiteInformation::first() ?? new SiteInformation();
+        $defaultLanguageCode = $this->getDefaultLanguageCode();
 
         $data = $request->validate([
             'company_name' => 'nullable|string|max:255',
@@ -58,6 +95,8 @@ class SiteInformationController extends Controller
             'gtag' => 'nullable|string|max:255',
             'custom_head_script' => 'nullable|string',
             'custom_body_script' => 'nullable|string',
+            'extra_fields' => 'nullable|array',
+            'translations' => 'nullable|array',
         ]);
 
         // Handle File Uploads
@@ -80,6 +119,18 @@ class SiteInformationController extends Controller
                 Storage::delete($siteInfo->footer_logo);
             }
             $data['footer_logo'] = $request->file('footer_logo')->store('site-info', 'public');
+        }
+
+        $extraFields = [];
+        foreach (config('cms-kit.database.site-information.extra_fields', []) as $key => $field) {
+            $extraFields[$key] = $request->input("extra_fields.{$key}");
+        }
+        $data['extra_fields'] = $extraFields;
+        $translations = $this->mergeTranslatableExtraFields($request->input('translations', []));
+        $data['translations'] = $translations;
+
+        foreach ($this->translatableFields as $field) {
+            $data[$field] = data_get($translations, "{$defaultLanguageCode}.{$field}", $request->input($field));
         }
 
         $siteInfo->fill($data);

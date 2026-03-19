@@ -62,7 +62,8 @@ return new class extends Migration
             $table->string('gtag')->nullable();
             $table->text('custom_head_script')->nullable();
             $table->text('custom_body_script')->nullable();
-
+            $table->json('translations')->nullable();
+            $table->json('extra_fields')->nullable();
             $table->timestamps();
         });
     }

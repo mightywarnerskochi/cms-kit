@@ -72,25 +72,21 @@
                         @endforeach
                     </div>
 
-                    <div class="card bg-light border-0 mb-4">
-                        <div class="card-body p-4">
-                            <h6 class="fw-bold mb-3">Visibility Settings</h6>
-                            <div class="row g-4 align-items-center">
-                                <div class="col-md-auto me-4">
-                                    <div class="form-check form-switch">
-                                        <input class="form-check-input" type="checkbox" name="status" id="sectionStatus" {{ old('status', $section->status ?? true) ? 'checked' : '' }}>
-                                        <label class="form-check-label fw-bold" for="sectionStatus">Status</label>
-                                    </div>
-                                </div>
-                                <div class="col-md-auto">
-                                    <div class="form-check form-switch">
-                                        <input class="form-check-input" type="checkbox" name="display_home" id="sectionDisplayHome" {{ old('display_home', $section->display_home ?? true) ? 'checked' : '' }}>
-                                        <label class="form-check-label fw-bold" for="sectionDisplayHome">Show on Home Page</label>
-                                    </div>
-                                </div>
+                    <div class="row g-4 align-items-center">
+                        <div class="col-md-auto me-4">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" name="status" id="sectionStatus" {{ old('status', $section->status ?? true) ? 'checked' : '' }}>
+                                <label class="form-check-label fw-bold" for="sectionStatus">Status</label>
+                            </div>
+                        </div>
+                        <div class="col-md-auto">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" name="display_home" id="sectionDisplayHome" {{ old('display_home', $section->display_home ?? true) ? 'checked' : '' }}>
+                                <label class="form-check-label fw-bold" for="sectionDisplayHome">Display Home </label>
                             </div>
                         </div>
                     </div>
+                       
 
                     @include('cms-kit::partials.extra-fields-global', [
                         'configKey' => 'blogs.section',
@@ -112,9 +108,17 @@
                 <h5 class="mb-0">Blogs List</h5>
                 <div class="d-flex gap-2">
                     @if(auth('cms')->user()->can('blogs.delete'))
-                    <button id="bulkDelete" class="btn btn-outline-danger btn-sm" style="display: none;">
-                        <i class="fas fa-trash"></i> Delete Selected (<span id="selectedCount">0</span>)
-                    </button>
+                    <div class="dropdown" id="bulkActions" style="display: none;">
+                        <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                            Bulk Actions (<span id="selectedCount">0</span>)
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li><button class="dropdown-item" type="button" onclick="bulkAction('active')"><i class="fas fa-check-circle text-success me-2"></i> Mark Active</button></li>
+                            <li><button class="dropdown-item" type="button" onclick="bulkAction('inactive')"><i class="fas fa-times-circle text-secondary me-2"></i> Mark Inactive</button></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><button class="dropdown-item" type="button" onclick="bulkAction('delete')"><i class="fas fa-trash text-danger me-2"></i> Delete Selected</button></li>
+                        </ul>
+                    </div>
                     @endif
                     @if(auth('cms')->user()->can('blogs.create'))
                     <a href="{{ route('cms.blogs.create') }}" class="btn btn-primary btn-sm px-3">
@@ -123,9 +127,12 @@
                     @endif
                 </div>
             </div>
+            <form id="bulkForm" action="{{ route('cms.blogs.bulk-action') }}" method="POST">
+                @csrf
+                <input type="hidden" name="action" id="bulkActionInput">
             <div class="card-body p-4">
                 <div class="table-responsive">
-                    <table class="table table-hover w-100" id="blogsTable">
+                    <table class="table premium-table mb-0 w-100" id="blogsTable">
                         <thead>
                             <tr>
                                 <th style="width: 40px;"><input type="checkbox" class="form-check-input" id="selectAll"></th>
@@ -135,18 +142,24 @@
                                 <th style="width: 120px;">Date</th>
                                 <th style="width: 100px;">Order</th>
                                 <th style="width: 100px;" class="text-center">Status</th>
-                                <th style="width: 100px;" class="text-end">Actions</th>
+                                <th style="width: 100px;" class="text-end pe-4">Actions</th>
                             </tr>
                         </thead>
+                        <tbody></tbody>
                     </table>
                 </div>
             </div>
+            </form>
         </div>
     </div>
 </div>
 @endsection
 
 @push('scripts')
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+
 <script>
     $(function() {
         const table = $('#blogsTable').DataTable({
@@ -161,9 +174,12 @@
                 {data: 'published_at', name: 'published_at'},
                 {data: 'order', name: 'order'},
                 {data: 'status', name: 'status', className: 'text-center'},
-                {data: 'action', name: 'action', orderable: false, searchable: false, className: 'text-end'}
+                {data: 'action', name: 'action', orderable: false, searchable: false, className: 'text-end pe-4'}
             ],
-            order: [[1, 'asc']]
+            order: [[1, 'asc']],
+            drawCallback: function() {
+                updateBulkButton();
+            }
         });
 
         // Bulk Actions logic
@@ -179,33 +195,36 @@
         function updateBulkButton() {
             const count = $('.row-checkbox:checked').length;
             $('#selectedCount').text(count);
-            $('#bulkDelete').toggle(count > 0);
+            $('#bulkActions').toggle(count > 0);
+            $('#selectAll').prop('checked', count > 0 && count === $('.row-checkbox').length && $('.row-checkbox').length > 0);
         }
 
-        $('#bulkDelete').on('click', function() {
-            const ids = $('.row-checkbox:checked').map(function() { return $(this).val(); }).get();
-            if (confirm('Delete selected blogs?')) {
-                $.post("{{ route('cms.blogs.bulk-action') }}", {
-                    ids: ids,
-                    action: 'delete',
-                    _token: "{{ csrf_token() }}"
-                }, function() {
-                    table.ajax.reload();
-                    $('#selectAll').prop('checked', false);
-                    updateBulkButton();
-                });
+        window.bulkAction = function(action) {
+            if (action === 'delete' && !confirm('Delete selected blogs?')) {
+                return;
             }
-        });
+
+            const ids = $('.row-checkbox:checked').map(function() { return $(this).val(); }).get();
+            $.post("{{ route('cms.blogs.bulk-action') }}", {
+                ids: ids,
+                action: action,
+                _token: "{{ csrf_token() }}"
+            }, function() {
+                table.ajax.reload(null, false);
+                $('#selectAll').prop('checked', false);
+                updateBulkButton();
+            });
+        };
 
         $(document).on('click', '.delete-item', function() {
             const id = $(this).data('id');
             if (confirm('Delete this blog post?')) {
                 $.ajax({
-                    url: "{{ url('admin/blogs') }}/" + id,
+                    url: "{{ url(config('cms-kit.common.auth.prefix', 'admin')) }}/blogs/" + id,
                     type: 'DELETE',
                     data: { _token: "{{ csrf_token() }}" },
                     success: function() {
-                        table.ajax.reload();
+                        table.ajax.reload(null, false);
                     }
                 });
             }
@@ -213,12 +232,14 @@
 
         $(document).on('change', '.toggle-status', function() {
             const id = $(this).data('id');
-            $.post("{{ url('admin/blogs') }}/" + id + "/toggle-status", {
+            $.post("{{ url(config('cms-kit.common.auth.prefix', 'admin')) }}/blogs/" + id + "/toggle-status", {
                 _token: "{{ csrf_token() }}"
+            }).fail(function() {
+                table.ajax.reload(null, false);
             });
         });
 
-        $(document).on('change', '.reorder-select', function() {
+        $(document).on('change', '.reorder-input', function() {
             const id = $(this).data('id');
             const order = $(this).val();
             $.post("{{ route('cms.blogs.reorder') }}", {
@@ -226,7 +247,7 @@
                 order_index: order,
                 _token: "{{ csrf_token() }}"
             }, function() {
-                table.ajax.reload();
+                table.ajax.reload(null, false);
             });
         });
     });

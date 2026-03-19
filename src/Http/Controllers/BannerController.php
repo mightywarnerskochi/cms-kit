@@ -9,6 +9,7 @@ use Yajra\DataTables\Facades\DataTables;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 
 class BannerController extends Controller
 {
@@ -37,9 +38,9 @@ class BannerController extends Controller
                 return '<div class="form-check form-switch">
                                 <input class="form-check-input toggle-status" type="checkbox" data-id="' . $row->id . '" ' . $checked . '>
                             </div>';
-            })
+                })
                 ->addColumn('order', function ($row) {
-                return '<input type="number" class="form-control form-control-sm reorder-input" data-id="' . $row->id . '" value="' . $row->order_index . '" style="width: 70px;">';
+                return '<input type="number" min="1" class="form-control form-control-sm reorder-input" data-id="' . $row->id . '" value="' . $row->order_index . '" style="width: 70px;">';
             })
                 ->addColumn('action', function ($row) {
                 return '<div class="btn-group">
@@ -89,36 +90,47 @@ class BannerController extends Controller
         $request->merge(['banner_type' => $resolvedBannerType]);
         $videoMaxSize = config('cms-kit.images.banners.banner_video.max_size', 10240);
         $typeRule = 'required|in:' . implode(',', $allowedTypes);
-        $videoSourceRule = in_array('video', $allowedTypes, true) ? 'nullable|in:url,file' : 'nullable';
-        $videoUrlRule = in_array('video', $allowedTypes, true)
-            ? 'nullable|required_if:banner_type,video|required_if:video_source,url|url'
-            : 'nullable';
-        $videoFileRule = in_array('video', $allowedTypes, true)
-            ? 'nullable|required_if:banner_type,video|required_if:video_source,file|file|mimetypes:video/mp4,video/quicktime,video/x-msvideo|max:' . $videoMaxSize
-            : 'nullable';
-
         $mainImageConfig = config('cms-kit.images.banners.main_image', ['max_size' => 2048, 'width' => 1920, 'height' => 800]);
         $avatarConfig = config('cms-kit.images.banners.client_avatar', ['max_size' => 512, 'width' => 100, 'height' => 100]);
         $request->validate([
             'banner_type' => $typeRule,
             'image' => 'nullable|required_if:banner_type,image|image|max:' . $mainImageConfig['max_size'],
             'google_avatars.*' => 'nullable|image|max:' . $avatarConfig['max_size'],
-            'video_source' => $videoSourceRule,
-            'video_url' => $videoUrlRule,
-            'video_file' => $videoFileRule,
+            'video_source' => [
+                Rule::requiredIf(fn () => $resolvedBannerType === 'video'),
+                'nullable',
+                'in:url,file',
+            ],
+            'video_url' => [
+                Rule::requiredIf(fn () => $resolvedBannerType === 'video' && $request->input('video_source') === 'url'),
+                'nullable',
+                'url',
+            ],
+            'video_file' => [
+                Rule::requiredIf(fn () => $resolvedBannerType === 'video' && $request->input('video_source') === 'file'),
+                'nullable',
+                'file',
+                'mimetypes:video/mp4,video/quicktime,video/x-msvideo',
+                'max:' . $videoMaxSize,
+            ],
             'translations.*.line_1' => 'required',
+            'order_index' => 'nullable|integer|min:1',
         ], [
             'image.required_if' => 'Banner image is required when banner type is image.',
             'image.image' => 'Banner image must be a valid image file.',
             'image.max' => 'Banner image size must not exceed ' . ($mainImageConfig['max_size'] ?? 2048) . ' KB.',
             'google_avatars.*.image' => 'Each client avatar must be a valid image file.',
             'google_avatars.*.max' => 'Each client avatar must not exceed ' . ($avatarConfig['max_size'] ?? 512) . ' KB.',
+            'video_source.required' => 'Please choose a video source.',
             'video_url.required_if' => 'Video URL is required when URL source is selected.',
+            'video_url.required' => 'Video URL is required when URL source is selected.',
             'video_url.url' => 'Video URL must be a valid URL.',
             'video_file.required_if' => 'Video file is required when file source is selected.',
+            'video_file.required' => 'Video file is required when file source is selected.',
             'video_file.mimetypes' => 'Video file must be an MP4, MOV, or AVI file.',
             'video_file.max' => 'Video file size must not exceed ' . $videoMaxSize . ' KB.',
             'translations.*.line_1.required' => 'Banner heading is required in every language.',
+            'order_index.min' => 'Display order must be at least 1.',
         ]);
 
         $data = $request->only(['banner_type', 'video_url', 'order_index', 'status']);
@@ -202,35 +214,46 @@ class BannerController extends Controller
         $request->merge(['banner_type' => $resolvedBannerType]);
         $videoMaxSize = config('cms-kit.images.banners.banner_video.max_size', 10240);
         $typeRule = 'required|in:' . implode(',', $allowedTypes);
-        $videoSourceRule = in_array('video', $allowedTypes, true) ? 'nullable|in:url,file' : 'nullable';
-        $videoUrlRule = in_array('video', $allowedTypes, true)
-            ? 'nullable|required_if:banner_type,video|required_if:video_source,url|url'
-            : 'nullable';
-        $videoFileRule = in_array('video', $allowedTypes, true)
-            ? 'nullable|required_if:banner_type,video|required_if:video_source,file|file|mimetypes:video/mp4,video/quicktime,video/x-msvideo|max:' . $videoMaxSize
-            : 'nullable';
-
         $mainImageConfig = config('cms-kit.images.banners.main_image', ['max_size' => 2048, 'width' => 1920, 'height' => 800]);
         $avatarConfig = config('cms-kit.images.banners.client_avatar', ['max_size' => 512, 'width' => 100, 'height' => 100]);
         $request->validate([
             'banner_type' => $typeRule,
             'image' => 'nullable|image|max:' . $mainImageConfig['max_size'],
             'google_avatars.*' => 'nullable|image|max:' . $avatarConfig['max_size'],
-            'video_source' => $videoSourceRule,
-            'video_url' => $videoUrlRule,
-            'video_file' => $videoFileRule,
+            'video_source' => [
+                Rule::requiredIf(fn () => $resolvedBannerType === 'video'),
+                'nullable',
+                'in:url,file',
+            ],
+            'video_url' => [
+                Rule::requiredIf(fn () => $resolvedBannerType === 'video' && $request->input('video_source') === 'url'),
+                'nullable',
+                'url',
+            ],
+            'video_file' => [
+                Rule::requiredIf(fn () => $resolvedBannerType === 'video' && $request->input('video_source') === 'file'),
+                'nullable',
+                'file',
+                'mimetypes:video/mp4,video/quicktime,video/x-msvideo',
+                'max:' . $videoMaxSize,
+            ],
             'translations.*.line_1' => 'required',
+            'order_index' => 'nullable|integer|min:1',
         ], [
             'image.image' => 'Banner image must be a valid image file.',
             'image.max' => 'Banner image size must not exceed ' . ($mainImageConfig['max_size'] ?? 2048) . ' KB.',
             'google_avatars.*.image' => 'Each client avatar must be a valid image file.',
             'google_avatars.*.max' => 'Each client avatar must not exceed ' . ($avatarConfig['max_size'] ?? 512) . ' KB.',
+            'video_source.required' => 'Please choose a video source.',
             'video_url.required_if' => 'Video URL is required when URL source is selected.',
+            'video_url.required' => 'Video URL is required when URL source is selected.',
             'video_url.url' => 'Video URL must be a valid URL.',
             'video_file.required_if' => 'Video file is required when file source is selected.',
+            'video_file.required' => 'Video file is required when file source is selected.',
             'video_file.mimetypes' => 'Video file must be an MP4, MOV, or AVI file.',
             'video_file.max' => 'Video file size must not exceed ' . $videoMaxSize . ' KB.',
             'translations.*.line_1.required' => 'Banner heading is required in every language.',
+            'order_index.min' => 'Display order must be at least 1.',
         ]);
 
         $data = $request->only(['banner_type', 'video_url', 'order_index', 'status']);
@@ -327,6 +350,11 @@ class BannerController extends Controller
 
     public function reorder(Request $request)
     {
+        $request->validate([
+            'id' => 'required|integer|exists:banners,id',
+            'order_index' => 'required|integer|min:1',
+        ]);
+
         $banner = Banner::findOrFail($request->id);
         $newOrder = $request->order_index;
         $oldOrder = $banner->order_index;

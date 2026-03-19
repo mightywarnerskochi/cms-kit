@@ -12,6 +12,36 @@ use Illuminate\Routing\Controller;
 
 class LocationController extends Controller
 {
+    protected function mergeLocationTranslatableExtraFields(array $translations): array
+    {
+        $fieldConfig = config('cms-kit.database.locations.items.extra_fields', []);
+        $translatableFields = collect($fieldConfig)->filter(fn ($field) => $field['translatable'] ?? false)->keys();
+
+        foreach ($translations as $lang => $values) {
+            $translations[$lang]['extra_fields'] = [];
+            foreach ($translatableFields as $fieldName) {
+                $translations[$lang]['extra_fields'][$fieldName] = data_get($values, "extra_fields.{$fieldName}");
+            }
+        }
+
+        return $translations;
+    }
+
+    protected function mergeSectionTranslatableExtraFields(array $translations): array
+    {
+        $fieldConfig = config('cms-kit.database.locations.section.extra_fields', []);
+        $translatableFields = collect($fieldConfig)->filter(fn ($field) => $field['translatable'] ?? false)->keys();
+
+        foreach ($translations as $lang => $values) {
+            $translations[$lang]['extra_fields'] = [];
+            foreach ($translatableFields as $fieldName) {
+                $translations[$lang]['extra_fields'][$fieldName] = data_get($values, "extra_fields.{$fieldName}");
+            }
+        }
+
+        return $translations;
+    }
+
     public function index(Request $request)
     {
         if ($request->ajax()) {
@@ -37,12 +67,7 @@ class LocationController extends Controller
                             </div>';
                 })
                 ->addColumn('order', function ($row) {
-                    $options = '';
-                    for ($i = 1; $i <= 10; $i++) {
-                        $selected = ($row->order_index == $i) ? 'selected' : '';
-                        $options .= "<option value='{$i}' {$selected}>{$i}</option>";
-                    }
-                    return "<select class='form-select form-select-sm reorder-select' data-id='{$row->id}'>{$options}</select>";
+                    return '<input type="number" min="1" class="form-control form-control-sm reorder-input" data-id="' . $row->id . '" value="' . $row->order_index . '" style="width: 80px;">';
                 })
                 ->addColumn('action', function ($row) use ($request) {
                     $btns = '<div class="btn-group">';
@@ -83,10 +108,12 @@ class LocationController extends Controller
             'translations.*.country' => 'required',
             'image' => 'nullable|image|max:' . ($imageConfig['max_size'] ?? 2048),
             'flag' => 'nullable|image|max:' . ($flagConfig['max_size'] ?? 1024),
+            'order_index' => 'nullable|integer|min:1',
         ]);
 
         $data = $request->except(['image', 'flag', 'status', 'emails', 'extra_fields']);
         $data['status'] = $request->has('status');
+        $data['translations'] = $this->mergeLocationTranslatableExtraFields($request->input('translations', []));
         
         // Handle Emails
         if ($request->filled('emails')) {
@@ -140,10 +167,12 @@ class LocationController extends Controller
             'translations.*.country' => 'required',
             'image' => 'nullable|image|max:' . ($imageConfig['max_size'] ?? 2048),
             'flag' => 'nullable|image|max:' . ($flagConfig['max_size'] ?? 1024),
+            'order_index' => 'nullable|integer|min:1',
         ]);
 
         $data = $request->except(['image', 'flag', 'status', 'emails', 'extra_fields']);
         $data['status'] = $request->has('status');
+        $data['translations'] = $this->mergeLocationTranslatableExtraFields($request->input('translations', []));
 
         if ($request->filled('emails')) {
             $data['emails'] = array_values(array_filter(explode("\n", str_replace(["\r", ",", ";"], "\n", $request->emails))));
@@ -199,6 +228,11 @@ class LocationController extends Controller
 
     public function reorder(Request $request)
     {
+        $request->validate([
+            'id' => 'required|integer|exists:locations,id',
+            'order_index' => 'required|integer|min:1',
+        ]);
+
         $location = Location::findOrFail($request->id);
         $newOrder = $request->order_index;
         $oldOrder = $location->order_index;
@@ -231,7 +265,7 @@ class LocationController extends Controller
         }
         $request->validate($rules);
 
-        $translations = $request->translations;
+        $translations = $this->mergeSectionTranslatableExtraFields($request->input('translations', []));
         
         $extra_fields = [];
         foreach ($sectionConfig['extra_fields'] ?? [] as $key => $field) {
@@ -255,8 +289,12 @@ class LocationController extends Controller
 
     public function bulkAction(Request $request)
     {
-        $ids = $request->ids;
-        $action = $request->action;
+        $ids = array_filter((array) $request->input('ids', []));
+        $action = $request->input('action');
+
+        if (empty($ids) || !$action) {
+            return response()->json(['success' => false, 'message' => 'No action or items selected.'], 422);
+        }
 
         if ($action === 'delete') {
             $locations = Location::whereIn('id', $ids)->get();
@@ -265,6 +303,14 @@ class LocationController extends Controller
                 if ($loc->flag) Storage::disk('public')->delete($loc->flag);
                 $loc->delete();
             }
+        }
+
+        if (in_array($action, ['active', 'activate'], true)) {
+            Location::whereIn('id', $ids)->update(['status' => true]);
+        }
+
+        if (in_array($action, ['inactive', 'deactivate'], true)) {
+            Location::whereIn('id', $ids)->update(['status' => false]);
         }
 
         return response()->json(['success' => true]);

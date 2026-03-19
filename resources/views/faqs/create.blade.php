@@ -58,6 +58,12 @@
                         @enderror
                         <div class="form-text mt-1 text-muted">Provide a detailed answer for the question above.</div>
                     </div>
+
+                    @include('cms-kit::partials.extra-fields-translatable', [
+                        'configKey' => 'faqs.items',
+                        'lang' => $lang,
+                        'existingTranslations' => [],
+                    ])
                 </div>
                 @endforeach
             </div>
@@ -67,7 +73,7 @@
             <div class="row g-3">
                 <div class="col-md-4">
                     <label class="form-label">Order Index</label>
-                    <input type="number" name="order_index" value="1" class="form-control">
+                    <input type="number" name="order_index" value="1" class="form-control" min="1">
                 </div>
                 <div class="col-md-4 d-flex align-items-end">
                     <div class="form-check form-switch mb-2">
@@ -76,6 +82,11 @@
                     </div>
                 </div>
             </div>
+
+            @include('cms-kit::partials.extra-fields-global', [
+                'configKey' => 'faqs.items',
+                'existingValues' => [],
+            ])
 
             <div class="mt-4">
                 <button type="submit" class="btn btn-primary px-4">Save FAQ</button>

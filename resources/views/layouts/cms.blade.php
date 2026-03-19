@@ -7,9 +7,18 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    @php
+        $primaryColor = config('cms-kit.common.theme.primary_color', '#dc3545');
+        $normalizedPrimary = ltrim($primaryColor, '#');
+        if (strlen($normalizedPrimary) === 3) {
+            $normalizedPrimary = collect(str_split($normalizedPrimary))->map(fn ($char) => $char . $char)->implode('');
+        }
+        [$primaryRed, $primaryGreen, $primaryBlue] = sscanf($normalizedPrimary, '%02x%02x%02x') ?: [220, 53, 69];
+    @endphp
     <style>
         :root {
-            --primary-color: {{ config('cms-kit.common.theme.primary_color', '#dc3545') }};
+            --primary-color: {{ $primaryColor }};
+            --primary-rgb: {{ $primaryRed }}, {{ $primaryGreen }}, {{ $primaryBlue }};
             --secondary-color: {{ config('cms-kit.common.secondary_color', '#212529') }};
             --bg-color: {{ config('cms-kit.common.background_color', '#f4f7f6') }};
             --sidebar-color: {{ config('cms-kit.common.sidebar_color', '#1a1d21') }};
@@ -41,20 +50,73 @@
                     <a class="nav-link @if(Route::is('cms.dashboard')) active @endif" href="{{ route('cms.dashboard') }}">
                         <i class="fas fa-th-large"></i> Dashboard
                     </a>
+                    {{-- Site Settings Group --}}
+                    @if((config('cms-kit.common.modules.languages', true) && $cmsUser->can('languages.view')) || $cmsUser->can('site-information.view'))
+                        <div class="nav-item sidebar-group">
+                            <a class="nav-link d-flex align-items-center sidebar-group-toggle @if(request()->routeIs('cms.languages.*') || request()->routeIs('cms.site-information.*')) active @endif" 
+                            data-bs-toggle="collapse" href="#settingsMenu" role="button" 
+                            aria-expanded="@if(request()->routeIs('cms.languages.*') || request()->routeIs('cms.site-information.*')) true @else false @endif">
+                                <i class="fas fa-cog"></i>
+                                <span>General Settings</span>
+                                <i class="fas fa-chevron-down ms-auto sidebar-chevron"></i>
+                            </a>
+                            <div class="collapse sidebar-submenu @if(request()->routeIs('cms.languages.*') || request()->routeIs('cms.site-information.*')) show @endif" id="settingsMenu">
+                                <nav class="nav flex-column">
+                                    @if(config('cms-kit.common.modules.languages', true) && $cmsUser->can('languages.view'))
+                                    <a class="nav-link py-2 @if(request()->routeIs('cms.languages.*')) active @endif" href="{{ route('cms.languages.index') }}">
+                                        Languages
+                                    </a>
+                                    @endif
+                                    @if($cmsUser->can('site-information.view'))
+                                    <a class="nav-link py-2 @if(request()->routeIs('cms.site-information.*')) active @endif" href="{{ route('cms.site-information.index') }}">
+                                        Site Information
+                                    </a>
+                                    @endif
+                                </nav>
+                            </div>
+                        </div>
+                    @endif
 
+                    {{-- SEO Group --}}
+                    @if((config('cms-kit.common.modules.metadata', true) && $cmsUser->can('metadata.view')) || $cmsUser->can('sitemap.view'))
+                    <div class="nav-item sidebar-group">
+                        <a class="nav-link d-flex align-items-center sidebar-group-toggle @if(request()->routeIs('cms.metadata.*') || request()->routeIs('cms.sitemap.*')) active @endif" 
+                           data-bs-toggle="collapse" href="#seoMenu" role="button" 
+                           aria-expanded="@if(request()->routeIs('cms.metadata.*') || request()->routeIs('cms.sitemap.*')) true @else false @endif">
+                            <i class="fas fa-search"></i>
+                            <span>SEO Management</span>
+                            <i class="fas fa-chevron-down ms-auto sidebar-chevron"></i>
+                        </a>
+                        <div class="collapse sidebar-submenu @if(request()->routeIs('cms.metadata.*') || request()->routeIs('cms.sitemap.*')) show @endif" id="seoMenu">
+                            <nav class="nav flex-column">
+                                @if(config('cms-kit.common.modules.metadata', true) && $cmsUser->can('metadata.view'))
+                                <a class="nav-link py-2 @if(request()->routeIs('cms.metadata.*')) active @endif" href="{{ route('cms.metadata.index') }}">
+                                    Metadata
+                                </a>
+                                @endif
+                                @if($cmsUser->can('sitemap.view'))
+                                <a class="nav-link py-2 @if(request()->routeIs('cms.sitemap.*')) active @endif" href="{{ route('cms.sitemap.index') }}">
+                                    Sitemap Generator
+                                </a>
+                                @endif
+                            </nav>
+                        </div>
+                    </div>
+                    @endif
+                    
                     {{-- Home Group --}}
                     @if(config('cms-kit.common.modules.banners', true) && $cmsUser->can('banners.view'))
-                    <div class="nav-item">
-                        <a class="nav-link d-flex align-items-center @if(request()->routeIs('cms.banners.*')) active @endif" 
+                    <div class="nav-item sidebar-group">
+                        <a class="nav-link d-flex align-items-center sidebar-group-toggle @if(request()->routeIs('cms.banners.*')) active @endif" 
                            data-bs-toggle="collapse" href="#homeMenu" role="button" 
                            aria-expanded="@if(request()->routeIs('cms.banners.*')) true @else false @endif">
                             <i class="fas fa-home"></i>
                             <span>Home</span>
-                            <i class="fas fa-chevron-down ms-auto" style="font-size: 0.7rem;"></i>
+                            <i class="fas fa-chevron-down ms-auto sidebar-chevron"></i>
                         </a>
-                        <div class="collapse @if(request()->routeIs('cms.banners.*')) show @endif" id="homeMenu">
-                            <nav class="nav flex-column ms-4 border-start border-white-50 border-opacity-25">
-                                <a class="nav-link py-1 @if(request()->routeIs('cms.banners.*')) active @endif" href="{{ route('cms.banners.index') }}">
+                        <div class="collapse sidebar-submenu @if(request()->routeIs('cms.banners.*')) show @endif" id="homeMenu">
+                            <nav class="nav flex-column">
+                                <a class="nav-link py-2 @if(request()->routeIs('cms.banners.*')) active @endif" href="{{ route('cms.banners.index') }}">
                                     Banner
                                 </a>
                             </nav>
@@ -88,21 +150,21 @@
 
 
                     @if(config('cms-kit.common.modules.enquiries', true) && $cmsUser->can('enquiries.view'))
-                    <div class="nav-item">
-                        <a class="nav-link d-flex align-items-center @if(request()->routeIs('cms.enquiries.*') || request()->routeIs('cms.newsletter-signups.*')) active @endif" 
+                    <div class="nav-item sidebar-group">
+                        <a class="nav-link d-flex align-items-center sidebar-group-toggle @if(request()->routeIs('cms.enquiries.*') || request()->routeIs('cms.newsletter-signups.*')) active @endif" 
                            data-bs-toggle="collapse" href="#enquiryMenu" role="button" 
                            aria-expanded="@if(request()->routeIs('cms.enquiries.*') || request()->routeIs('cms.newsletter-signups.*')) true @else false @endif">
                             <i class="fas fa-envelope"></i>
                             <span>Enquiries</span>
-                            <i class="fas fa-chevron-down ms-auto" style="font-size: 0.7rem;"></i>
+                            <i class="fas fa-chevron-down ms-auto sidebar-chevron"></i>
                         </a>
-                        <div class="collapse @if(request()->routeIs('cms.enquiries.*') || request()->routeIs('cms.newsletter-signups.*')) show @endif" id="enquiryMenu">
-                            <nav class="nav flex-column ms-4 border-start border-white-50 border-opacity-25">
-                                <a class="nav-link py-1 @if(request()->routeIs('cms.enquiries.*')) active @endif" href="{{ route('cms.enquiries.index') }}">
+                        <div class="collapse sidebar-submenu @if(request()->routeIs('cms.enquiries.*') || request()->routeIs('cms.newsletter-signups.*')) show @endif" id="enquiryMenu">
+                            <nav class="nav flex-column">
+                                <a class="nav-link py-2 @if(request()->routeIs('cms.enquiries.*')) active @endif" href="{{ route('cms.enquiries.index') }}">
                                     Form Enquiries
                                 </a>
                                 @if(config('cms-kit.common.modules.newsletter-signups', true) && $cmsUser->can('newsletter.view'))
-                                <a class="nav-link py-1 @if(request()->routeIs('cms.newsletter-signups.*')) active @endif" href="{{ route('cms.newsletter-signups.index') }}">
+                                <a class="nav-link py-2 @if(request()->routeIs('cms.newsletter-signups.*')) active @endif" href="{{ route('cms.newsletter-signups.index') }}">
                                     Newsletter Signups
                                 </a>
                                 @endif
@@ -117,83 +179,28 @@
                     </a>
                     @endif
 
-
-                    {{-- SEO Group --}}
-                    @if((config('cms-kit.common.modules.metadata', true) && $cmsUser->can('metadata.view')) || $cmsUser->can('sitemap.view'))
-                    <div class="nav-item">
-                        <a class="nav-link d-flex align-items-center @if(request()->routeIs('cms.metadata.*') || request()->routeIs('cms.sitemap.*')) active @endif" 
-                           data-bs-toggle="collapse" href="#seoMenu" role="button" 
-                           aria-expanded="@if(request()->routeIs('cms.metadata.*') || request()->routeIs('cms.sitemap.*')) true @else false @endif">
-                            <i class="fas fa-search"></i>
-                            <span>SEO Management</span>
-                            <i class="fas fa-chevron-down ms-auto" style="font-size: 0.7rem;"></i>
-                        </a>
-                        <div class="collapse @if(request()->routeIs('cms.metadata.*') || request()->routeIs('cms.sitemap.*')) show @endif" id="seoMenu">
-                            <nav class="nav flex-column ms-4 border-start border-white-50 border-opacity-25">
-                                @if(config('cms-kit.common.modules.metadata', true) && $cmsUser->can('metadata.view'))
-                                <a class="nav-link py-1 @if(request()->routeIs('cms.metadata.*')) active @endif" href="{{ route('cms.metadata.index') }}">
-                                    Metadata
-                                </a>
-                                @endif
-                                @if($cmsUser->can('sitemap.view'))
-                                <a class="nav-link py-1 @if(request()->routeIs('cms.sitemap.*')) active @endif" href="{{ route('cms.sitemap.index') }}">
-                                    Sitemap Generator
-                                </a>
-                                @endif
-                            </nav>
-                        </div>
-                    </div>
-                    @endif
-
-                    {{-- Site Settings Group --}}
-                    @if((config('cms-kit.common.modules.languages', true) && $cmsUser->can('languages.view')) || $cmsUser->can('site-information.view'))
-                    <div class="nav-item">
-                        <a class="nav-link d-flex align-items-center @if(request()->routeIs('cms.languages.*') || request()->routeIs('cms.site-information.*')) active @endif" 
-                           data-bs-toggle="collapse" href="#settingsMenu" role="button" 
-                           aria-expanded="@if(request()->routeIs('cms.languages.*') || request()->routeIs('cms.site-information.*')) true @else false @endif">
-                            <i class="fas fa-cog"></i>
-                            <span>General Settings</span>
-                            <i class="fas fa-chevron-down ms-auto" style="font-size: 0.7rem;"></i>
-                        </a>
-                        <div class="collapse @if(request()->routeIs('cms.languages.*') || request()->routeIs('cms.site-information.*')) show @endif" id="settingsMenu">
-                            <nav class="nav flex-column ms-4 border-start border-white-50 border-opacity-25">
-                                @if(config('cms-kit.common.modules.languages', true) && $cmsUser->can('languages.view'))
-                                <a class="nav-link py-1 @if(request()->routeIs('cms.languages.*')) active @endif" href="{{ route('cms.languages.index') }}">
-                                    Languages
-                                </a>
-                                @endif
-                                @if($cmsUser->can('site-information.view'))
-                                <a class="nav-link py-1 @if(request()->routeIs('cms.site-information.*')) active @endif" href="{{ route('cms.site-information.index') }}">
-                                    Site Information
-                                </a>
-                                @endif
-                            </nav>
-                        </div>
-                    </div>
-                    @endif
-
                     {{-- User Management Group --}}
                     @if($cmsUser->hasRole('superadmin') || $cmsUser->can('users.view') || $cmsUser->can('roles.view'))
-                    <div class="nav-item">
-                        <a class="nav-link d-flex align-items-center @if(request()->routeIs('cms.admins.*') || request()->routeIs('cms.roles.*') || request()->routeIs('cms.permissions.*')) active @endif" 
+                    <div class="nav-item sidebar-group">
+                        <a class="nav-link d-flex align-items-center sidebar-group-toggle @if(request()->routeIs('cms.admins.*') || request()->routeIs('cms.roles.*') || request()->routeIs('cms.permissions.*')) active @endif" 
                            data-bs-toggle="collapse" href="#userMenu" role="button" 
                            aria-expanded="@if(request()->routeIs('cms.admins.*') || request()->routeIs('cms.roles.*') || request()->routeIs('cms.permissions.*')) true @else false @endif">
                             <i class="fas fa-users-cog"></i>
                             <span>User Management</span>
-                            <i class="fas fa-chevron-down ms-auto" style="font-size: 0.7rem;"></i>
+                            <i class="fas fa-chevron-down ms-auto sidebar-chevron"></i>
                         </a>
-                        <div class="collapse @if(request()->routeIs('cms.admins.*') || request()->routeIs('cms.roles.*') || request()->routeIs('cms.permissions.*')) show @endif" id="userMenu">
-                            <nav class="nav flex-column ms-4 border-start border-white-50 border-opacity-25">
+                        <div class="collapse sidebar-submenu @if(request()->routeIs('cms.admins.*') || request()->routeIs('cms.roles.*') || request()->routeIs('cms.permissions.*')) show @endif" id="userMenu">
+                            <nav class="nav flex-column">
                                 @if($cmsUser->hasRole('superadmin') || $cmsUser->can('users.view'))
-                                <a class="nav-link py-1 @if(request()->routeIs('cms.admins.*')) active @endif" href="{{ route('cms.admins.index') }}">
+                                <a class="nav-link py-2 @if(request()->routeIs('cms.admins.*')) active @endif" href="{{ route('cms.admins.index') }}">
                                     Administrators
                                 </a>
                                 @endif
                                 @if($cmsUser->hasRole('superadmin') || $cmsUser->can('roles.view'))
-                                <a class="nav-link py-1 @if(request()->routeIs('cms.roles.*')) active @endif" href="{{ route('cms.roles.index') }}">
+                                <a class="nav-link py-2 @if(request()->routeIs('cms.roles.*')) active @endif" href="{{ route('cms.roles.index') }}">
                                     Roles & Permissions
                                 </a>
-                                <a class="nav-link py-1 @if(request()->routeIs('cms.permissions.*')) active @endif" href="{{ route('cms.permissions.index') }}">
+                                <a class="nav-link py-2 @if(request()->routeIs('cms.permissions.*')) active @endif" href="{{ route('cms.permissions.index') }}">
                                     Permissions List
                                 </a>
                                 @endif

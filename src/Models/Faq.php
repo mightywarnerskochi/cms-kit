@@ -11,6 +11,7 @@ class Faq extends Model
         'translations',
         'order_index',
         'status',
+        'extra_fields',
         'faqable_type',
         'faqable_id',
     ];
@@ -18,6 +19,7 @@ class Faq extends Model
     protected $casts = [
         'translations' => 'array',
         'status' => 'boolean',
+        'extra_fields' => 'array',
     ];
 
     /**

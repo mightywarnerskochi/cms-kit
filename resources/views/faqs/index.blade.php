@@ -108,8 +108,9 @@
                         <th style="width: 40px;">
                             <input type="checkbox" class="form-check-input" id="selectAll">
                         </th>
-                        <th>Order</th>
+                        <th>#</th>
                         <th>Question</th>
+                        <th>Order</th>
                         <th class="text-center">Status</th>
                         <th class="text-end pe-4">Actions</th>
                     </tr>
@@ -141,8 +142,9 @@
             ajax: "{{ route('cms.faqs.index') }}",
             columns: [
                 {data: 'select_all', name: 'select_all', orderable: false, searchable: false},
-                {data: 'order', name: 'order'},
+                {data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false},
                 {data: 'question', name: 'question'},
+                {data: 'order', name: 'order'},
                 {data: 'status', name: 'status', className: 'text-center'},
                 {data: 'action', name: 'action', orderable: false, searchable: false}
             ],

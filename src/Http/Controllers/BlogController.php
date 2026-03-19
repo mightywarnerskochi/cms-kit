@@ -13,9 +13,40 @@ use Illuminate\Support\Str;
 
 class BlogController extends Controller
 {
+    protected function mergeBlogTranslatableExtraFields(array $translations): array
+    {
+        $fieldConfig = config('cms-kit.database.blogs.items.extra_fields', []);
+        $translatableFields = collect($fieldConfig)->filter(fn ($field) => $field['translatable'] ?? false)->keys();
+
+        foreach ($translations as $lang => $values) {
+            $translations[$lang]['extra_fields'] = [];
+            foreach ($translatableFields as $fieldName) {
+                $translations[$lang]['extra_fields'][$fieldName] = data_get($values, "extra_fields.{$fieldName}");
+            }
+        }
+
+        return $translations;
+    }
+
+    protected function mergeBlogSectionTranslatableExtraFields(array $translations): array
+    {
+        $fieldConfig = config('cms-kit.database.blogs.section.extra_fields', []);
+        $translatableFields = collect($fieldConfig)->filter(fn ($field) => $field['translatable'] ?? false)->keys();
+
+        foreach ($translations as $lang => $values) {
+            $translations[$lang]['extra_fields'] = [];
+            foreach ($translatableFields as $fieldName) {
+                $translations[$lang]['extra_fields'][$fieldName] = data_get($values, "extra_fields.{$fieldName}");
+            }
+        }
+
+        return $translations;
+    }
+
     public function index(Request $request)
     {
         if ($request->ajax()) {
+            $cmsUser = auth('cms')->user();
             $data = Blog::orderBy('order_index', 'asc');
             return DataTables::of($data)
                 ->addIndexColumn()
@@ -41,19 +72,14 @@ class BlogController extends Controller
                             </div>';
                 })
                 ->addColumn('order', function ($row) {
-                    $options = '';
-                    for ($i = 1; $i <= 100; $i++) {
-                        $selected = ($row->order_index == $i) ? 'selected' : '';
-                        $options .= "<option value='{$i}' {$selected}>{$i}</option>";
-                    }
-                    return "<select class='form-select form-select-sm reorder-select' data-id='{$row->id}'>{$options}</select>";
+                    return '<input type="number" min="1" class="form-control form-control-sm reorder-input" data-id="' . $row->id . '" value="' . $row->order_index . '" style="width: 80px;">';
                 })
-                ->addColumn('action', function ($row) {
+                ->addColumn('action', function ($row) use ($cmsUser) {
                     $btns = '<div class="btn-group">';
-                    if (auth('cms')->user()->can('blogs.edit')) {
+                    if ($cmsUser && $cmsUser->can('blogs.edit')) {
                         $btns .= '<a href="' . route('cms.blogs.edit', $row->id) . '" class="btn btn-sm btn-outline-primary"><i class="fas fa-edit"></i></a>';
                     }
-                    if (auth('cms')->user()->can('blogs.delete')) {
+                    if ($cmsUser && $cmsUser->can('blogs.delete')) {
                         $btns .= '<button type="button" class="btn btn-sm btn-outline-danger delete-item" data-id="' . $row->id . '"><i class="fas fa-trash"></i></button>';
                     }
                     $btns .= '</div>';
@@ -88,12 +114,15 @@ class BlogController extends Controller
             'banner_image' => 'nullable|image|max:' . ($imagesConfig['banner_image']['max_size'] ?? 1024),
             'image_3' => 'nullable|image|max:' . ($imagesConfig['image_3']['max_size'] ?? 1024),
             'image_4' => 'nullable|image|max:' . ($imagesConfig['image_4']['max_size'] ?? 1024),
+            'order_index' => 'nullable|integer|min:1',
         ]);
 
         $data = $request->except(['feature_image', 'detail_image', 'banner_image', 'image_3', 'image_4', 'status', 'display_home', 'slug']);
         $data['status'] = $request->has('status');
         $data['display_home'] = $request->has('display_home');
+        $data['translations'] = $this->mergeBlogTranslatableExtraFields($request->input('translations', []));
         $data['slug'] = $request->filled('slug') ? Str::slug($request->slug) : Str::slug($request->translations[config('app.fallback_locale')]['title'] ?? $request->translations[array_key_first($request->translations)]['title']);
+        $data['extra_fields'] = $request->input('extra_fields', []);
 
         $imageFields = ['feature_image', 'detail_image', 'banner_image', 'image_3', 'image_4'];
         foreach ($imageFields as $field) {
@@ -142,11 +171,14 @@ class BlogController extends Controller
             'banner_image' => 'nullable|image|max:' . ($imagesConfig['banner_image']['max_size'] ?? 1024),
             'image_3' => 'nullable|image|max:' . ($imagesConfig['image_3']['max_size'] ?? 1024),
             'image_4' => 'nullable|image|max:' . ($imagesConfig['image_4']['max_size'] ?? 1024),
+            'order_index' => 'nullable|integer|min:1',
         ]);
 
         $data = $request->except(['feature_image', 'detail_image', 'banner_image', 'image_3', 'image_4', 'status', 'display_home', 'slug']);
         $data['status'] = $request->has('status');
         $data['display_home'] = $request->has('display_home');
+        $data['translations'] = $this->mergeBlogTranslatableExtraFields($request->input('translations', []));
+        $data['extra_fields'] = $request->input('extra_fields', []);
         if ($request->filled('slug')) {
             $data['slug'] = Str::slug($request->slug);
         }
@@ -213,6 +245,11 @@ class BlogController extends Controller
 
     public function reorder(Request $request)
     {
+        $request->validate([
+            'id' => 'required|integer|exists:blogs,id',
+            'order_index' => 'required|integer|min:1',
+        ]);
+
         $blog = Blog::findOrFail($request->id);
         $newOrder = $request->order_index;
         $oldOrder = $blog->order_index;
@@ -243,13 +280,16 @@ class BlogController extends Controller
         SectionLabel::updateOrCreate(
             ['section_key' => 'blogs'],
             [
-                'translations' => $request->translations,
+                'translations' => $this->mergeBlogSectionTranslatableExtraFields($request->input('translations', [])),
                 'status' => $request->has('status'),
                 'display_home' => $request->has('display_home'),
-                'extra_fields' => [
-                    'status' => $request->has('status'),
-                    'display_home' => $request->has('display_home'),
-                ]
+                'extra_fields' => array_merge(
+                    $request->input('extra_fields', []),
+                    [
+                        'status' => $request->has('status'),
+                        'display_home' => $request->has('display_home'),
+                    ]
+                )
             ]
         );
 
@@ -258,24 +298,37 @@ class BlogController extends Controller
 
     public function bulkAction(Request $request)
     {
-        $ids = $request->ids;
-        $action = $request->action;
+        $ids = array_filter((array) $request->input('ids', []));
+        $action = $request->input('action');
+
+        if (empty($ids) || !$action) {
+            return response()->json(['success' => false, 'message' => 'No action or items selected.'], 422);
+        }
 
         if ($action === 'delete') {
             $blogs = Blog::whereIn('id', $ids)->get();
             foreach ($blogs as $blog) {
                 $imageFields = ['feature_image', 'detail_image', 'banner_image', 'image_3', 'image_4'];
                 foreach ($imageFields as $field) {
-                    if ($blog->$field) Storage::disk('public')->delete($blog->$field);
+                    if ($blog->$field) {
+                        Storage::disk('public')->delete($blog->$field);
+                    }
                 }
 
-                // Delete Metadata OG Image
                 if (!empty($blog->metadata['og_image'])) {
                     Storage::disk('public')->delete($blog->metadata['og_image']);
                 }
 
                 $blog->delete();
             }
+        }
+
+        if (in_array($action, ['active', 'activate'], true)) {
+            Blog::whereIn('id', $ids)->update(['status' => true]);
+        }
+
+        if (in_array($action, ['inactive', 'deactivate'], true)) {
+            Blog::whereIn('id', $ids)->update(['status' => false]);
         }
 
         return response()->json(['success' => true]);

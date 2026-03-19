@@ -11,6 +11,9 @@
         <h5 class="mb-0">Edit Location</h5>
     </div>
     <div class="card-body p-4">
+        <form action="{{ route('cms.locations.update', $location->id) }}" method="POST" enctype="multipart/form-data">
+            @csrf
+            @method('PUT')
             <div class="alert alert-light border-start border-primary border-4 py-2 mb-4 shadow-sm" style="font-size: 0.9rem;">
                 <i class="fas fa-info-circle text-primary me-2"></i> 
                 <strong>Note:</strong> Please ensure all required fields <span class="text-danger">(*)</span> are filled across all language tabs.
@@ -52,6 +55,12 @@
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
+
+                        @include('cms-kit::partials.extra-fields-translatable', [
+                            'configKey' => 'locations.items',
+                            'lang' => $lang,
+                            'existingTranslations' => $location->translations ?? [],
+                        ])
                     </div>
                 </div>
                 @endforeach
@@ -115,7 +124,7 @@
                 <!-- Settings -->
                 <div class="col-md-4">
                     <label class="form-label">Sort Order</label>
-                    <input type="number" name="order_index" class="form-control" value="{{ old('order_index', $location->order_index) }}">
+                    <input type="number" name="order_index" class="form-control" value="{{ old('order_index', $location->order_index) }}" min="1">
                 </div>
                 <div class="col-md-4 d-flex align-items-end pb-2">
                     <div class="form-check form-switch mb-0">

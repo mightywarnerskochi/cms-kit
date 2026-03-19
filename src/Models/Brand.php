@@ -12,11 +12,13 @@ class Brand extends Model
         'order_index',
         'status',
         'extra_fields',
+        'translations',
     ];
 
     protected $casts = [
         'status' => 'boolean',
         'extra_fields' => 'array',
+        'translations' => 'array',
     ];
 
     /**

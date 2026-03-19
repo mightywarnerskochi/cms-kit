@@ -23,10 +23,7 @@ return [
             'subject' => true,
             'created_at' => true,
         ],
-        // 'extra_fields' => [
-        //     'subject' => ['label' => 'Subject', 'type' => 'text'],
-        //     'interested_in' => ['label' => 'Interested In', 'type' => 'text'],
-        // ],
+       
     ],
     'testimonials' => [
         'section' => [

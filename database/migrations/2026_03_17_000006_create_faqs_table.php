@@ -22,7 +22,7 @@ return new class extends Migration
             $table->string('faqable_type')->nullable();
             $table->unsignedBigInteger('faqable_id')->nullable();
             $table->index(['faqable_type', 'faqable_id']);
-
+            $table->json('extra_fields')->nullable(); // For any additional custom fields in the future);
             $table->timestamps();
         });
     }

@@ -22,13 +22,19 @@
                     </ul>
                 </div>
             </div>
-            @if(($canAddBanner ?? true) && $cmsUser->can('banners.edit'))
-            <a href="{{ route('cms.banners.create') }}" class="btn btn-primary btn-sm">
+            <a
+                href="{{ route('cms.banners.create') }}"
+                id="addBannerButton"
+                class="btn btn-primary btn-sm {{ ($canAddBanner ?? true) && $cmsUser->can('banners.edit') ? '' : 'd-none' }}"
+            >
                 <i class="fas fa-plus"></i> Add Banner
             </a>
-            @elseif(!($canAddBanner ?? true))
-            <span class="badge bg-warning text-dark"><i class="fas fa-info-circle"></i> Limit Reached ({{ $maxBanners }})</span>
-            @endif
+            <span
+                id="bannerLimitBadge"
+                class="badge bg-warning text-dark {{ !($canAddBanner ?? true) ? '' : 'd-none' }}"
+            >
+                <i class="fas fa-info-circle"></i> Limit Reached ({{ $maxBanners }})
+            </span>
         </div>
     </div>
     <div class="card-body p-4">
@@ -65,6 +71,8 @@
 
 <script>
     $(function() {
+        const maxBanners = {{ (int) $maxBanners }};
+        const canEditBanners = {{ $cmsUser->can('banners.edit') ? 'true' : 'false' }};
         const table = $('.premium-table').DataTable({
             processing: true,
             serverSide: true,
@@ -81,8 +89,21 @@
             order: [[1, 'asc']],
             drawCallback: function() {
                 updateBulkVisibility();
+                updateBannerLimitState();
             }
         });
+
+        function updateBannerLimitState() {
+            const pageInfo = table.page.info();
+            const totalRecords = Number(pageInfo.recordsTotal || 0);
+            const limitReached = totalRecords >= maxBanners;
+
+            if (canEditBanners) {
+                $('#addBannerButton').toggleClass('d-none', limitReached);
+            }
+
+            $('#bannerLimitBadge').toggleClass('d-none', !limitReached);
+        }
 
         // Toggle Status
         $(document).on('change', '.toggle-status', function() {

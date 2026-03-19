@@ -12,6 +12,36 @@ use Illuminate\Routing\Controller;
 
 class FaqController extends Controller
 {
+    protected function mergeFaqTranslatableExtraFields(array $translations): array
+    {
+        $fieldConfig = config('cms-kit.database.faqs.items.extra_fields', []);
+        $translatableFields = collect($fieldConfig)->filter(fn ($field) => $field['translatable'] ?? false)->keys();
+
+        foreach ($translations as $lang => $values) {
+            $translations[$lang]['extra_fields'] = [];
+            foreach ($translatableFields as $fieldName) {
+                $translations[$lang]['extra_fields'][$fieldName] = data_get($values, "extra_fields.{$fieldName}");
+            }
+        }
+
+        return $translations;
+    }
+
+    protected function mergeFaqSectionTranslatableExtraFields(array $translations): array
+    {
+        $fieldConfig = config('cms-kit.database.faqs.section.extra_fields', []);
+        $translatableFields = collect($fieldConfig)->filter(fn ($field) => $field['translatable'] ?? false)->keys();
+
+        foreach ($translations as $lang => $values) {
+            $translations[$lang]['extra_fields'] = [];
+            foreach ($translatableFields as $fieldName) {
+                $translations[$lang]['extra_fields'][$fieldName] = data_get($values, "extra_fields.{$fieldName}");
+            }
+        }
+
+        return $translations;
+    }
+
     public function index(Request $request)
     {
         if ($request->ajax()) {
@@ -31,7 +61,7 @@ class FaqController extends Controller
                             </div>';
             })
                 ->addColumn('order', function ($row) {
-                return '<input type="number" class="form-control form-control-sm reorder-input" data-id="' . $row->id . '" value="' . $row->order_index . '" style="width: 70px;">';
+                return '<input type="number" min="1" class="form-control form-control-sm reorder-input" data-id="' . $row->id . '" value="' . $row->order_index . '" style="width: 70px;">';
             })
                 ->addColumn('action', function ($row) {
                 return '<div class="btn-group">
@@ -80,6 +110,7 @@ class FaqController extends Controller
 
             $translations[$lang->code] = $transData;
         }
+        $translations = $this->mergeFaqSectionTranslatableExtraFields($translations);
 
         $data = [
             'translations' => $translations,
@@ -110,7 +141,9 @@ class FaqController extends Controller
     public function store(FaqRequest $request)
     {
         $data = $request->validated();
+        $data['translations'] = $this->mergeFaqTranslatableExtraFields($request->input('translations', []));
         $data['status'] = $request->has('status');
+        $data['extra_fields'] = $request->input('extra_fields', []);
 
         $order = $request->order_index ?? (Faq::max('order_index') + 1);
         Faq::where('order_index', '>=', $order)->increment('order_index');
@@ -132,7 +165,9 @@ class FaqController extends Controller
     {
         $faq = Faq::findOrFail($id);
         $data = $request->validated();
+        $data['translations'] = $this->mergeFaqTranslatableExtraFields($request->input('translations', []));
         $data['status'] = $request->has('status');
+        $data['extra_fields'] = $request->input('extra_fields', []);
 
         $faq->update($data);
 
@@ -161,6 +196,11 @@ class FaqController extends Controller
 
     public function reorder(Request $request)
     {
+        $request->validate([
+            'id' => 'required|integer|exists:faqs,id',
+            'order_index' => 'required|integer|min:1',
+        ]);
+
         $faq = Faq::findOrFail($request->id);
         $newOrder = $request->order_index;
         $oldOrder = $faq->order_index;

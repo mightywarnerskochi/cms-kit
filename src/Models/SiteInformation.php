@@ -16,10 +16,11 @@ class SiteInformation extends Model
         'logo', 'logo_alt', 'favicon', 'footer_logo', 'footer_logo_alt', 'footer_description',
         'facebook', 'twitter', 'linkedin', 'instagram', 'tiktok', 'snapchat',
         'pinterest', 'youtube', 'skype', 'whatsapp_social', 'vimeo',
-        'gtag', 'custom_head_script', 'custom_body_script'
+        'gtag', 'custom_head_script', 'custom_body_script', 'extra_fields', 'translations'
     ];
 
     protected $casts = [
-        // No boolean casts needed for simplified schema
+        'extra_fields' => 'array',
+        'translations' => 'array',
     ];
 }

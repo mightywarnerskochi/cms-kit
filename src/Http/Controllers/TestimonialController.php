@@ -35,7 +35,7 @@ class TestimonialController extends Controller
                     return '<span class="text-warning">'.str_repeat('<i class="fas fa-star"></i>', $row->rating).'</span>';
                 })
                 ->addColumn('order', function($row){
-                    return '<input type="number" value="'.$row->order_index.'" class="form-control form-control-sm text-center reorder-input" style="width: 60px;" data-id="'.$row->id.'">';
+                    return '<input type="number" min="1" value="'.$row->order_index.'" class="form-control form-control-sm text-center reorder-input" style="width: 60px;" data-id="'.$row->id.'">';
                 })
                 ->addColumn('status_toggle', function($row){
                     $checked = $row->status ? 'checked' : '';
@@ -44,7 +44,7 @@ class TestimonialController extends Controller
                             </div>';
                 })
                 ->addColumn('actions', function($row){
-                    $editBtn = '<button type="button" class="btn btn-link text-primary p-0 me-2" data-bs-toggle="modal" data-bs-target="#editTestimonialModal'.$row->id.'"><i class="fas fa-edit"></i></button>';
+                    $editBtn = '<a href="'.route('cms.testimonials.edit', $row->id).'" class="btn btn-link text-primary p-0 me-2"><i class="fas fa-edit"></i></a>';
                     $deleteBtn = '<form action="'.route('cms.testimonials.destroy', $row->id).'" method="POST" style="display:inline;">'.csrf_field().method_field('DELETE').'<button type="submit" class="btn btn-link text-danger p-0" onclick="return confirm(\'Delete this and reorder others?\')"><i class="fas fa-trash"></i></button></form>';
                     return '<div class="text-end pe-3">'.$editBtn.$deleteBtn.'</div>';
                 })
@@ -52,11 +52,26 @@ class TestimonialController extends Controller
                 ->make(true);
         }
 
-        $testimonials = Testimonial::orderBy('order_index', 'asc')->get();
         $languages = Language::active()->get();
         $section = SectionLabel::firstOrCreate(['section_key' => 'testimonials']);
+        return view('cms-kit::testimonials.index', compact('section', 'languages'));
+    }
+
+    public function create()
+    {
+        $languages = Language::active()->get();
         $nextOrder = (Testimonial::max('order_index') ?? 0) + 1;
-        return view('cms-kit::testimonials.index', compact('testimonials', 'section', 'languages', 'nextOrder'));
+
+        return view('cms-kit::testimonials.create', compact('languages', 'nextOrder'));
+    }
+
+    public function edit($id)
+    {
+        $testimonial = Testimonial::findOrFail($id);
+        $languages = Language::active()->get();
+        $nextOrder = $testimonial->order_index;
+
+        return view('cms-kit::testimonials.edit', compact('testimonial', 'languages', 'nextOrder'));
     }
 
     public function updateSection(Request $request)
@@ -161,6 +176,8 @@ class TestimonialController extends Controller
             $rules['image'] = 'required';
         }
 
+        $rules['order_index'] = 'nullable|integer|min:1';
+
         $request->validate($rules);
     }
 
@@ -215,7 +232,7 @@ class TestimonialController extends Controller
 
         Testimonial::create($data);
 
-        return redirect()->back()->with('success', 'Testimonial added.');
+        return redirect()->route('cms.testimonials.index')->with('success', 'Testimonial added.');
     }
 
     public function update(Request $request, $id)
@@ -269,7 +286,7 @@ class TestimonialController extends Controller
 
         $testimonial->update($data);
 
-        return redirect()->back()->with('success', 'Testimonial updated.');
+        return redirect()->route('cms.testimonials.index')->with('success', 'Testimonial updated.');
     }
 
     protected function reorderItem($item, $newOrder)
@@ -307,6 +324,11 @@ class TestimonialController extends Controller
 
     public function reorder(Request $request)
     {
+        $request->validate([
+            'id' => 'required|integer|exists:testimonials,id',
+            'order_index' => 'required|integer|min:1',
+        ]);
+
         $id = $request->id;
         $newOrder = $request->order_index;
         $testimonial = Testimonial::findOrFail($id);

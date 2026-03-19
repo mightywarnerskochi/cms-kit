@@ -17,6 +17,7 @@
 @endphp
 
 @if($globalFields->count())
+<hr class="my-4">
 <div class="mb-4">
     <h6 class="fw-bold mb-3">Additional Fields</h6>
     <div class="row g-3">

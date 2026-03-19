@@ -4,15 +4,34 @@ namespace CMS\SiteManager\Http\Controllers;
 
 use Illuminate\Http\Request;
 use CMS\SiteManager\Models\Brand;
+use CMS\SiteManager\Models\Language;
 use Yajra\DataTables\Facades\DataTables;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Routing\Controller;
 
 class BrandController extends Controller
 {
+    protected function buildBrandTranslations(Request $request): array
+    {
+        $languages = Language::active()->get();
+        $fieldConfig = config('cms-kit.database.brands.items.extra_fields', []);
+        $translatableFields = collect($fieldConfig)->filter(fn ($field) => $field['translatable'] ?? false)->keys();
+        $translations = [];
+
+        foreach ($languages as $lang) {
+            $translations[$lang->code]['extra_fields'] = [];
+            foreach ($translatableFields as $fieldName) {
+                $translations[$lang->code]['extra_fields'][$fieldName] = $request->input("translations.{$lang->code}.extra_fields.{$fieldName}");
+            }
+        }
+
+        return $translations;
+    }
+
     public function index(Request $request)
     {
         if ($request->ajax()) {
+            $cmsUser = auth('cms')->user();
             $data = Brand::orderBy('order_index', 'asc');
             return DataTables::of($data)
                 ->addIndexColumn()
@@ -20,6 +39,9 @@ class BrandController extends Controller
                     return '<input type="checkbox" class="row-checkbox form-check-input" value="' . $row->id . '">';
                 })
                 ->addColumn('image', function ($row) {
+                    if (!$row->image) {
+                        return '<span class="text-muted">No Image</span>';
+                    }
                     return '<img src="' . asset('storage/' . $row->image) . '" class="img-thumbnail" style="height: 40px;">';
                 })
                 ->addColumn('status', function ($row) {
@@ -29,19 +51,14 @@ class BrandController extends Controller
                             </div>';
                 })
                 ->addColumn('order', function ($row) {
-                    $options = '';
-                    for ($i = 1; $i <= 100; $i++) {
-                        $selected = ($row->order_index == $i) ? 'selected' : '';
-                        $options .= "<option value='{$i}' {$selected}>{$i}</option>";
-                    }
-                    return "<select class='form-select form-select-sm reorder-select' data-id='{$row->id}'>{$options}</select>";
+                    return '<input type="number" min="1" class="form-control form-control-sm reorder-input" data-id="' . $row->id . '" value="' . $row->order_index . '" style="width: 80px;">';
                 })
-                ->addColumn('action', function ($row) {
+                ->addColumn('action', function ($row) use ($cmsUser) {
                     $btns = '<div class="btn-group">';
-                    if (auth('cms')->user()->can('brands.edit')) {
+                    if ($cmsUser && $cmsUser->can('brands.edit')) {
                         $btns .= '<a href="' . route('cms.brands.edit', $row->id) . '" class="btn btn-sm btn-outline-primary"><i class="fas fa-edit"></i></a>';
                     }
-                    if (auth('cms')->user()->can('brands.delete')) {
+                    if ($cmsUser && $cmsUser->can('brands.delete')) {
                         $btns .= '<button type="button" class="btn btn-sm btn-outline-danger delete-item" data-id="' . $row->id . '"><i class="fas fa-trash"></i></button>';
                     }
                     $btns .= '</div>';
@@ -57,7 +74,8 @@ class BrandController extends Controller
     public function create()
     {
         $imageConfig = config('cms-kit.images.brands.logo');
-        return view('cms-kit::brands.create', compact('imageConfig'));
+        $languages = Language::active()->get();
+        return view('cms-kit::brands.create', compact('imageConfig', 'languages'));
     }
 
     public function store(Request $request)
@@ -67,10 +85,12 @@ class BrandController extends Controller
         $request->validate([
             'image' => 'required|image|max:' . ($imageConfig['max_size'] ?? 512),
             'image_alt' => 'required|string|max:255',
+            'order_index' => 'nullable|integer|min:1',
         ]);
 
         $data = $request->only(['image_alt', 'order_index', 'extra_fields']);
         $data['status'] = $request->has('status');
+        $data['translations'] = $this->buildBrandTranslations($request);
 
         if ($request->hasFile('image')) {
             $data['image'] = $request->file('image')->store('brands', 'public');
@@ -89,7 +109,8 @@ class BrandController extends Controller
     {
         $brand = Brand::findOrFail($id);
         $imageConfig = config('cms-kit.images.brands.logo');
-        return view('cms-kit::brands.edit', compact('brand', 'imageConfig'));
+        $languages = Language::active()->get();
+        return view('cms-kit::brands.edit', compact('brand', 'imageConfig', 'languages'));
     }
 
     public function update(Request $request, $id)
@@ -100,10 +121,12 @@ class BrandController extends Controller
         $request->validate([
             'image' => 'nullable|image|max:' . ($imageConfig['max_size'] ?? 512),
             'image_alt' => 'required|string|max:255',
+            'order_index' => 'nullable|integer|min:1',
         ]);
 
         $data = $request->only(['image_alt', 'order_index', 'extra_fields']);
         $data['status'] = $request->has('status');
+        $data['translations'] = $this->buildBrandTranslations($request);
 
         if ($request->hasFile('image')) {
             if ($brand->image) Storage::disk('public')->delete($brand->image);
@@ -138,6 +161,11 @@ class BrandController extends Controller
 
     public function reorder(Request $request)
     {
+        $request->validate([
+            'id' => 'required|integer|exists:brands,id',
+            'order_index' => 'required|integer|min:1',
+        ]);
+
         $brand = Brand::findOrFail($request->id);
         $newOrder = $request->order_index;
         $oldOrder = $brand->order_index;
@@ -161,15 +189,29 @@ class BrandController extends Controller
 
     public function bulkAction(Request $request)
     {
-        $ids = $request->ids;
-        $action = $request->action;
+        $ids = array_filter((array) $request->input('ids', []));
+        $action = $request->input('action');
+
+        if (empty($ids) || !$action) {
+            return response()->json(['success' => false, 'message' => 'No action or items selected.'], 422);
+        }
 
         if ($action === 'delete') {
             $brands = Brand::whereIn('id', $ids)->get();
             foreach ($brands as $brand) {
-                if ($brand->image) Storage::disk('public')->delete($brand->image);
+                if ($brand->image) {
+                    Storage::disk('public')->delete($brand->image);
+                }
                 $brand->delete();
             }
+        }
+
+        if (in_array($action, ['active', 'activate'], true)) {
+            Brand::whereIn('id', $ids)->update(['status' => true]);
+        }
+
+        if (in_array($action, ['inactive', 'deactivate'], true)) {
+            Brand::whereIn('id', $ids)->update(['status' => false]);
         }
 
         return response()->json(['success' => true]);

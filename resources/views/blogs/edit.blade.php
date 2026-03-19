@@ -60,6 +60,12 @@
                                 <div class="invalid-feedback d-block">{{ $message }}</div>
                             @enderror
                         </div>
+
+                        @include('cms-kit::partials.extra-fields-translatable', [
+                            'configKey' => 'blogs.items',
+                            'lang' => $lang,
+                            'existingTranslations' => $blog->translations ?? [],
+                        ])
                     </div>
                 </div>
                 @endforeach
@@ -136,6 +142,11 @@
                     </div>
                 </div>
             </div>
+
+            @include('cms-kit::partials.extra-fields-global', [
+                'configKey' => 'blogs.items',
+                'existingValues' => $blog->extra_fields ?? [],
+            ])
 
             <div class="mt-5 border-top pt-4">
                 <button type="submit" class="btn btn-primary px-5">Update Blog Post</button>

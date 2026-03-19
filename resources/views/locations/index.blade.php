@@ -63,25 +63,18 @@
                         </div>
                         @endforeach
                     </div>
-
-                    <div class="card bg-light border-0 mb-4">
-                        <div class="card-body p-4">
-                            <h6 class="fw-bold mb-3">Additional Settings</h6>
-                            <div class="row g-4">
-                                @include('cms-kit::partials.extra-fields-global', [
-                                    'configKey' => 'locations.section',
-                                    'existingValues' => $section->extra_fields ?? [],
-                                ])
-
-                                <div class="col-md-12">
-                                    <div class="form-check form-switch">
-                                        <input class="form-check-input" type="checkbox" name="status" id="sectionStatus" {{ old('status', $section->status ?? true) ? 'checked' : '' }}>
-                                        <label class="form-check-label fw-bold" for="sectionStatus">Status</label>
-                                    </div>
+                        @include('cms-kit::partials.extra-fields-global', [
+                            'configKey' => 'locations.section',
+                            'existingValues' => $section->extra_fields ?? [],
+                        ])
+                        <div class="row g-4">
+                            <div class="col-md-12">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" name="status" id="sectionStatus" {{ old('status', $section->status ?? true) ? 'checked' : '' }}>
+                                    <label class="form-check-label fw-bold" for="sectionStatus">Status</label>
                                 </div>
                             </div>
                         </div>
-                    </div>
 
                     <div class="col-12 border-top pt-4">
                         <button type="submit" class="btn btn-primary px-4 shadow-sm">
@@ -98,10 +91,16 @@
                 <h5 class="mb-0">Locations List</h5>
                 <div class="d-flex gap-2">
                     @if($cmsUser->can('locations.delete'))
-                    <div id="bulkActions" style="display: none;">
-                        <button class="btn btn-outline-danger btn-sm" onclick="bulkAction('delete')">
-                            <i class="fas fa-trash"></i> Delete Selected (<span id="selectedCount">0</span>)
+                    <div class="dropdown" id="bulkActions" style="display: none;">
+                        <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                            Bulk Actions (<span id="selectedCount">0</span>)
                         </button>
+                        <ul class="dropdown-menu">
+                            <li><button class="dropdown-item" type="button" onclick="bulkAction('active')"><i class="fas fa-check-circle text-success me-2"></i> Mark Active</button></li>
+                            <li><button class="dropdown-item" type="button" onclick="bulkAction('inactive')"><i class="fas fa-times-circle text-secondary me-2"></i> Mark Inactive</button></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><button class="dropdown-item" type="button" onclick="bulkAction('delete')"><i class="fas fa-trash text-danger me-2"></i> Delete Selected</button></li>
+                        </ul>
                     </div>
                     @endif
                     @if($cmsUser->can('locations.create'))
@@ -136,11 +135,6 @@
     </div>
 </div>
 
-<form id="bulkForm" action="{{ route('cms.locations.bulk-action') }}" method="POST" style="display: none;">
-    @csrf
-    <input type="hidden" name="action" value="delete">
-    <div id="bulkIdsContainer"></div>
-</form>
 @endsection
 
 @push('scripts')
@@ -178,7 +172,7 @@
         });
 
         // Reorder
-        $(document).on('change', '.reorder-select', function() {
+        $(document).on('change', '.reorder-input', function() {
             const id = $(this).data('id');
             const order = $(this).val();
             $.post("{{ route('cms.locations.reorder') }}", {
@@ -216,18 +210,28 @@
             const checkedCount = $('.row-checkbox:checked').length;
             $('#selectedCount').text(checkedCount);
             $('#bulkActions').toggle(checkedCount > 0);
-            $('#selectAll').prop('checked', checkedCount > 0 && checkedCount === $('.row-checkbox').length);
+            $('#selectAll').prop('checked', checkedCount > 0 && checkedCount === $('.row-checkbox').length && $('.row-checkbox').length > 0);
         }
 
         window.bulkAction = function(action) {
-            if (confirm('Are you sure you want to perform this action?')) {
-                const container = $('#bulkIdsContainer');
-                container.empty();
-                $('.row-checkbox:checked').each(function() {
-                    container.append(`<input type="hidden" name="ids[]" value="${$(this).val()}">`);
-                });
-                $('#bulkForm').submit();
+            if (action === 'delete' && !confirm('Are you sure you want to delete selected items?')) {
+                return;
             }
+
+            const ids = $('.row-checkbox:checked').map(function() {
+                return $(this).val();
+            }).get();
+
+            $.post("{{ route('cms.locations.bulk-action') }}", {
+                _token: '{{ csrf_token() }}',
+                action: action,
+                ids: ids
+            })
+            .done(function() {
+                table.ajax.reload(null, false);
+                $('#selectAll').prop('checked', false);
+                updateBulkVisibility();
+            });
         };
     });
 </script>

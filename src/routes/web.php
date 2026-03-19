@@ -47,7 +47,9 @@ Route::middleware(['web'])->group(function () {
                 if (config('cms-kit.common.modules.testimonials', true)) {
                     Route::get('/testimonials', [TestimonialController::class, 'index'])->name('cms.testimonials.index');
                     Route::post('/testimonials/section', [TestimonialController::class, 'updateSection'])->name('cms.testimonials.update-section')->middleware('cms.permission:testimonials.edit');
+                    Route::get('/testimonials/create', [TestimonialController::class, 'create'])->name('cms.testimonials.create')->middleware('cms.permission:testimonials.edit');
                     Route::post('/testimonials', [TestimonialController::class, 'store'])->name('cms.testimonials.store')->middleware('cms.permission:testimonials.edit');
+                    Route::get('/testimonials/{id}/edit', [TestimonialController::class, 'edit'])->name('cms.testimonials.edit')->middleware('cms.permission:testimonials.edit');
                     Route::put('/testimonials/{id}', [TestimonialController::class, 'update'])->name('cms.testimonials.update')->middleware('cms.permission:testimonials.edit');
                     Route::delete('/testimonials/{id}', [TestimonialController::class, 'destroy'])->name('cms.testimonials.destroy')->middleware('cms.permission:testimonials.edit');
                     Route::post('/testimonials/{id}/toggle-status', [TestimonialController::class, 'toggleStatus'])->name('cms.testimonials.toggle-status')->middleware('cms.permission:testimonials.edit');

@@ -6,6 +6,10 @@
 @endsection
 
 @section('content')
+@php
+    $brandExtraFields = config('cms-kit.database.brands.items.extra_fields', []);
+    $hasTranslatableExtraFields = collect($brandExtraFields)->contains(fn($field) => $field['translatable'] ?? false);
+@endphp
 <div class="card">
     <div class="card-header bg-white py-3">
         <h5 class="mb-0">Edit Brand</h5>
@@ -18,6 +22,30 @@
                 <i class="fas fa-info-circle text-primary me-2"></i> 
                 <strong>Note:</strong> Update the brand logo and details. Required fields are marked with <span class="text-danger">*</span>.
             </div>
+
+            @if($hasTranslatableExtraFields)
+            <ul class="nav nav-pills mb-4 bg-light p-2 rounded-3" id="brandLanguageTabs" role="tablist">
+                @foreach($languages as $lang)
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link {{ $loop->first ? 'active' : '' }} px-4 py-2 fw-medium" id="brand-tab-{{ $lang->code }}" data-bs-toggle="tab" data-bs-target="#brand-panel-{{ $lang->code }}" type="button" role="tab">
+                        <i class="fas fa-language me-2 opacity-75"></i>{{ $lang->name }}
+                    </button>
+                </li>
+                @endforeach
+            </ul>
+
+            <div class="tab-content mb-4">
+                @foreach($languages as $lang)
+                <div class="tab-pane fade {{ $loop->first ? 'show active' : '' }}" id="brand-panel-{{ $lang->code }}" role="tabpanel">
+                    @include('cms-kit::partials.extra-fields-translatable', [
+                        'configKey' => 'brands.items',
+                        'lang' => $lang,
+                        'existingTranslations' => $brand->translations ?? [],
+                    ])
+                </div>
+                @endforeach
+            </div>
+            @endif
 
             <div class="row g-4">
                 <div class="col-12">
@@ -43,7 +71,7 @@
 
                 <div class="col-md-6">
                     <label class="form-label fw-bold">Sort Order</label>
-                    <input type="number" name="order_index" class="form-control @error('order_index') is-invalid @enderror" value="{{ old('order_index', $brand->order_index) }}">
+                    <input type="number" name="order_index" class="form-control @error('order_index') is-invalid @enderror" value="{{ old('order_index', $brand->order_index) }}" min="1">
                     @error('order_index')
                         <div class="invalid-feedback">{{ $message }}</div>
                     @enderror
@@ -71,3 +99,19 @@
     </div>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+document.addEventListener('invalid', function(e) {
+    let invalidTabPane = e.target.closest('.tab-pane');
+    if (invalidTabPane) {
+        let tabId = invalidTabPane.id;
+        let tabBtn = document.querySelector(`[data-bs-target="#${tabId}"]`);
+        if (tabBtn && !tabBtn.classList.contains('active')) {
+            bootstrap.Tab.getOrCreateInstance(tabBtn).show();
+            setTimeout(() => { e.target.focus(); }, 150);
+        }
+    }
+}, true);
+</script>
+@endpush

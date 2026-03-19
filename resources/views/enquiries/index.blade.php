@@ -39,11 +39,11 @@
         <h5 class="mb-0">Enquiries List</h5>
         @if($cmsUser->can('enquiries.delete'))
         <div class="dropdown" id="bulkActions" style="display: none;">
-            <button class="btn btn-danger btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                Delete Selected (<span id="selectedCount">0</span>)
+            <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                Bulk Actions (<span id="selectedCount">0</span>)
             </button>
             <ul class="dropdown-menu">
-                <li><button class="dropdown-item text-danger" onclick="bulkAction('delete')"><i class="fas fa-trash me-2"></i> Confirm Delete</button></li>
+                <li><button class="dropdown-item" type="button" onclick="bulkAction('delete')"><i class="fas fa-trash text-danger me-2"></i> Delete Selected</button></li>
             </ul>
         </div>
         @endif
@@ -212,10 +212,14 @@
             const checkedCount = $('.row-checkbox:checked').length;
             $('#selectedCount').text(checkedCount);
             $('#bulkActions').toggle(checkedCount > 0);
-            $('#selectAll').prop('checked', checkedCount > 0 && checkedCount === $('.row-checkbox').length);
+            $('#selectAll').prop('checked', checkedCount > 0 && checkedCount === $('.row-checkbox').length && $('.row-checkbox').length > 0);
         }
 
         window.bulkAction = function(action) {
+            if (action === 'delete' && !confirm('Are you sure you want to delete selected enquiries?')) {
+                return;
+            }
+
             const ids = $('.row-checkbox:checked').map(function() {
                 return $(this).val();
             }).get();
@@ -226,7 +230,9 @@
                 ids: ids
             })
             .done(function() {
-                table.ajax.reload();
+                table.ajax.reload(null, false);
+                $('#selectAll').prop('checked', false);
+                updateBulkVisibility();
             });
         };
     });

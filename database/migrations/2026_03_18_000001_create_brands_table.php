@@ -15,6 +15,7 @@ return new class extends Migration
             $table->integer('order_index')->default(0);
             $table->json('extra_fields')->nullable();
             $table->boolean('status')->default(true);
+            $table->json('translations')->nullable();
             $table->timestamps();
         });
     }

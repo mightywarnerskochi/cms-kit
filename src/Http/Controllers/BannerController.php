@@ -10,9 +10,12 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use CMS\SiteManager\Support\ValidatesImageDimensions;
 
 class BannerController extends Controller
 {
+    use ValidatesImageDimensions;
+
     public function index(Request $request)
     {
         if ($request->ajax()) {
@@ -132,6 +135,8 @@ class BannerController extends Controller
             'translations.*.line_1.required' => 'Banner heading is required in every language.',
             'order_index.min' => 'Display order must be at least 1.',
         ]);
+        $this->validateImageWithinLimits($request, 'image', $mainImageConfig, 'Banner image');
+        $this->validateImageArrayWithinLimits($request, 'google_avatars', $avatarConfig, 'Client avatar');
 
         $data = $request->only(['banner_type', 'video_url', 'order_index', 'status']);
         $data['status'] = $request->has('status');
@@ -255,6 +260,8 @@ class BannerController extends Controller
             'translations.*.line_1.required' => 'Banner heading is required in every language.',
             'order_index.min' => 'Display order must be at least 1.',
         ]);
+        $this->validateImageWithinLimits($request, 'image', $mainImageConfig, 'Banner image');
+        $this->validateImageArrayWithinLimits($request, 'google_avatars', $avatarConfig, 'Client avatar');
 
         $data = $request->only(['banner_type', 'video_url', 'order_index', 'status']);
         $data['status'] = $request->has('status');

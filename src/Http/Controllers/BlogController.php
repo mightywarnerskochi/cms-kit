@@ -10,9 +10,12 @@ use Yajra\DataTables\Facades\DataTables;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Str;
+use CMS\SiteManager\Support\ValidatesImageDimensions;
 
 class BlogController extends Controller
 {
+    use ValidatesImageDimensions;
+
     protected function getBlogValidationRules(bool $isUpdate = false): array
     {
         $imagesConfig = config('cms-kit.images.blogs');
@@ -162,6 +165,9 @@ class BlogController extends Controller
     {
         $imagesConfig = config('cms-kit.images.blogs');
         $request->validate($this->getBlogValidationRules());
+        foreach (['feature_image', 'detail_image', 'banner_image', 'image_3', 'image_4'] as $field) {
+            $this->validateImageWithinLimits($request, $field, $imagesConfig[$field] ?? [], str_replace('_', ' ', ucfirst($field)));
+        }
 
         $data = $request->except(['feature_image', 'detail_image', 'banner_image', 'image_3', 'image_4', 'status', 'display_home', 'slug']);
         $data['status'] = $request->has('status');
@@ -209,6 +215,9 @@ class BlogController extends Controller
         $imagesConfig = config('cms-kit.images.blogs');
 
         $request->validate($this->getBlogValidationRules(true));
+        foreach (['feature_image', 'detail_image', 'banner_image', 'image_3', 'image_4'] as $field) {
+            $this->validateImageWithinLimits($request, $field, $imagesConfig[$field] ?? [], str_replace('_', ' ', ucfirst($field)));
+        }
 
         $data = $request->except(['feature_image', 'detail_image', 'banner_image', 'image_3', 'image_4', 'status', 'display_home', 'slug']);
         $data['status'] = $request->has('status');

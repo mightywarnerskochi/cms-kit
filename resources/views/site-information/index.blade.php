@@ -9,6 +9,7 @@
     @php
         $siteInfoConfig = config('cms-kit.database.site-information', []);
         $siteInfoRequired = $siteInfoConfig['required'] ?? [];
+        $showLanguageUi = config('cms-kit.common.modules.languages', true);
         $siteInfoExtraFields = config('cms-kit.database.site-information.extra_fields', []);
         $hasTranslatableExtraFields = collect($siteInfoExtraFields)->contains(fn($field) => $field['translatable'] ?? false);
         $translations = $siteInfo->translations ?? [];
@@ -32,7 +33,13 @@
             <i class="fas fa-info-circle text-primary fs-4 me-3"></i>
             <div>
                 <h6 class="mb-1 fw-bold text-primary">Site Configuration Note</h6>
-                <p class="mb-0 text-muted small">Use language tabs for company details and legal content that should vary by language. Shared assets, contact channels, and tracking remain global.</p>
+                <p class="mb-0 text-muted small">
+                    @if($showLanguageUi)
+                        Use language tabs for company details and legal content that should vary by language. Shared assets, contact channels, and tracking remain global.
+                    @else
+                        Manage company details, legal content, shared assets, contact channels, and tracking settings here.
+                    @endif
+                </p>
             </div>
         </div>
     </div>
@@ -47,6 +54,7 @@
                         <h5 class="mb-0 fw-bold text-primary">Language Content</h5>
                     </div>
                     <div class="card-body">
+                        @if($showLanguageUi)
                         <ul class="nav nav-pills mb-4 bg-light p-2 rounded-3" id="siteInfoTabs" role="tablist">
                             @foreach($languages as $lang)
                             <li class="nav-item" role="presentation">
@@ -56,6 +64,7 @@
                             </li>
                             @endforeach
                         </ul>
+                        @endif
 
                         <div class="tab-content" id="siteInfoTabsContent">
                             @foreach($languages as $lang)

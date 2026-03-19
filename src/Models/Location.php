@@ -25,6 +25,7 @@ class Location extends Model
 
     protected $casts = [
         'translations' => 'array',
+        'phone' => 'array',
         'emails' => 'array',
         'extra_fields' => 'array',
         'status' => 'boolean',

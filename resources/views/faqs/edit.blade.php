@@ -9,6 +9,7 @@
 @php
     $faqConfig = config('cms-kit.database.faqs.items', []);
     $faqRequired = $faqConfig['required'] ?? [];
+    $showLanguageUi = config('cms-kit.common.modules.languages', true);
 @endphp
 <div class="card">
     <div class="card-header bg-white py-3">
@@ -30,10 +31,10 @@
             
             <div class="alert alert-light border-start border-primary border-4 py-2 mb-4 shadow-sm" style="font-size: 0.9rem;">
                 <i class="fas fa-info-circle text-primary me-2"></i> 
-                <strong>Note:</strong> Please ensure all required fields <span class="text-danger">(*)</span> are filled across all language tabs.
+                <strong>Note:</strong> Please ensure all required fields <span class="text-danger">(*)</span> are filled@if($showLanguageUi) across all language tabs@endif.
             </div>
 
-            <!-- Improved Language Switcher -->
+            @if($showLanguageUi)
             <ul class="nav nav-pills mb-4 bg-light p-2 rounded-3" id="langTabs" role="tablist">
                 @foreach($languages as $lang)
                 <li class="nav-item" role="presentation">
@@ -43,6 +44,7 @@
                 </li>
                 @endforeach
             </ul>
+            @endif
 
             <div class="tab-content mb-4" id="langTabsContent">
                 @foreach($languages as $lang)
@@ -50,7 +52,7 @@
                 <div class="tab-pane fade {{ $loop->first ? 'show active' : '' }}" id="{{ $lang->code }}" role="tabpanel">
                     @if($faqConfig['question'] ?? true)
                     <div class="mb-3">
-                        <label class="form-label fw-bold">Question ({{ strtoupper($lang->code) }}) {!! in_array('question', $faqRequired) ? '<span class="text-danger">*</span>' : '' !!}</label>
+                        <label class="form-label fw-bold">Question@if($showLanguageUi) ({{ strtoupper($lang->code) }})@endif {!! in_array('question', $faqRequired) ? '<span class="text-danger">*</span>' : '' !!}</label>
                         <input type="text" name="translations[{{ $lang->code }}][question]" class="form-control @error("translations.{$lang->code}.question") is-invalid @enderror" value="{{ old("translations.{$lang->code}.question", $trans['question'] ?? '') }}" {{ in_array('question', $faqRequired) ? 'required' : '' }}>
                         @error("translations.{$lang->code}.question")
                             <div class="invalid-feedback">{{ $message }}</div>
@@ -60,7 +62,7 @@
                     @endif
                     @if($faqConfig['answer'] ?? true)
                     <div class="mb-3">
-                        <label class="form-label fw-bold">Answer ({{ strtoupper($lang->code) }}) {!! in_array('answer', $faqRequired) ? '<span class="text-danger">*</span>' : '' !!}</label>
+                        <label class="form-label fw-bold">Answer@if($showLanguageUi) ({{ strtoupper($lang->code) }})@endif {!! in_array('answer', $faqRequired) ? '<span class="text-danger">*</span>' : '' !!}</label>
                         <textarea name="translations[{{ $lang->code }}][answer]" class="form-control tinymce-editor @error("translations.{$lang->code}.answer") is-invalid @enderror" rows="5">{{ old("translations.{$lang->code}.answer", $trans['answer'] ?? '') }}</textarea>
                         @error("translations.{$lang->code}.answer")
                             <div class="invalid-feedback d-block">{{ $message }}</div>

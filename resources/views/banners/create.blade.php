@@ -6,6 +6,7 @@
 @endsection
 
 @section('content')
+@php $showLanguageUi = config('cms-kit.common.modules.languages', true); @endphp
 <div class="card">
     <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
         <h5 class="mb-0">Add New Dynamic Banner</h5>
@@ -34,7 +35,7 @@
                 <strong>Note:</strong> Please ensure all required fields <span class="text-danger">(*)</span> are filled across all language tabs.
             </div>
 
-            <!-- Improved Language Switcher -->
+            @if($showLanguageUi)
             <ul class="nav nav-pills mb-4 bg-light p-2 rounded-3" id="languageTabs" role="tablist">
                 @foreach($languages as $lang)
                 <li class="nav-item" role="presentation">
@@ -44,6 +45,7 @@
                 </li>
                 @endforeach
             </ul>
+            @endif
 
             <div class="tab-content mb-4">
                 @foreach($languages as $lang)

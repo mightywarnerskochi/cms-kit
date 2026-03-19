@@ -5,6 +5,11 @@
 @endsection
 
 @section('content')
+@php
+    $showLanguageUi = config('cms-kit.common.modules.languages', true);
+    $sectionConfig = config('cms-kit.database.locations.section', []);
+    $sectionRequired = $sectionConfig['required'] ?? [];
+@endphp
 <div class="row">
     <div class="col-12">
         <!-- Section Settings -->
@@ -22,7 +27,7 @@
                         <strong>Note:</strong> These settings control the header area of your Locations page. Required fields are marked with <span class="text-danger">*</span>.
                     </div>
 
-                    <!-- Improved Language Switcher -->
+                    @if($showLanguageUi)
                     <ul class="nav nav-pills mb-4 bg-light p-2 rounded-3" id="sectionLanguageTabs" role="tablist">
                         @foreach($languages as $lang)
                         <li class="nav-item" role="presentation">
@@ -32,19 +37,23 @@
                         </li>
                         @endforeach
                     </ul>
+                    @endif
 
                     <div class="tab-content mb-4">
-                        @foreach($languages as $lang)
+                            @foreach($languages as $lang)
                         <div class="tab-pane fade {{ $loop->first ? 'show active' : '' }}" id="section-panel-{{ $lang->code }}" role="tabpanel">
                             <div class="row g-4">
+                                @if($sectionConfig['title'] ?? true)
                                 <div class="col-md-12">
-                                    <label class="form-label fw-bold">Section Title <span class="text-danger">*</span></label>
-                                    <input type="text" name="translations[{{ $lang->code }}][title]" class="form-control @error("translations.{$lang->code}.title") is-invalid @enderror" value="{{ old("translations.{$lang->code}.title", $section->translations[$lang->code]['title'] ?? '') }}" required>
+                                    <label class="form-label fw-bold">Section Title {!! in_array('title', $sectionRequired) ? '<span class="text-danger">*</span>' : '' !!}</label>
+                                    <input type="text" name="translations[{{ $lang->code }}][title]" class="form-control @error("translations.{$lang->code}.title") is-invalid @enderror" value="{{ old("translations.{$lang->code}.title", $section->translations[$lang->code]['title'] ?? '') }}" {{ in_array('title', $sectionRequired) ? 'required' : '' }}>
                                     @error("translations.{$lang->code}.title")
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                     <div class="form-text mt-1">The main heading for the locations section.</div>
                                 </div>
+                                @endif
+                                @if($sectionConfig['description'] ?? true)
                                 <div class="col-12">
                                     <label class="form-label fw-bold">Section Description</label>
                                     <textarea name="translations[{{ $lang->code }}][description]" class="form-control @error("translations.{$lang->code}.description") is-invalid @enderror" rows="3">{{ old("translations.{$lang->code}.description", $section->translations[$lang->code]['description'] ?? '') }}</textarea>
@@ -53,6 +62,7 @@
                                     @enderror
                                     <div class="form-text mt-1">A brief introductory text for the locations section.</div>
                                 </div>
+                                @endif
 
                                 @include('cms-kit::partials.extra-fields-translatable', [
                                     'configKey' => 'locations.section',
@@ -67,6 +77,7 @@
                             'configKey' => 'locations.section',
                             'existingValues' => $section->extra_fields ?? [],
                         ])
+                        @if($sectionConfig['status'] ?? true)
                         <div class="row g-4">
                             <div class="col-md-12">
                                 <div class="form-check form-switch">
@@ -75,6 +86,7 @@
                                 </div>
                             </div>
                         </div>
+                        @endif
 
                     <div class="col-12 border-top pt-4">
                         <button type="submit" class="btn btn-primary px-4 shadow-sm">

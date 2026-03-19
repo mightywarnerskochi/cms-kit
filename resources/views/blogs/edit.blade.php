@@ -9,6 +9,7 @@
 @php
     $blogConfig = config('cms-kit.database.blogs.items', []);
     $blogRequired = $blogConfig['required'] ?? [];
+    $showLanguageUi = config('cms-kit.common.modules.languages', true);
     $blogImageLabels = [
         'feature_image' => 'Feature Image (Listing)',
         'detail_image' => 'Detail Image (Hero)',
@@ -43,10 +44,10 @@
 
             <div class="alert alert-light border-start border-primary border-4 py-2 mb-4 shadow-sm" style="font-size: 0.9rem;">
                 <i class="fas fa-info-circle text-primary me-2"></i> 
-                <strong>Note:</strong> Please ensure all required fields <span class="text-danger">(*)</span> are filled across all language tabs.
+                <strong>Note:</strong> Please ensure all required fields <span class="text-danger">(*)</span> are filled@if($showLanguageUi) across all language tabs@endif.
             </div>
 
-            <!-- Improved Language Switcher -->
+            @if($showLanguageUi)
             <ul class="nav nav-pills mb-4 bg-light p-2 rounded-3" id="languageTabs" role="tablist">
                 @foreach($languages as $lang)
                 <li class="nav-item" role="presentation">
@@ -56,6 +57,7 @@
                 </li>
                 @endforeach
             </ul>
+            @endif
 
             <div class="tab-content mb-4">
                 @foreach($languages as $lang)

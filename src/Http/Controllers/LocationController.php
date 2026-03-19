@@ -9,9 +9,24 @@ use CMS\SiteManager\Models\SectionLabel;
 use Yajra\DataTables\Facades\DataTables;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Routing\Controller;
+use CMS\SiteManager\Support\ValidatesImageDimensions;
 
 class LocationController extends Controller
 {
+    use ValidatesImageDimensions;
+
+    protected function normalizeMultiValueInput(?string $value): array
+    {
+        if (!is_string($value) || trim($value) === '') {
+            return [];
+        }
+
+        return array_values(array_filter(array_map(
+            static fn ($item) => trim($item),
+            explode("\n", str_replace(["\r", ",", ";"], "\n", $value))
+        )));
+    }
+
     protected function getLocationItemValidationRules(bool $isUpdate = false): array
     {
         $imageConfig = config('cms-kit.images.locations.main_image');
@@ -28,6 +43,12 @@ class LocationController extends Controller
                 if (($itemConfig[$field] ?? true) && in_array($field, $requiredFields)) {
                     $rules["translations.{$lang->code}.{$field}"] = 'required';
                 }
+            }
+        }
+
+        foreach (['phone', 'whatsapp', 'fax', 'emails', 'map_link'] as $field) {
+            if ($itemConfig[$field] ?? true) {
+                $rules[$field] = in_array($field, $requiredFields) ? 'required' : 'nullable';
             }
         }
 
@@ -148,15 +169,17 @@ class LocationController extends Controller
     public function store(Request $request)
     {
         $request->validate($this->getLocationItemValidationRules());
+        $this->validateImageWithinLimits($request, 'image', config('cms-kit.images.locations.main_image', []), 'Location image');
+        $this->validateImageWithinLimits($request, 'flag', config('cms-kit.images.locations.flag', []), 'Flag image');
 
         $data = $request->except(['image', 'flag', 'status', 'emails', 'extra_fields']);
         $data['status'] = $request->has('status');
         $data['translations'] = $this->mergeLocationTranslatableExtraFields($request->input('translations', []));
+
+        $data['phone'] = $this->normalizeMultiValueInput($request->input('phone'));
         
         // Handle Emails
-        if ($request->filled('emails')) {
-            $data['emails'] = array_values(array_filter(explode("\n", str_replace(["\r", ",", ";"], "\n", $request->emails))));
-        }
+        $data['emails'] = $this->normalizeMultiValueInput($request->input('emails'));
 
         // Handle Extra Fields
         $extra_fields = [];
@@ -197,16 +220,16 @@ class LocationController extends Controller
     {
         $location = Location::findOrFail($id);
         $request->validate($this->getLocationItemValidationRules(true));
+        $this->validateImageWithinLimits($request, 'image', config('cms-kit.images.locations.main_image', []), 'Location image');
+        $this->validateImageWithinLimits($request, 'flag', config('cms-kit.images.locations.flag', []), 'Flag image');
 
         $data = $request->except(['image', 'flag', 'status', 'emails', 'extra_fields']);
         $data['status'] = $request->has('status');
         $data['translations'] = $this->mergeLocationTranslatableExtraFields($request->input('translations', []));
 
-        if ($request->filled('emails')) {
-            $data['emails'] = array_values(array_filter(explode("\n", str_replace(["\r", ",", ";"], "\n", $request->emails))));
-        } else {
-            $data['emails'] = [];
-        }
+        $data['phone'] = $this->normalizeMultiValueInput($request->input('phone'));
+
+        $data['emails'] = $this->normalizeMultiValueInput($request->input('emails'));
 
         // Handle Extra Fields
         $extra_fields = [];

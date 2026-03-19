@@ -8,9 +8,12 @@ use CMS\SiteManager\Models\Language;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Yajra\DataTables\Facades\DataTables;
+use CMS\SiteManager\Support\ValidatesImageDimensions;
 
 class TestimonialController extends Controller
 {
+    use ValidatesImageDimensions;
+
     public function index(Request $request)
     {
         if ($request->ajax() || $request->wantsJson()) {
@@ -187,6 +190,7 @@ class TestimonialController extends Controller
         $itemConfig = config('cms-kit.database.testimonials.items', []);
         
         $this->validateItem($request, $itemConfig, $languages);
+        $this->validateImageWithinLimits($request, 'image', config('cms-kit.images.testimonials.item_image', []), 'Testimonial image');
 
         $order = $request->order_index ?? (Testimonial::max('order_index') + 1);
         
@@ -242,6 +246,7 @@ class TestimonialController extends Controller
         $itemConfig = config('cms-kit.database.testimonials.items', []);
         
         $this->validateItem($request, $itemConfig, $languages);
+        $this->validateImageWithinLimits($request, 'image', config('cms-kit.images.testimonials.item_image', []), 'Testimonial image');
 
         $newOrder = $request->order_index ?? $testimonial->order_index;
         if ($newOrder != $testimonial->order_index) {

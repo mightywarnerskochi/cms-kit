@@ -5,6 +5,7 @@
 @endsection
 
 @section('content')
+@php $showLanguageUi = config('cms-kit.common.modules.languages', true); @endphp
 <!-- Section Settings -->
 <div class="card mb-4 shadow-sm border-0">
     <div class="card-body">
@@ -19,7 +20,7 @@
                 <strong>Note:</strong> Please ensure all required fields <span class="text-danger">(*)</span> are filled across all language tabs.
             </div>
 
-            <!-- Improved Language Switcher -->
+            @if($showLanguageUi)
             <ul class="nav nav-pills mb-4 bg-light p-2 rounded-3" id="sectionTabs" role="tablist">
                 @foreach($languages as $lang)
                 <li class="nav-item" role="presentation">
@@ -29,13 +30,14 @@
                 </li>
                 @endforeach
             </ul>
+            @endif
 
             <div class="tab-content" id="sectionTabsContent">
                 @foreach($languages as $lang)
                 <div class="tab-pane fade {{ $loop->first ? 'show active' : '' }}" id="section-{{ $lang->code }}" role="tabpanel">
                     <div class="row g-4">
                         <div class="col-md-6">
-                            <label class="form-label fw-bold">Section Title ({{ strtoupper($lang->code) }}) <span class="text-danger">*</span></label>
+                            <label class="form-label fw-bold">Section Title@if($showLanguageUi) ({{ strtoupper($lang->code) }})@endif <span class="text-danger">*</span></label>
                             <input type="text" name="translations[{{ $lang->code }}][title]" class="form-control @error("translations.{$lang->code}.title") is-invalid @enderror" value="{{ $section->translations[$lang->code]['title'] ?? '' }}" required>
                             @error("translations.{$lang->code}.title")
                                 <div class="invalid-feedback">{{ $message }}</div>
@@ -44,7 +46,7 @@
                         </div>
                         
                         <div class="col-12 mt-3">
-                            <label class="form-label fw-bold">Section Description ({{ strtoupper($lang->code) }})</label>
+                            <label class="form-label fw-bold">Section Description@if($showLanguageUi) ({{ strtoupper($lang->code) }})@endif</label>
                             <textarea name="translations[{{ $lang->code }}][description]" class="form-control @error("translations.{$lang->code}.description") is-invalid @enderror" rows="2">{{ $section->translations[$lang->code]['description'] ?? '' }}</textarea>
                             @error("translations.{$lang->code}.description")
                                 <div class="invalid-feedback">{{ $message }}</div>

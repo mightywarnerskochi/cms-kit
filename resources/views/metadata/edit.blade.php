@@ -13,7 +13,7 @@
     <div class="card-body p-4">
         <div class="alert alert-light border-start border-primary border-4 py-2 mb-4 shadow-sm" style="font-size: 0.9rem;">
             <i class="fas fa-info-circle text-primary me-2"></i> 
-            <strong>Note:</strong> Manage SEO settings in English. Required fields are marked with <span class="text-danger">*</span>.
+            <strong>Note:</strong> Manage SEO settings@if(config('cms-kit.common.modules.languages', true)) in English@endif. Required fields are marked with <span class="text-danger">*</span>.
         </div>
 
         <form action="{{ route('cms.metadata.update', $metadata->id) }}" method="POST" enctype="multipart/form-data">

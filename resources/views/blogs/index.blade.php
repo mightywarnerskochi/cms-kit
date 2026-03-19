@@ -5,6 +5,7 @@
 @endsection
 
 @section('content')
+@php $showLanguageUi = config('cms-kit.common.modules.languages', true); @endphp
 <div class="row">
     <div class="col-12">
         <!-- Section Settings -->
@@ -22,7 +23,7 @@
                         <strong>Note:</strong> These settings control the header area of your Blogs page. Required fields are marked with <span class="text-danger">*</span>.
                     </div>
 
-                    <!-- Improved Language Switcher -->
+                    @if($showLanguageUi)
                     <ul class="nav nav-pills mb-4 bg-light p-2 rounded-3" id="blogSectionTabs" role="tablist">
                         @foreach($languages as $lang)
                         <li class="nav-item" role="presentation">
@@ -32,6 +33,7 @@
                         </li>
                         @endforeach
                     </ul>
+                    @endif
 
                     <div class="tab-content mb-4" id="blogSectionContent">
                         @foreach($languages as $lang)

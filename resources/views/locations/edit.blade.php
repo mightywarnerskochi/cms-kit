@@ -9,6 +9,7 @@
 @php
     $locationConfig = config('cms-kit.database.locations.items', []);
     $locationRequired = $locationConfig['required'] ?? [];
+    $showLanguageUi = config('cms-kit.common.modules.languages', true);
 @endphp
 <div class="card">
     <div class="card-header bg-white py-3">
@@ -20,10 +21,10 @@
             @method('PUT')
             <div class="alert alert-light border-start border-primary border-4 py-2 mb-4 shadow-sm" style="font-size: 0.9rem;">
                 <i class="fas fa-info-circle text-primary me-2"></i> 
-                <strong>Note:</strong> Please ensure all required fields <span class="text-danger">(*)</span> are filled across all language tabs.
+                <strong>Note:</strong> Please ensure all required fields <span class="text-danger">(*)</span> are filled@if($showLanguageUi) across all language tabs@endif.
             </div>
 
-            <!-- Improved Language Switcher -->
+            @if($showLanguageUi)
             <ul class="nav nav-pills mb-4 bg-light p-2 rounded-3" id="langTabs" role="tablist">
                 @foreach($languages as $lang)
                 <li class="nav-item" role="presentation">
@@ -33,6 +34,7 @@
                 </li>
                 @endforeach
             </ul>
+            @endif
 
             <div class="tab-content mb-4">
                 @foreach($languages as $lang)
@@ -82,27 +84,27 @@
                 <!-- Images -->
                 @if($locationConfig['image'] ?? true)
                 <div class="col-md-6">
-                    <label class="form-label d-block">Location Image</label>
+                    <label class="form-label d-block">Location Image {!! in_array('image', $locationRequired) ? '<span class="text-danger">*</span>' : '' !!}</label>
                     <small class="text-muted d-block mb-1">Recommended size: {{ $imageConfig['width'] }}x{{ $imageConfig['height'] }}px, Max: {{ $imageConfig['max_size'] }}KB</small>
                     @if($location->image)
                         <div class="mb-2">
                             <img src="{{ asset('storage/' . $location->image) }}" class="img-thumbnail" style="height: 100px;">
                         </div>
                     @endif
-                    <input type="file" name="image" class="form-control">
+                    <input type="file" name="image" class="form-control" {{ in_array('image', $locationRequired) ? 'required' : '' }}>
                     <input type="text" name="image_alt" class="form-control mt-2" value="{{ old('image_alt', $location->image_alt) }}" placeholder="Image ALT text">
                 </div>
                 @endif
                 @if($locationConfig['flag'] ?? true)
                 <div class="col-md-6">
-                    <label class="form-label d-block">Flag Image</label>
+                    <label class="form-label d-block">Flag Image {!! in_array('flag', $locationRequired) ? '<span class="text-danger">*</span>' : '' !!}</label>
                     <small class="text-muted d-block mb-1">Recommended size: {{ $flagConfig['width'] }}x{{ $flagConfig['height'] }}px, Max: {{ $flagConfig['max_size'] }}KB</small>
                     @if($location->flag)
                         <div class="mb-2">
                             <img src="{{ asset('storage/' . $location->flag) }}" class="img-thumbnail" style="height: 100px;">
                         </div>
                     @endif
-                    <input type="file" name="flag" class="form-control">
+                    <input type="file" name="flag" class="form-control" {{ in_array('flag', $locationRequired) ? 'required' : '' }}>
                     <input type="text" name="flag_alt" class="form-control mt-2" value="{{ old('flag_alt', $location->flag_alt) }}" placeholder="Flag ALT text">
                 </div>
                 @endif
@@ -110,27 +112,28 @@
                 <!-- Contact info -->
                 @if($locationConfig['phone'] ?? true)
                 <div class="col-md-4">
-                    <label class="form-label">Phone</label>
-                    <input type="text" name="phone" class="form-control" value="{{ old('phone', $location->phone) }}" placeholder="+971 4 123 4567">
+                    <label class="form-label">Phone Numbers {!! in_array('phone', $locationRequired) ? '<span class="text-danger">*</span>' : '' !!}</label>
+                    <textarea name="phone" class="form-control" rows="3" placeholder="One phone per line" {{ in_array('phone', $locationRequired) ? 'required' : '' }}>{{ old('phone', is_array($location->phone) ? implode("\n", $location->phone) : ($location->phone ?? '')) }}</textarea>
+                    <small class="text-muted">Enter one phone number per line. Comma or semicolon also accepted.</small>
                 </div>
                 @endif
                 @if($locationConfig['whatsapp'] ?? true)
                 <div class="col-md-4">
-                    <label class="form-label">WhatsApp</label>
-                    <input type="text" name="whatsapp" class="form-control" value="{{ old('whatsapp', $location->whatsapp) }}" placeholder="+971 50 123 4567">
+                    <label class="form-label">WhatsApp {!! in_array('whatsapp', $locationRequired) ? '<span class="text-danger">*</span>' : '' !!}</label>
+                    <input type="text" name="whatsapp" class="form-control" value="{{ old('whatsapp', $location->whatsapp) }}" placeholder="+971 50 123 4567" {{ in_array('whatsapp', $locationRequired) ? 'required' : '' }}>
                 </div>
                 @endif
                 @if($locationConfig['fax'] ?? true)
                 <div class="col-md-4">
-                    <label class="form-label">Fax</label>
-                    <input type="text" name="fax" class="form-control" value="{{ old('fax', $location->fax) }}">
+                    <label class="form-label">Fax {!! in_array('fax', $locationRequired) ? '<span class="text-danger">*</span>' : '' !!}</label>
+                    <input type="text" name="fax" class="form-control" value="{{ old('fax', $location->fax) }}" {{ in_array('fax', $locationRequired) ? 'required' : '' }}>
                 </div>
                 @endif
 
                 @if($locationConfig['emails'] ?? true)
                 <div class="col-12">
-                    <label class="form-label">Emails (multiple)</label>
-                    <textarea name="emails" class="form-control" rows="3" placeholder="One email per line">{{ old('emails', is_array($location->emails) ? implode("\n", $location->emails) : '') }}</textarea>
+                    <label class="form-label">Emails (multiple) {!! in_array('emails', $locationRequired) ? '<span class="text-danger">*</span>' : '' !!}</label>
+                    <textarea name="emails" class="form-control" rows="3" placeholder="One email per line" {{ in_array('emails', $locationRequired) ? 'required' : '' }}>{{ old('emails', is_array($location->emails) ? implode("\n", $location->emails) : '') }}</textarea>
                     <small class="text-muted">Enter one email per line. Comma or semicolon also accepted.</small>
                 </div>
                 @endif
@@ -138,8 +141,8 @@
                 <!-- Map -->
                 @if($locationConfig['map_link'] ?? true)
                 <div class="col-12">
-                    <label class="form-label">Google Map Link / Embed URL</label>
-                    <input type="text" name="map_link" class="form-control" value="{{ old('map_link', $location->map_link) }}" placeholder="https://maps.google.com/...">
+                    <label class="form-label">Google Map Link / Embed URL {!! in_array('map_link', $locationRequired) ? '<span class="text-danger">*</span>' : '' !!}</label>
+                    <input type="text" name="map_link" class="form-control" value="{{ old('map_link', $location->map_link) }}" placeholder="https://maps.google.com/..." {{ in_array('map_link', $locationRequired) ? 'required' : '' }}>
                 </div>
                 @endif
 

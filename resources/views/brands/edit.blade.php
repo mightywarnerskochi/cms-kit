@@ -9,6 +9,7 @@
 @php
     $brandConfig = config('cms-kit.database.brands.items', []);
     $brandRequired = $brandConfig['required'] ?? [];
+    $showLanguageUi = config('cms-kit.common.modules.languages', true);
     $brandExtraFields = config('cms-kit.database.brands.items.extra_fields', []);
     $hasTranslatableExtraFields = collect($brandExtraFields)->contains(fn($field) => $field['translatable'] ?? false);
 @endphp
@@ -25,7 +26,7 @@
                 <strong>Note:</strong> Update the brand logo and details. Required fields are marked with <span class="text-danger">*</span>.
             </div>
 
-            @if($hasTranslatableExtraFields)
+            @if($hasTranslatableExtraFields && $showLanguageUi)
             <ul class="nav nav-pills mb-4 bg-light p-2 rounded-3" id="brandLanguageTabs" role="tablist">
                 @foreach($languages as $lang)
                 <li class="nav-item" role="presentation">

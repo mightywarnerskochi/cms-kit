@@ -8,9 +8,12 @@ use CMS\SiteManager\Models\Language;
 use Yajra\DataTables\Facades\DataTables;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Routing\Controller;
+use CMS\SiteManager\Support\ValidatesImageDimensions;
 
 class BrandController extends Controller
 {
+    use ValidatesImageDimensions;
+
     protected function getValidationRules(bool $isUpdate = false): array
     {
         $imageConfig = config('cms-kit.images.brands.logo');
@@ -94,6 +97,7 @@ class BrandController extends Controller
     public function store(Request $request)
     {
         $request->validate($this->getValidationRules());
+        $this->validateImageWithinLimits($request, 'image', config('cms-kit.images.brands.logo', []), 'Brand logo');
 
         $data = $request->only(['image_alt', 'order_index', 'extra_fields']);
         $data['status'] = $request->has('status');
@@ -124,6 +128,7 @@ class BrandController extends Controller
     {
         $brand = Brand::findOrFail($id);
         $request->validate($this->getValidationRules(true));
+        $this->validateImageWithinLimits($request, 'image', config('cms-kit.images.brands.logo', []), 'Brand logo');
 
         $data = $request->only(['image_alt', 'order_index', 'extra_fields']);
         $data['status'] = $request->has('status');

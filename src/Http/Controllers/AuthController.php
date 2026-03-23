@@ -26,7 +26,7 @@ class AuthController extends Controller
 
         if (Auth::guard('cms')->attempt($request->only('email', 'password'), $request->filled('remember'))) {
             $request->session()->regenerate();
-            return redirect()->intended(route('cms.testimonials.index'));
+            return redirect()->intended(route('cms.dashboard'));
         }
 
         return back()->withErrors(['email' => 'Invalid credentials.'])->withInput($request->only('email'));

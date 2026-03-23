@@ -50,6 +50,7 @@ class SiteManagerServiceProvider extends ServiceProvider
         if ($this->app->runningInConsole()) {
             $this->commands([
                 \CMS\SiteManager\Console\Commands\SitemapGenerateCommand::class,
+                \CMS\SiteManager\Console\Commands\PublishOverridesCommand::class,
             ]);
         }
 
@@ -69,15 +70,6 @@ class SiteManagerServiceProvider extends ServiceProvider
             __DIR__ . '/../resources/views' => resource_path('views/vendor/cms-kit'),
         ], 'cms-kit-views');
 
-        // Publish Controllers (optional for user customization)
-        $this->publishes([
-            __DIR__ . '/Http/Controllers' => app_path('Http/Controllers/CmsKit'),
-        ], 'cms-kit-controllers');
-
-        // Publish Models (optional for user customization)
-        $this->publishes([
-            __DIR__ . '/Models' => app_path('Models/CmsKit'),
-        ], 'cms-kit-models');
     }
 
     /**
@@ -91,6 +83,9 @@ class SiteManagerServiceProvider extends ServiceProvider
         $this->mergeConfigFrom(
             __DIR__ . '/../config/cms-kit.php', 'cms-kit'
         );
+
+        // Prefer app overrides when published copies exist.
+        $this->registerAppOverrides();
 
         // Configure Guard
         $this->setupAuth();
@@ -123,6 +118,28 @@ class SiteManagerServiceProvider extends ServiceProvider
             $model = is_numeric($key) ? $value : $key;
             if (class_exists($model)) {
                 $model::observe(\CMS\SiteManager\Observers\SitemapObserver::class);
+            }
+        }
+    }
+
+    protected function registerAppOverrides(): void
+    {
+        $this->registerOverrideAliases('Models', app()->getNamespace() . 'Models\\CmsKit\\');
+        $this->registerOverrideAliases('Http/Controllers', app()->getNamespace() . 'Http\\Controllers\\CmsKit\\');
+    }
+
+    protected function registerOverrideAliases(string $relativePath, string $appNamespace): void
+    {
+        $directory = __DIR__ . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $relativePath);
+        $packageNamespace = 'CMS\\SiteManager\\' . str_replace('/', '\\', $relativePath) . '\\';
+
+        foreach (glob($directory . DIRECTORY_SEPARATOR . '*.php') ?: [] as $file) {
+            $className = pathinfo($file, PATHINFO_FILENAME);
+            $overrideClass = $appNamespace . $className;
+            $packageClass = $packageNamespace . $className;
+
+            if (class_exists($overrideClass) && !class_exists($packageClass, false)) {
+                class_alias($overrideClass, $packageClass);
             }
         }
     }

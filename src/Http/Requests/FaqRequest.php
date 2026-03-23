@@ -2,7 +2,7 @@
 
 namespace CMS\SiteManager\Http\Requests;
 
-use CMS\SiteManager\Models\Language;
+use CMS\SiteManager\Models\CmsKit\Language;
 use Illuminate\Foundation\Http\FormRequest;
 
 class FaqRequest extends FormRequest
@@ -43,3 +43,4 @@ class FaqRequest extends FormRequest
         return $rules;
     }
 }
+

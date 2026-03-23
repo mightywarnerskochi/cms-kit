@@ -1,13 +1,13 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use CMS\SiteManager\Http\Controllers\TestimonialController;
-use CMS\SiteManager\Http\Controllers\AuthController;
-use CMS\SiteManager\Http\Controllers\ForgotPasswordController;
-use CMS\SiteManager\Http\Controllers\ResetPasswordController;
-use CMS\SiteManager\Http\Controllers\LanguageController;
-use CMS\SiteManager\Http\Controllers\MetadataController;
-use CMS\SiteManager\Http\Controllers\BannerController;
+use CMS\SiteManager\Http\Controllers\CmsKit\TestimonialController;
+use CMS\SiteManager\Http\Controllers\CmsKit\AuthController;
+use CMS\SiteManager\Http\Controllers\CmsKit\ForgotPasswordController;
+use CMS\SiteManager\Http\Controllers\CmsKit\ResetPasswordController;
+use CMS\SiteManager\Http\Controllers\CmsKit\LanguageController;
+use CMS\SiteManager\Http\Controllers\CmsKit\MetadataController;
+use CMS\SiteManager\Http\Controllers\CmsKit\BannerController;
 
 Route::middleware(['web'])->group(function () {
     Route::prefix(config('cms-kit.common.auth.prefix', 'admin'))->group(function () {
@@ -24,8 +24,8 @@ Route::middleware(['web'])->group(function () {
         // Protected Routes
         Route::middleware(['cms.auth'])->group(function () {
             // Dashboard
-            Route::get('/', [CMS\SiteManager\Http\Controllers\DashboardController::class, 'index'])->name('cms.dashboard');
-            Route::get('/dashboard', [CMS\SiteManager\Http\Controllers\DashboardController::class, 'index']);
+            Route::get('/', [CMS\SiteManager\Http\Controllers\CmsKit\DashboardController::class, 'index'])->name('cms.dashboard');
+            Route::get('/dashboard', [CMS\SiteManager\Http\Controllers\CmsKit\DashboardController::class, 'index']);
 
             // Banners
             Route::middleware(['cms.permission:banners.view'])->group(function () {
@@ -81,86 +81,86 @@ Route::middleware(['web'])->group(function () {
 
             // Site Information
             Route::middleware(['cms.permission:site-information.view'])->group(function () {
-                Route::get('/site-information', [\CMS\SiteManager\Http\Controllers\SiteInformationController::class, 'index'])->name('cms.site-information.index');
-                Route::post('/site-information', [\CMS\SiteManager\Http\Controllers\SiteInformationController::class, 'update'])->name('cms.site-information.update')->middleware('cms.permission:site-information.edit');
+                Route::get('/site-information', [\CMS\SiteManager\Http\Controllers\CmsKit\SiteInformationController::class, 'index'])->name('cms.site-information.index');
+                Route::post('/site-information', [\CMS\SiteManager\Http\Controllers\CmsKit\SiteInformationController::class, 'update'])->name('cms.site-information.update')->middleware('cms.permission:site-information.edit');
             });
 
             // RBAC Management
             Route::middleware(['cms.permission:roles.view'])->group(function () {
-                Route::get('/roles', [\CMS\SiteManager\Http\Controllers\RoleController::class, 'index'])->name('cms.roles.index');
-                Route::get('/roles/create', [\CMS\SiteManager\Http\Controllers\RoleController::class, 'create'])->name('cms.roles.create')->middleware('cms.permission:roles.edit');
-                Route::post('/roles', [\CMS\SiteManager\Http\Controllers\RoleController::class, 'store'])->name('cms.roles.store')->middleware('cms.permission:roles.edit');
-                Route::get('/roles/{id}/edit', [\CMS\SiteManager\Http\Controllers\RoleController::class, 'edit'])->name('cms.roles.edit')->middleware('cms.permission:roles.edit');
-                Route::put('/roles/{id}', [\CMS\SiteManager\Http\Controllers\RoleController::class, 'update'])->name('cms.roles.update')->middleware('cms.permission:roles.edit');
-                Route::delete('/roles/{id}', [\CMS\SiteManager\Http\Controllers\RoleController::class, 'destroy'])->name('cms.roles.destroy')->middleware('cms.permission:roles.edit');
-                Route::post('/permissions', [\CMS\SiteManager\Http\Controllers\RoleController::class, 'storePermission'])->name('cms.permissions.store')->middleware('cms.permission:roles.edit');
+                Route::get('/roles', [\CMS\SiteManager\Http\Controllers\CmsKit\RoleController::class, 'index'])->name('cms.roles.index');
+                Route::get('/roles/create', [\CMS\SiteManager\Http\Controllers\CmsKit\RoleController::class, 'create'])->name('cms.roles.create')->middleware('cms.permission:roles.edit');
+                Route::post('/roles', [\CMS\SiteManager\Http\Controllers\CmsKit\RoleController::class, 'store'])->name('cms.roles.store')->middleware('cms.permission:roles.edit');
+                Route::get('/roles/{id}/edit', [\CMS\SiteManager\Http\Controllers\CmsKit\RoleController::class, 'edit'])->name('cms.roles.edit')->middleware('cms.permission:roles.edit');
+                Route::put('/roles/{id}', [\CMS\SiteManager\Http\Controllers\CmsKit\RoleController::class, 'update'])->name('cms.roles.update')->middleware('cms.permission:roles.edit');
+                Route::delete('/roles/{id}', [\CMS\SiteManager\Http\Controllers\CmsKit\RoleController::class, 'destroy'])->name('cms.roles.destroy')->middleware('cms.permission:roles.edit');
+                Route::post('/permissions', [\CMS\SiteManager\Http\Controllers\CmsKit\RoleController::class, 'storePermission'])->name('cms.permissions.store')->middleware('cms.permission:roles.edit');
             });
 
             Route::middleware(['cms.permission:users.view'])->group(function () {
-                Route::get('/admins', [\CMS\SiteManager\Http\Controllers\AdminController::class, 'index'])->name('cms.admins.index');
-                Route::get('/admins/create', [\CMS\SiteManager\Http\Controllers\AdminController::class, 'create'])->name('cms.admins.create')->middleware('cms.permission:users.edit');
-                Route::post('/admins', [\CMS\SiteManager\Http\Controllers\AdminController::class, 'store'])->name('cms.admins.store')->middleware('cms.permission:users.edit');
-                Route::get('/admins/{id}/edit', [\CMS\SiteManager\Http\Controllers\AdminController::class, 'edit'])->name('cms.admins.edit')->middleware('cms.permission:users.edit');
-                Route::put('/admins/{id}', [\CMS\SiteManager\Http\Controllers\AdminController::class, 'update'])->name('cms.admins.update')->middleware('cms.permission:users.edit');
-                Route::delete('/admins/{id}', [\CMS\SiteManager\Http\Controllers\AdminController::class, 'destroy'])->name('cms.admins.destroy')->middleware('cms.permission:users.edit');
-                Route::post('/admins/{id}/toggle-status', [\CMS\SiteManager\Http\Controllers\AdminController::class, 'toggleStatus'])->name('cms.admins.toggle-status')->middleware('cms.permission:users.edit');
+                Route::get('/admins', [\CMS\SiteManager\Http\Controllers\CmsKit\AdminController::class, 'index'])->name('cms.admins.index');
+                Route::get('/admins/create', [\CMS\SiteManager\Http\Controllers\CmsKit\AdminController::class, 'create'])->name('cms.admins.create')->middleware('cms.permission:users.edit');
+                Route::post('/admins', [\CMS\SiteManager\Http\Controllers\CmsKit\AdminController::class, 'store'])->name('cms.admins.store')->middleware('cms.permission:users.edit');
+                Route::get('/admins/{id}/edit', [\CMS\SiteManager\Http\Controllers\CmsKit\AdminController::class, 'edit'])->name('cms.admins.edit')->middleware('cms.permission:users.edit');
+                Route::put('/admins/{id}', [\CMS\SiteManager\Http\Controllers\CmsKit\AdminController::class, 'update'])->name('cms.admins.update')->middleware('cms.permission:users.edit');
+                Route::delete('/admins/{id}', [\CMS\SiteManager\Http\Controllers\CmsKit\AdminController::class, 'destroy'])->name('cms.admins.destroy')->middleware('cms.permission:users.edit');
+                Route::post('/admins/{id}/toggle-status', [\CMS\SiteManager\Http\Controllers\CmsKit\AdminController::class, 'toggleStatus'])->name('cms.admins.toggle-status')->middleware('cms.permission:users.edit');
             });
 
             Route::middleware(['cms.permission:roles.view'])->group(function () {
-                Route::get('/permissions', [\CMS\SiteManager\Http\Controllers\PermissionController::class, 'index'])->name('cms.permissions.index');
-                Route::post('/permissions', [\CMS\SiteManager\Http\Controllers\PermissionController::class, 'store'])->name('cms.permissions.store');
-                Route::put('/permissions/{id}', [\CMS\SiteManager\Http\Controllers\PermissionController::class, 'update'])->name('cms.permissions.update');
-                Route::delete('/permissions/{id}', [\CMS\SiteManager\Http\Controllers\PermissionController::class, 'destroy'])->name('cms.permissions.destroy');
+                Route::get('/permissions', [\CMS\SiteManager\Http\Controllers\CmsKit\PermissionController::class, 'index'])->name('cms.permissions.index');
+                Route::post('/permissions', [\CMS\SiteManager\Http\Controllers\CmsKit\PermissionController::class, 'store'])->name('cms.permissions.store');
+                Route::put('/permissions/{id}', [\CMS\SiteManager\Http\Controllers\CmsKit\PermissionController::class, 'update'])->name('cms.permissions.update');
+                Route::delete('/permissions/{id}', [\CMS\SiteManager\Http\Controllers\CmsKit\PermissionController::class, 'destroy'])->name('cms.permissions.destroy');
             });
 
             // Sitemap
             Route::middleware(['cms.permission:sitemap.view'])->group(function () {
-                Route::get('/sitemap', [\CMS\SiteManager\Http\Controllers\SitemapController::class, 'index'])->name('cms.sitemap.index');
-                Route::get('/sitemap/generate', [\CMS\SiteManager\Http\Controllers\SitemapController::class, 'generate'])->name('cms.sitemap.generate')->middleware('cms.permission:sitemap.edit');
-                Route::get('/sitemap/edit', [\CMS\SiteManager\Http\Controllers\SitemapController::class, 'edit'])->name('cms.sitemap.edit')->middleware('cms.permission:sitemap.edit');
-                Route::post('/sitemap/update', [\CMS\SiteManager\Http\Controllers\SitemapController::class, 'update'])->name('cms.sitemap.update')->middleware('cms.permission:sitemap.edit');
+                Route::get('/sitemap', [\CMS\SiteManager\Http\Controllers\CmsKit\SitemapController::class, 'index'])->name('cms.sitemap.index');
+                Route::get('/sitemap/generate', [\CMS\SiteManager\Http\Controllers\CmsKit\SitemapController::class, 'generate'])->name('cms.sitemap.generate')->middleware('cms.permission:sitemap.edit');
+                Route::get('/sitemap/edit', [\CMS\SiteManager\Http\Controllers\CmsKit\SitemapController::class, 'edit'])->name('cms.sitemap.edit')->middleware('cms.permission:sitemap.edit');
+                Route::post('/sitemap/update', [\CMS\SiteManager\Http\Controllers\CmsKit\SitemapController::class, 'update'])->name('cms.sitemap.update')->middleware('cms.permission:sitemap.edit');
             });
 
             // FAQs
             Route::middleware(['cms.permission:faqs.view'])->group(function () {
                 if (config('cms-kit.common.modules.faqs', true)) {
-                    Route::get('/faqs', [\CMS\SiteManager\Http\Controllers\FaqController::class, 'index'])->name('cms.faqs.index');
-                    Route::post('/faqs/section', [\CMS\SiteManager\Http\Controllers\FaqController::class, 'updateSection'])->name('cms.faqs.update-section')->middleware('cms.permission:faqs.edit');
-                    Route::get('/faqs/create', [\CMS\SiteManager\Http\Controllers\FaqController::class, 'create'])->name('cms.faqs.create')->middleware('cms.permission:faqs.edit');
-                    Route::post('/faqs', [\CMS\SiteManager\Http\Controllers\FaqController::class, 'store'])->name('cms.faqs.store')->middleware('cms.permission:faqs.edit');
-                    Route::get('/faqs/{id}/edit', [\CMS\SiteManager\Http\Controllers\FaqController::class, 'edit'])->name('cms.faqs.edit')->middleware('cms.permission:faqs.edit');
-                    Route::put('/faqs/{id}', [\CMS\SiteManager\Http\Controllers\FaqController::class, 'update'])->name('cms.faqs.update')->middleware('cms.permission:faqs.edit');
-                    Route::delete('/faqs/{id}', [\CMS\SiteManager\Http\Controllers\FaqController::class, 'destroy'])->name('cms.faqs.destroy')->middleware('cms.permission:faqs.edit');
-                    Route::post('/faqs/{id}/toggle-status', [\CMS\SiteManager\Http\Controllers\FaqController::class, 'toggleStatus'])->name('cms.faqs.toggle-status')->middleware('cms.permission:faqs.edit');
-                    Route::post('/faqs/reorder', [\CMS\SiteManager\Http\Controllers\FaqController::class, 'reorder'])->name('cms.faqs.reorder')->middleware('cms.permission:faqs.edit');
-                    Route::post('/faqs/bulk-action', [\CMS\SiteManager\Http\Controllers\FaqController::class, 'bulkAction'])->name('cms.faqs.bulk-action')->middleware('cms.permission:faqs.edit');
+                    Route::get('/faqs', [\CMS\SiteManager\Http\Controllers\CmsKit\FaqController::class, 'index'])->name('cms.faqs.index');
+                    Route::post('/faqs/section', [\CMS\SiteManager\Http\Controllers\CmsKit\FaqController::class, 'updateSection'])->name('cms.faqs.update-section')->middleware('cms.permission:faqs.edit');
+                    Route::get('/faqs/create', [\CMS\SiteManager\Http\Controllers\CmsKit\FaqController::class, 'create'])->name('cms.faqs.create')->middleware('cms.permission:faqs.edit');
+                    Route::post('/faqs', [\CMS\SiteManager\Http\Controllers\CmsKit\FaqController::class, 'store'])->name('cms.faqs.store')->middleware('cms.permission:faqs.edit');
+                    Route::get('/faqs/{id}/edit', [\CMS\SiteManager\Http\Controllers\CmsKit\FaqController::class, 'edit'])->name('cms.faqs.edit')->middleware('cms.permission:faqs.edit');
+                    Route::put('/faqs/{id}', [\CMS\SiteManager\Http\Controllers\CmsKit\FaqController::class, 'update'])->name('cms.faqs.update')->middleware('cms.permission:faqs.edit');
+                    Route::delete('/faqs/{id}', [\CMS\SiteManager\Http\Controllers\CmsKit\FaqController::class, 'destroy'])->name('cms.faqs.destroy')->middleware('cms.permission:faqs.edit');
+                    Route::post('/faqs/{id}/toggle-status', [\CMS\SiteManager\Http\Controllers\CmsKit\FaqController::class, 'toggleStatus'])->name('cms.faqs.toggle-status')->middleware('cms.permission:faqs.edit');
+                    Route::post('/faqs/reorder', [\CMS\SiteManager\Http\Controllers\CmsKit\FaqController::class, 'reorder'])->name('cms.faqs.reorder')->middleware('cms.permission:faqs.edit');
+                    Route::post('/faqs/bulk-action', [\CMS\SiteManager\Http\Controllers\CmsKit\FaqController::class, 'bulkAction'])->name('cms.faqs.bulk-action')->middleware('cms.permission:faqs.edit');
                 }
             });
 
             // Enquiries
             Route::middleware(['cms.permission:enquiries.view'])->group(function () {
                 if (config('cms-kit.common.modules.enquiries', true)) {
-                    Route::get('/enquiries', [\CMS\SiteManager\Http\Controllers\EnquiryController::class, 'index'])->name('cms.enquiries.index');
-                    Route::get('/enquiries/export', [\CMS\SiteManager\Http\Controllers\EnquiryController::class, 'export'])->name('cms.enquiries.export')->middleware('cms.permission:enquiries.export');
-                    Route::get('/enquiries/{id}', [\CMS\SiteManager\Http\Controllers\EnquiryController::class, 'show'])->name('cms.enquiries.show')->middleware('cms.permission:enquiries.show');
-                    Route::delete('/enquiries/{id}', [\CMS\SiteManager\Http\Controllers\EnquiryController::class, 'destroy'])->name('cms.enquiries.destroy')->middleware('cms.permission:enquiries.delete');
-                    Route::post('/enquiries/bulk-action', [\CMS\SiteManager\Http\Controllers\EnquiryController::class, 'bulkAction'])->name('cms.enquiries.bulk-action')->middleware('cms.permission:enquiries.delete');
+                    Route::get('/enquiries', [\CMS\SiteManager\Http\Controllers\CmsKit\EnquiryController::class, 'index'])->name('cms.enquiries.index');
+                    Route::get('/enquiries/export', [\CMS\SiteManager\Http\Controllers\CmsKit\EnquiryController::class, 'export'])->name('cms.enquiries.export')->middleware('cms.permission:enquiries.export');
+                    Route::get('/enquiries/{id}', [\CMS\SiteManager\Http\Controllers\CmsKit\EnquiryController::class, 'show'])->name('cms.enquiries.show')->middleware('cms.permission:enquiries.show');
+                    Route::delete('/enquiries/{id}', [\CMS\SiteManager\Http\Controllers\CmsKit\EnquiryController::class, 'destroy'])->name('cms.enquiries.destroy')->middleware('cms.permission:enquiries.delete');
+                    Route::post('/enquiries/bulk-action', [\CMS\SiteManager\Http\Controllers\CmsKit\EnquiryController::class, 'bulkAction'])->name('cms.enquiries.bulk-action')->middleware('cms.permission:enquiries.delete');
                 }
             });
 
             // Locations
             Route::middleware(['cms.permission:locations.view'])->group(function () {
                 if (config('cms-kit.common.modules.locations', true)) {
-                    Route::get('/locations', [\CMS\SiteManager\Http\Controllers\LocationController::class, 'index'])->name('cms.locations.index');
-                    Route::post('/locations/section', [\CMS\SiteManager\Http\Controllers\LocationController::class, 'updateSection'])->name('cms.locations.update-section')->middleware('cms.permission:locations.edit');
-                    Route::get('/locations/create', [\CMS\SiteManager\Http\Controllers\LocationController::class, 'create'])->name('cms.locations.create')->middleware('cms.permission:locations.create');
-                    Route::post('/locations', [\CMS\SiteManager\Http\Controllers\LocationController::class, 'store'])->name('cms.locations.store')->middleware('cms.permission:locations.create');
-                    Route::get('/locations/{id}/edit', [\CMS\SiteManager\Http\Controllers\LocationController::class, 'edit'])->name('cms.locations.edit')->middleware('cms.permission:locations.edit');
-                    Route::put('/locations/{id}', [\CMS\SiteManager\Http\Controllers\LocationController::class, 'update'])->name('cms.locations.update')->middleware('cms.permission:locations.edit');
-                    Route::delete('/locations/{id}', [\CMS\SiteManager\Http\Controllers\LocationController::class, 'destroy'])->name('cms.locations.destroy')->middleware('cms.permission:locations.delete');
-                    Route::post('/locations/{id}/toggle-status', [\CMS\SiteManager\Http\Controllers\LocationController::class, 'toggleStatus'])->name('cms.locations.toggle-status')->middleware('cms.permission:locations.edit');
-                    Route::post('/locations/reorder', [\CMS\SiteManager\Http\Controllers\LocationController::class, 'reorder'])->name('cms.locations.reorder')->middleware('cms.permission:locations.edit');
-                    Route::post('/locations/bulk-action', [\CMS\SiteManager\Http\Controllers\LocationController::class, 'bulkAction'])->name('cms.locations.bulk-action')->middleware('cms.permission:locations.delete');
+                    Route::get('/locations', [\CMS\SiteManager\Http\Controllers\CmsKit\LocationController::class, 'index'])->name('cms.locations.index');
+                    Route::post('/locations/section', [\CMS\SiteManager\Http\Controllers\CmsKit\LocationController::class, 'updateSection'])->name('cms.locations.update-section')->middleware('cms.permission:locations.edit');
+                    Route::get('/locations/create', [\CMS\SiteManager\Http\Controllers\CmsKit\LocationController::class, 'create'])->name('cms.locations.create')->middleware('cms.permission:locations.create');
+                    Route::post('/locations', [\CMS\SiteManager\Http\Controllers\CmsKit\LocationController::class, 'store'])->name('cms.locations.store')->middleware('cms.permission:locations.create');
+                    Route::get('/locations/{id}/edit', [\CMS\SiteManager\Http\Controllers\CmsKit\LocationController::class, 'edit'])->name('cms.locations.edit')->middleware('cms.permission:locations.edit');
+                    Route::put('/locations/{id}', [\CMS\SiteManager\Http\Controllers\CmsKit\LocationController::class, 'update'])->name('cms.locations.update')->middleware('cms.permission:locations.edit');
+                    Route::delete('/locations/{id}', [\CMS\SiteManager\Http\Controllers\CmsKit\LocationController::class, 'destroy'])->name('cms.locations.destroy')->middleware('cms.permission:locations.delete');
+                    Route::post('/locations/{id}/toggle-status', [\CMS\SiteManager\Http\Controllers\CmsKit\LocationController::class, 'toggleStatus'])->name('cms.locations.toggle-status')->middleware('cms.permission:locations.edit');
+                    Route::post('/locations/reorder', [\CMS\SiteManager\Http\Controllers\CmsKit\LocationController::class, 'reorder'])->name('cms.locations.reorder')->middleware('cms.permission:locations.edit');
+                    Route::post('/locations/bulk-action', [\CMS\SiteManager\Http\Controllers\CmsKit\LocationController::class, 'bulkAction'])->name('cms.locations.bulk-action')->middleware('cms.permission:locations.delete');
 
                 }
             });
@@ -168,40 +168,40 @@ Route::middleware(['web'])->group(function () {
             // Brands Module
             Route::middleware(['cms.permission:brands.view'])->group(function () {
                 if (config('cms-kit.common.modules.brands', true)) {
-                    Route::get('/brands', [\CMS\SiteManager\Http\Controllers\BrandController::class, 'index'])->name('cms.brands.index');
-                    Route::get('/brands/create', [\CMS\SiteManager\Http\Controllers\BrandController::class, 'create'])->name('cms.brands.create')->middleware('cms.permission:brands.create');
-                    Route::post('/brands', [\CMS\SiteManager\Http\Controllers\BrandController::class, 'store'])->name('cms.brands.store')->middleware('cms.permission:brands.create');
-                    Route::get('/brands/{id}/edit', [\CMS\SiteManager\Http\Controllers\BrandController::class, 'edit'])->name('cms.brands.edit')->middleware('cms.permission:brands.edit');
-                    Route::put('/brands/{id}', [\CMS\SiteManager\Http\Controllers\BrandController::class, 'update'])->name('cms.brands.update')->middleware('cms.permission:brands.edit');
-                    Route::delete('/brands/{id}', [\CMS\SiteManager\Http\Controllers\BrandController::class, 'destroy'])->name('cms.brands.destroy')->middleware('cms.permission:brands.delete');
-                    Route::post('/brands/{id}/toggle-status', [\CMS\SiteManager\Http\Controllers\BrandController::class, 'toggleStatus'])->name('cms.brands.toggle-status')->middleware('cms.permission:brands.edit');
-                    Route::post('/brands/reorder', [\CMS\SiteManager\Http\Controllers\BrandController::class, 'reorder'])->name('cms.brands.reorder')->middleware('cms.permission:brands.edit');
-                    Route::post('/brands/bulk-action', [\CMS\SiteManager\Http\Controllers\BrandController::class, 'bulkAction'])->name('cms.brands.bulk-action')->middleware('cms.permission:brands.delete');
+                    Route::get('/brands', [\CMS\SiteManager\Http\Controllers\CmsKit\BrandController::class, 'index'])->name('cms.brands.index');
+                    Route::get('/brands/create', [\CMS\SiteManager\Http\Controllers\CmsKit\BrandController::class, 'create'])->name('cms.brands.create')->middleware('cms.permission:brands.create');
+                    Route::post('/brands', [\CMS\SiteManager\Http\Controllers\CmsKit\BrandController::class, 'store'])->name('cms.brands.store')->middleware('cms.permission:brands.create');
+                    Route::get('/brands/{id}/edit', [\CMS\SiteManager\Http\Controllers\CmsKit\BrandController::class, 'edit'])->name('cms.brands.edit')->middleware('cms.permission:brands.edit');
+                    Route::put('/brands/{id}', [\CMS\SiteManager\Http\Controllers\CmsKit\BrandController::class, 'update'])->name('cms.brands.update')->middleware('cms.permission:brands.edit');
+                    Route::delete('/brands/{id}', [\CMS\SiteManager\Http\Controllers\CmsKit\BrandController::class, 'destroy'])->name('cms.brands.destroy')->middleware('cms.permission:brands.delete');
+                    Route::post('/brands/{id}/toggle-status', [\CMS\SiteManager\Http\Controllers\CmsKit\BrandController::class, 'toggleStatus'])->name('cms.brands.toggle-status')->middleware('cms.permission:brands.edit');
+                    Route::post('/brands/reorder', [\CMS\SiteManager\Http\Controllers\CmsKit\BrandController::class, 'reorder'])->name('cms.brands.reorder')->middleware('cms.permission:brands.edit');
+                    Route::post('/brands/bulk-action', [\CMS\SiteManager\Http\Controllers\CmsKit\BrandController::class, 'bulkAction'])->name('cms.brands.bulk-action')->middleware('cms.permission:brands.delete');
                 }
             });
 
             // Newsletter Signups
             Route::middleware(['cms.permission:newsletter.view'])->group(function () {
                 if (config('cms-kit.common.modules.newsletter-signups', true)) {
-                    Route::get('/newsletter-signups', [\CMS\SiteManager\Http\Controllers\NewsletterSignupController::class, 'index'])->name('cms.newsletter-signups.index');
-                    Route::delete('/newsletter-signups/{id}', [\CMS\SiteManager\Http\Controllers\NewsletterSignupController::class, 'destroy'])->name('cms.newsletter-signups.destroy')->middleware('cms.permission:newsletter.delete');
-                    Route::post('/newsletter-signups/bulk-action', [\CMS\SiteManager\Http\Controllers\NewsletterSignupController::class, 'bulkAction'])->name('cms.newsletter-signups.bulk-action')->middleware('cms.permission:newsletter.delete');
+                    Route::get('/newsletter-signups', [\CMS\SiteManager\Http\Controllers\CmsKit\NewsletterSignupController::class, 'index'])->name('cms.newsletter-signups.index');
+                    Route::delete('/newsletter-signups/{id}', [\CMS\SiteManager\Http\Controllers\CmsKit\NewsletterSignupController::class, 'destroy'])->name('cms.newsletter-signups.destroy')->middleware('cms.permission:newsletter.delete');
+                    Route::post('/newsletter-signups/bulk-action', [\CMS\SiteManager\Http\Controllers\CmsKit\NewsletterSignupController::class, 'bulkAction'])->name('cms.newsletter-signups.bulk-action')->middleware('cms.permission:newsletter.delete');
                 }
             });
 
             // Blogs
             Route::middleware(['cms.permission:blogs.view'])->group(function () {
                 if (config('cms-kit.common.modules.blogs', true)) {
-                    Route::get('/blogs', [\CMS\SiteManager\Http\Controllers\BlogController::class, 'index'])->name('cms.blogs.index');
-                    Route::get('/blogs/create', [\CMS\SiteManager\Http\Controllers\BlogController::class, 'create'])->name('cms.blogs.create')->middleware('cms.permission:blogs.create');
-                    Route::post('/blogs', [\CMS\SiteManager\Http\Controllers\BlogController::class, 'store'])->name('cms.blogs.store')->middleware('cms.permission:blogs.create');
-                    Route::get('/blogs/{id}/edit', [\CMS\SiteManager\Http\Controllers\BlogController::class, 'edit'])->name('cms.blogs.edit')->middleware('cms.permission:blogs.edit');
-                    Route::put('/blogs/{id}', [\CMS\SiteManager\Http\Controllers\BlogController::class, 'update'])->name('cms.blogs.update')->middleware('cms.permission:blogs.edit');
-                    Route::delete('/blogs/{id}', [\CMS\SiteManager\Http\Controllers\BlogController::class, 'destroy'])->name('cms.blogs.destroy')->middleware('cms.permission:blogs.delete');
-                    Route::post('/blogs/{id}/toggle-status', [\CMS\SiteManager\Http\Controllers\BlogController::class, 'toggleStatus'])->name('cms.blogs.toggle-status')->middleware('cms.permission:blogs.edit');
-                    Route::post('/blogs/reorder', [\CMS\SiteManager\Http\Controllers\BlogController::class, 'reorder'])->name('cms.blogs.reorder')->middleware('cms.permission:blogs.edit');
-                    Route::post('/blogs/update-section', [\CMS\SiteManager\Http\Controllers\BlogController::class, 'updateSection'])->name('cms.blogs.update-section')->middleware('cms.permission:blogs.edit');
-                    Route::post('/blogs/bulk-action', [\CMS\SiteManager\Http\Controllers\BlogController::class, 'bulkAction'])->name('cms.blogs.bulk-action')->middleware('cms.permission:blogs.delete');
+                    Route::get('/blogs', [\CMS\SiteManager\Http\Controllers\CmsKit\BlogController::class, 'index'])->name('cms.blogs.index');
+                    Route::get('/blogs/create', [\CMS\SiteManager\Http\Controllers\CmsKit\BlogController::class, 'create'])->name('cms.blogs.create')->middleware('cms.permission:blogs.create');
+                    Route::post('/blogs', [\CMS\SiteManager\Http\Controllers\CmsKit\BlogController::class, 'store'])->name('cms.blogs.store')->middleware('cms.permission:blogs.create');
+                    Route::get('/blogs/{id}/edit', [\CMS\SiteManager\Http\Controllers\CmsKit\BlogController::class, 'edit'])->name('cms.blogs.edit')->middleware('cms.permission:blogs.edit');
+                    Route::put('/blogs/{id}', [\CMS\SiteManager\Http\Controllers\CmsKit\BlogController::class, 'update'])->name('cms.blogs.update')->middleware('cms.permission:blogs.edit');
+                    Route::delete('/blogs/{id}', [\CMS\SiteManager\Http\Controllers\CmsKit\BlogController::class, 'destroy'])->name('cms.blogs.destroy')->middleware('cms.permission:blogs.delete');
+                    Route::post('/blogs/{id}/toggle-status', [\CMS\SiteManager\Http\Controllers\CmsKit\BlogController::class, 'toggleStatus'])->name('cms.blogs.toggle-status')->middleware('cms.permission:blogs.edit');
+                    Route::post('/blogs/reorder', [\CMS\SiteManager\Http\Controllers\CmsKit\BlogController::class, 'reorder'])->name('cms.blogs.reorder')->middleware('cms.permission:blogs.edit');
+                    Route::post('/blogs/update-section', [\CMS\SiteManager\Http\Controllers\CmsKit\BlogController::class, 'updateSection'])->name('cms.blogs.update-section')->middleware('cms.permission:blogs.edit');
+                    Route::post('/blogs/bulk-action', [\CMS\SiteManager\Http\Controllers\CmsKit\BlogController::class, 'bulkAction'])->name('cms.blogs.bulk-action')->middleware('cms.permission:blogs.delete');
                 }
             });
 
@@ -210,3 +210,4 @@ Route::middleware(['web'])->group(function () {
         });
     });
 });
+

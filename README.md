@@ -57,19 +57,8 @@ Optional publish tags:
 php artisan vendor:publish --tag=cms-kit-config
 php artisan vendor:publish --tag=cms-kit-assets
 php artisan vendor:publish --tag=cms-kit-views
-```
-
-To publish overrideable controllers and models with the correct `App\...` namespaces, use:
-
-```bash
-php artisan cms-kit:publish-overrides
-```
-
-You can also publish only one type:
-
-```bash
-php artisan cms-kit:publish-overrides controllers
-php artisan cms-kit:publish-overrides models
+php artisan vendor:publish --tag=cms-kit-controllers
+php artisan vendor:publish --tag=cms-kit-models
 ```
 
 Published paths:

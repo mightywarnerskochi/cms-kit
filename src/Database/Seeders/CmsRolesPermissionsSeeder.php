@@ -3,7 +3,7 @@
 namespace CMS\SiteManager\Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use CMS\SiteManager\Models\Admin;
+use CMS\SiteManager\Models\CmsKit\Admin;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
 use Illuminate\Support\Facades\Hash;
@@ -93,3 +93,4 @@ class CmsRolesPermissionsSeeder extends Seeder
         }
     }
 }
+

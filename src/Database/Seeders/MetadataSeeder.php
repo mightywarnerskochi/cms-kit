@@ -3,7 +3,7 @@
 namespace CMS\SiteManager\Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use CMS\SiteManager\Models\Metadata;
+use CMS\SiteManager\Models\CmsKit\Metadata;
 
 class MetadataSeeder extends Seeder
 {
@@ -29,3 +29,4 @@ class MetadataSeeder extends Seeder
         }
     }
 }
+

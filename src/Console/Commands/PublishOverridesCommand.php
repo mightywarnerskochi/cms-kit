@@ -18,12 +18,12 @@ class PublishOverridesCommand extends Command
 
         $targets = [
             'controllers' => [
-                'source' => __DIR__ . '/../../Http/Controllers',
+                'source' => __DIR__ . '/../../Http/Controllers/CmsKit',
                 'target' => app_path('Http/Controllers/CmsKit'),
                 'namespace' => $appNamespace . 'Http\\Controllers\\CmsKit',
             ],
             'models' => [
-                'source' => __DIR__ . '/../../Models',
+                'source' => __DIR__ . '/../../Models/CmsKit',
                 'target' => app_path('Models/CmsKit'),
                 'namespace' => $appNamespace . 'Models\\CmsKit',
             ],
@@ -81,7 +81,7 @@ class PublishOverridesCommand extends Command
     protected function rewriteNamespace(string $contents, string $targetNamespace): string
     {
         return preg_replace(
-            '/^namespace\s+CMS\\\\SiteManager\\\\(?:Http\\\\Controllers|Models);/m',
+            '/^namespace\s+CMS\\\\SiteManager\\\\(?:Http\\\\Controllers|Models)\\\\CmsKit;/m',
             'namespace ' . $targetNamespace . ';',
             $contents
         ) ?? $contents;
@@ -92,12 +92,13 @@ class PublishOverridesCommand extends Command
         $appNamespace = app()->getNamespace();
 
         $replacements = [
-            'use CMS\\SiteManager\\Models\\' => 'use ' . $appNamespace . 'Models\\CmsKit\\',
-            'use CMS\\SiteManager\\Http\\Controllers\\' => 'use ' . $appNamespace . 'Http\\Controllers\\CmsKit\\',
-            '\\CMS\\SiteManager\\Models\\' => '\\' . $appNamespace . 'Models\\CmsKit\\',
-            '\\CMS\\SiteManager\\Http\\Controllers\\' => '\\' . $appNamespace . 'Http\\Controllers\\CmsKit\\',
+            'use CMS\\SiteManager\\Models\\CmsKit\\' => 'use ' . $appNamespace . 'Models\\CmsKit\\',
+            'use CMS\\SiteManager\\Http\\Controllers\\CmsKit\\' => 'use ' . $appNamespace . 'Http\\Controllers\\CmsKit\\',
+            '\\CMS\\SiteManager\\Models\\CmsKit\\' => '\\' . $appNamespace . 'Models\\CmsKit\\',
+            '\\CMS\\SiteManager\\Http\\Controllers\\CmsKit\\' => '\\' . $appNamespace . 'Http\\Controllers\\CmsKit\\',
         ];
 
         return strtr($contents, $replacements);
     }
 }
+

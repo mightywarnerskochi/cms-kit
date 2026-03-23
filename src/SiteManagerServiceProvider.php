@@ -20,7 +20,7 @@ class SiteManagerServiceProvider extends ServiceProvider
 
         // Share Site Information with all views
         \Illuminate\Support\Facades\View::composer('*', function ($view) {
-            $siteInfo = \CMS\SiteManager\Models\SiteInformation::first() ?? new \CMS\SiteManager\Models\SiteInformation([
+            $siteInfo = \CMS\SiteManager\Models\CmsKit\SiteInformation::first() ?? new \CMS\SiteManager\Models\CmsKit\SiteInformation([
                 'company_name' => config('cms-kit.common.name', 'CMS Kit')
             ]);
             $view->with('siteInfo', $siteInfo);
@@ -70,6 +70,16 @@ class SiteManagerServiceProvider extends ServiceProvider
             __DIR__ . '/../resources/views' => resource_path('views/vendor/cms-kit'),
         ], 'cms-kit-views');
 
+        // Publish Controllers (app-ready copies for customization)
+        $this->publishes([
+            __DIR__ . '/Http/Controllers/CmsKit' => app_path('Http/Controllers/CmsKit'),
+        ], 'cms-kit-controllers');
+
+        // Publish Models (app-ready copies for customization)
+        $this->publishes([
+            __DIR__ . '/Models/CmsKit' => app_path('Models/CmsKit'),
+        ], 'cms-kit-models');
+
     }
 
     /**
@@ -100,7 +110,7 @@ class SiteManagerServiceProvider extends ServiceProvider
             ],
             'auth.providers.cms_admins' => [
                 'driver' => 'eloquent',
-                'model' => \CMS\SiteManager\Models\Admin::class,
+                'model' => \CMS\SiteManager\Models\CmsKit\Admin::class,
             ],
             'auth.passwords.cms_admins' => [
                 'provider' => 'cms_admins',
@@ -124,8 +134,8 @@ class SiteManagerServiceProvider extends ServiceProvider
 
     protected function registerAppOverrides(): void
     {
-        $this->registerOverrideAliases('Models', app()->getNamespace() . 'Models\\CmsKit\\');
-        $this->registerOverrideAliases('Http/Controllers', app()->getNamespace() . 'Http\\Controllers\\CmsKit\\');
+        $this->registerOverrideAliases('Models/CmsKit', app()->getNamespace() . 'Models\\CmsKit\\');
+        $this->registerOverrideAliases('Http/Controllers/CmsKit', app()->getNamespace() . 'Http\\Controllers\\CmsKit\\');
     }
 
     protected function registerOverrideAliases(string $relativePath, string $appNamespace): void
@@ -144,3 +154,5 @@ class SiteManagerServiceProvider extends ServiceProvider
         }
     }
 }
+
+

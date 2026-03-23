@@ -14,7 +14,7 @@ return [
 
     'models' => [
         // Simple format (requires getSitemapUrl() or 'url' attribute on model)
-        // \CMS\SiteManager\Models\Testimonial::class,
+        // \CMS\SiteManager\Models\CmsKit\Testimonial::class,
 
         // Dynamic format (specify URL prefix and optionally slug field)
         // \App\Models\Service::class => [
@@ -36,3 +36,4 @@ return [
     'middleware' => ['web', 'cms.auth'],
 
 ];
+

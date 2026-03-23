@@ -24,15 +24,15 @@
 
 ## 🚀 Installation
 
-### 1. Configure Local Repository (Optional)
+### 1. Configure Repository (Optional)
 
-If you are developing locally, add the package to your `composer.json` repositories:
+If you want to install the package using the GitHub repository, add this to your `composer.json`:
 
 ```json
 "repositories": [
     {
-        "type": "path",
-        "url": "../cms-kit"
+        "type": "vcs",
+        "url": "https://github.com/dev1kochi-crypto/cms-kit"
     }
 ]
 ```
@@ -58,6 +58,20 @@ Run the migrations to create the necessary tables for testimonials and languages
 ```bash
 php artisan migrate
 ```
+
+### 4. Seed the Database
+
+Run the package seeders after migration:
+
+```bash
+php artisan db:seed --class="CMS\\SiteManager\\Database\\Seeders\\CmsRolesPermissionsSeeder"
+php artisan db:seed --class="CMS\\SiteManager\\Database\\Seeders\\MetadataSeeder"
+```
+
+Seeder classes used:
+
+- `CMS\SiteManager\Database\Seeders\CmsRolesPermissionsSeeder`
+- `CMS\SiteManager\Database\Seeders\MetadataSeeder`
 
 ---
 

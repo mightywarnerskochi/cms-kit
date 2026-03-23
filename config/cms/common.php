@@ -13,7 +13,6 @@ return [
     'auth' => [
         'admin_name' => env('CMS_ADMIN_NAME', 'Admin User'),
         'admin_email' => env('CMS_ADMIN_EMAIL', 'admin@example.com'),
-        'admin_password' => env('CMS_ADMIN_PASSWORD', 'password'),
         'prefix' => 'admin',
         'middleware' => ['web'],
     ],

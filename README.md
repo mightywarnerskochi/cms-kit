@@ -51,6 +51,21 @@ Publish the configuration file, view components, and public assets:
 php artisan vendor:publish --provider="CMS\SiteManager\SiteManagerServiceProvider"
 ```
 
+Optional publish tags:
+
+```bash
+php artisan vendor:publish --tag=cms-kit-config
+php artisan vendor:publish --tag=cms-kit-assets
+php artisan vendor:publish --tag=cms-kit-views
+php artisan vendor:publish --tag=cms-kit-controllers
+php artisan vendor:publish --tag=cms-kit-models
+```
+
+Published paths:
+
+- Controllers: `app/Http/Controllers/CmsKit`
+- Models: `app/Models/CmsKit`
+
 ### 3. Run Migrations
 
 Run the migrations to create the necessary tables for testimonials and languages:
@@ -64,8 +79,8 @@ php artisan migrate
 Run the package seeders after migration:
 
 ```bash
-php artisan db:seed --class="CMS\\SiteManager\\Database\\Seeders\\CmsRolesPermissionsSeeder"
-php artisan db:seed --class="CMS\\SiteManager\\Database\\Seeders\\MetadataSeeder"
+php artisan db:seed --class="CMS\SiteManager\Database\Seeders\CmsRolesPermissionsSeeder"
+php artisan db:seed --class="CMS\SiteManager\Database\Seeders\MetadataSeeder"
 ```
 
 Seeder classes used:

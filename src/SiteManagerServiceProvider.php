@@ -68,6 +68,16 @@ class SiteManagerServiceProvider extends ServiceProvider
         $this->publishes([
             __DIR__ . '/../resources/views' => resource_path('views/vendor/cms-kit'),
         ], 'cms-kit-views');
+
+        // Publish Controllers (optional for user customization)
+        $this->publishes([
+            __DIR__ . '/Http/Controllers' => app_path('Http/Controllers/CmsKit'),
+        ], 'cms-kit-controllers');
+
+        // Publish Models (optional for user customization)
+        $this->publishes([
+            __DIR__ . '/Models' => app_path('Models/CmsKit'),
+        ], 'cms-kit-models');
     }
 
     /**

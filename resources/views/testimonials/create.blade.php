@@ -11,6 +11,15 @@
         <h5 class="mb-0">Add New Testimonial</h5>
     </div>
     <div class="card-body p-4">
+        @if ($errors->any())
+            <div class="alert alert-danger">
+                <ul class="mb-0">
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
         <form action="{{ route('cms.testimonials.store') }}" method="POST" enctype="multipart/form-data">
             @csrf
             @include('cms-kit::testimonials._form', ['nextOrder' => $nextOrder])

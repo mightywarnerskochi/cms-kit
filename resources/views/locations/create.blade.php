@@ -18,6 +18,15 @@
         <h5 class="mb-0">Add Location</h5>
     </div>
     <div class="card-body p-4">
+        @if ($errors->any())
+            <div class="alert alert-danger">
+                <ul class="mb-0">
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
         <form action="{{ route('cms.locations.store') }}" method="POST" enctype="multipart/form-data">
             @csrf
             <div class="alert alert-light border-start border-primary border-4 py-2 mb-4 shadow-sm" style="font-size: 0.9rem;">

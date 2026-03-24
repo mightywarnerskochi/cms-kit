@@ -10,6 +10,24 @@
             --primary-color: {{ config('cms-kit.common.theme.primary_color', '#dc3545') }};
             --bg-color: #f0f2f5;
         }
+
+        .password-group .form-control {
+            border-right: 0;
+        }
+
+        .password-toggle-btn {
+            border-left: 0;
+            background: #e9edf5;
+            color: #6c757d;
+            min-width: 46px;
+        }
+
+        .password-toggle-btn:hover,
+        .password-toggle-btn:focus {
+            background: #dfe5ef;
+            color: #495057;
+            box-shadow: none;
+        }
     </style>
     <link rel="stylesheet" href="{{ asset('vendor/cms-kit/css/cms-auth.css') }}">
 </head>
@@ -43,9 +61,9 @@
                     <label class="form-label small fw-bold">Password</label>
                     <a href="{{ route('cms.password.request') }}" class="small text-decoration-none" style="color: var(--primary-color)">Forgot?</a>
                 </div>
-                <div class="input-group">
+                <div class="input-group password-group">
                     <input type="password" id="loginPassword" name="password" class="form-control @error('password') is-invalid @enderror" placeholder="••••••••" required>
-                    <button class="btn btn-outline-secondary" type="button" id="togglePassword" aria-label="Toggle password visibility">
+                    <button class="btn password-toggle-btn" type="button" id="togglePassword" aria-label="Toggle password visibility">
                         <i class="fas fa-eye"></i>
                     </button>
                     @error('password')

@@ -10,11 +10,12 @@ use Yajra\DataTables\Facades\DataTables;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Str;
+use CMS\SiteManager\Support\ManagesOrderIndex;
 use CMS\SiteManager\Support\ValidatesImageDimensions;
 
 class BlogController extends Controller
 {
-    use ValidatesImageDimensions;
+    use ValidatesImageDimensions, ManagesOrderIndex;
 
     protected function getBlogValidationRules(bool $isUpdate = false): array
     {
@@ -170,7 +171,8 @@ class BlogController extends Controller
         }
 
         $data = $request->except(['feature_image', 'detail_image', 'banner_image', 'image_3', 'image_4', 'status', 'slug']);
-        $data['status'] = $request->has('status');
+        // Blog create defaults to active unless explicitly turned off.
+        $data['status'] = $request->boolean('status', true);
         $data['translations'] = $this->mergeBlogTranslatableExtraFields($request->input('translations', []));
         $data['slug'] = $request->filled('slug') ? Str::slug($request->slug) : Str::slug($request->translations[config('app.fallback_locale')]['title'] ?? $request->translations[array_key_first($request->translations)]['title']);
         $data['extra_fields'] = $request->input('extra_fields', []);
@@ -182,7 +184,7 @@ class BlogController extends Controller
             }
         }
 
-        $order = $request->order_index ?? (Blog::max('order_index') + 1);
+        $order = $this->resolveOrderForCreate(Blog::class, $request->order_index ? (int) $request->order_index : null);
         Blog::where('order_index', '>=', $order)->increment('order_index');
         $data['order_index'] = $order;
 
@@ -219,7 +221,8 @@ class BlogController extends Controller
         }
 
         $data = $request->except(['feature_image', 'detail_image', 'banner_image', 'image_3', 'image_4', 'status', 'slug']);
-        $data['status'] = $request->has('status');
+        // Keep existing status when status input is absent in edit form.
+        $data['status'] = $request->has('status') ? $request->boolean('status') : $blog->status;
         $data['translations'] = $this->mergeBlogTranslatableExtraFields($request->input('translations', []));
         $data['extra_fields'] = $request->input('extra_fields', []);
         if ($request->filled('slug')) {
@@ -273,6 +276,7 @@ class BlogController extends Controller
         $blog->delete();
 
         Blog::where('order_index', '>', $order)->decrement('order_index');
+        $this->normalizeOrderIndex(Blog::class);
 
         return response()->json(['success' => true]);
     }
@@ -294,7 +298,7 @@ class BlogController extends Controller
         ]);
 
         $blog = Blog::findOrFail($request->id);
-        $newOrder = $request->order_index;
+        $newOrder = $this->resolveOrderForReorder(Blog::class, (int) $request->order_index);
         $oldOrder = $blog->order_index;
 
         if ($newOrder != $oldOrder) {
@@ -310,6 +314,7 @@ class BlogController extends Controller
             $blog->order_index = $newOrder;
             $blog->save();
         }
+        $this->normalizeOrderIndex(Blog::class);
 
         return response()->json(['success' => true]);
     }
@@ -360,6 +365,7 @@ class BlogController extends Controller
 
                 $blog->delete();
             }
+            $this->normalizeOrderIndex(Blog::class);
         }
 
         if (in_array($action, ['active', 'activate'], true)) {

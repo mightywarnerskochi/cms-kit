@@ -8,11 +8,12 @@ use CMS\SiteManager\Models\CmsKit\Language;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Yajra\DataTables\Facades\DataTables;
+use CMS\SiteManager\Support\ManagesOrderIndex;
 use CMS\SiteManager\Support\ValidatesImageDimensions;
 
 class TestimonialController extends Controller
 {
-    use ValidatesImageDimensions;
+    use ValidatesImageDimensions, ManagesOrderIndex;
 
     public function index(Request $request)
     {
@@ -192,7 +193,7 @@ class TestimonialController extends Controller
         $this->validateItem($request, $itemConfig, $languages);
         $this->validateImageWithinLimits($request, 'image', config('cms-kit.images.testimonials.item_image', []), 'Testimonial image');
 
-        $order = $request->order_index ?? (Testimonial::max('order_index') + 1);
+        $order = $this->resolveOrderForCreate(Testimonial::class, $request->order_index ? (int) $request->order_index : null);
         
         // Shift existing items
         Testimonial::where('order_index', '>=', $order)->increment('order_index');
@@ -235,6 +236,7 @@ class TestimonialController extends Controller
         $data['image_alt'] = $request->input('image_alt');
 
         Testimonial::create($data);
+        $this->normalizeOrderIndex(Testimonial::class);
 
         return redirect()->route('cms.testimonials.index')->with('success', 'Testimonial added.');
     }
@@ -248,7 +250,8 @@ class TestimonialController extends Controller
         $this->validateItem($request, $itemConfig, $languages);
         $this->validateImageWithinLimits($request, 'image', config('cms-kit.images.testimonials.item_image', []), 'Testimonial image');
 
-        $newOrder = $request->order_index ?? $testimonial->order_index;
+        $newOrder = $request->order_index ? (int) $request->order_index : $testimonial->order_index;
+        $newOrder = $this->resolveOrderForReorder(Testimonial::class, $newOrder);
         if ($newOrder != $testimonial->order_index) {
             $this->reorderItem($testimonial, $newOrder);
         }
@@ -290,6 +293,7 @@ class TestimonialController extends Controller
         $data['image_alt'] = $request->input('image_alt');
 
         $testimonial->update($data);
+        $this->normalizeOrderIndex(Testimonial::class);
 
         return redirect()->route('cms.testimonials.index')->with('success', 'Testimonial updated.');
     }
@@ -316,6 +320,7 @@ class TestimonialController extends Controller
         
         // Fill the gap
         Testimonial::where('order_index', '>', $order)->decrement('order_index');
+        $this->normalizeOrderIndex(Testimonial::class);
 
         return redirect()->back()->with('success', 'Testimonial deleted.');
     }
@@ -335,10 +340,11 @@ class TestimonialController extends Controller
         ]);
 
         $id = $request->id;
-        $newOrder = $request->order_index;
+        $newOrder = $this->resolveOrderForReorder(Testimonial::class, (int) $request->order_index);
         $testimonial = Testimonial::findOrFail($id);
         $this->reorderItem($testimonial, $newOrder);
         $testimonial->update(['order_index' => $newOrder]);
+        $this->normalizeOrderIndex(Testimonial::class);
         return redirect()->back()->with('success', 'Order updated.');
     }
 
@@ -360,6 +366,7 @@ class TestimonialController extends Controller
                     Testimonial::where('order_index', '>', $order)->decrement('order_index');
                 }
             }
+            $this->normalizeOrderIndex(Testimonial::class);
             return redirect()->back()->with('success', 'Selected items deleted.');
         }
 

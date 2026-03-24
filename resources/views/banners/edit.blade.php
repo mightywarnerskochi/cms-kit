@@ -12,6 +12,15 @@
         <h5 class="mb-0">Edit Dynamic Banner</h5>
     </div>
     <div class="card-body p-4">
+        @if ($errors->any())
+            <div class="alert alert-danger">
+                <ul class="mb-0">
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
         <form action="{{ route('cms.banners.update', $banner->id) }}" method="POST" enctype="multipart/form-data">
             @csrf
             @method('PUT')
@@ -349,6 +358,18 @@ $(document).ready(function() {
             $(this).closest('.button-row').find('input').val('');
         }
     });
+
+    document.addEventListener('invalid', function(e) {
+        const invalidTabPane = e.target.closest('.tab-pane');
+        if (invalidTabPane) {
+            const tabId = invalidTabPane.id;
+            const tabBtn = document.querySelector(`[data-bs-target="#${tabId}"]`);
+            if (tabBtn && !tabBtn.classList.contains('active')) {
+                bootstrap.Tab.getOrCreateInstance(tabBtn).show();
+                setTimeout(() => { e.target.focus(); }, 150);
+            }
+        }
+    }, true);
 });
 </script>
 @endpush

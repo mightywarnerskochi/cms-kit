@@ -10,6 +10,15 @@
     <div class="col-xl-4">
         <div class="card glass-card h-100">
             <div class="card-body">
+                @if ($errors->any())
+                    <div class="alert alert-danger">
+                        <ul class="mb-0">
+                            @foreach ($errors->all() as $error)
+                                <li>{{ $error }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                @endif
                 <div class="d-flex align-items-center mb-4">
                     <div class="avatar-sm bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 32px; height: 32px;">
                         <i class="fas fa-plus ps-0" style="font-size: 0.8rem;"></i>
@@ -19,24 +28,36 @@
                 <form action="{{ route('cms.languages.store') }}" method="POST" enctype="multipart/form-data">
                     @csrf
                     <div class="mb-3">
-                        <label class="form-label small fw-bold text-muted text-uppercase">Language Name</label>
-                        <input type="text" name="name" class="form-control form-control-lg" placeholder="e.g. Arabic" required>
+                        <label class="form-label small fw-bold text-muted text-uppercase">Language Name <span class="text-danger">*</span></label>
+                        <input type="text" name="name" class="form-control form-control-lg @error('name') is-invalid @enderror" placeholder="e.g. Arabic" value="{{ old('name') }}" required>
+                        @error('name')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
                     </div>
                     <div class="mb-3">
-                        <label class="form-label small fw-bold text-muted text-uppercase">Language Code</label>
-                        <input type="text" name="code" class="form-control form-control-lg" placeholder="e.g. ar" required>
+                        <label class="form-label small fw-bold text-muted text-uppercase">Language Code <span class="text-danger">*</span></label>
+                        <input type="text" name="code" class="form-control form-control-lg @error('code') is-invalid @enderror" placeholder="e.g. ar" value="{{ old('code') }}" required>
+                        @error('code')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
                     </div>
                     @if(config('cms-kit.database.languages.items.flag', true))
                     <div class="mb-3">
                         <label class="form-label small fw-bold text-muted text-uppercase">Flag image</label>
-                        <input type="file" name="flag_image" class="form-control form-control-lg" accept="image/*">
+                        <input type="file" name="flag_image" class="form-control form-control-lg @error('flag_image') is-invalid @enderror" accept="image/*">
+                        @error('flag_image')
+                            <div class="invalid-feedback d-block">{{ $message }}</div>
+                        @enderror
                         <small class="text-muted d-block mt-1">Max {{ config('cms-kit.images.languages.flag.max_size', 256) }} KB, up to {{ config('cms-kit.images.languages.flag.width', 64) }}×{{ config('cms-kit.images.languages.flag.height', 48) }} px.</small>
                     </div>
                     @endif
                     @if(config('cms-kit.database.languages.items.flag_alt', true))
                     <div class="mb-4">
                         <label class="form-label small fw-bold text-muted text-uppercase">Flag ALT text</label>
-                        <input type="text" name="flag_alt" class="form-control form-control-lg" placeholder="e.g. United Kingdom flag">
+                        <input type="text" name="flag_alt" class="form-control form-control-lg @error('flag_alt') is-invalid @enderror" placeholder="e.g. United Kingdom flag" value="{{ old('flag_alt') }}">
+                        @error('flag_alt')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
                     </div>
                     @endif
                     <button type="submit" class="btn btn-primary btn-premium w-100 py-3 shadow-sm">
@@ -141,11 +162,11 @@
                 <div class="modal-body">
                     <div class="mb-3">
                         <label class="form-label">Language Name</label>
-                        <input type="text" name="name" class="form-control" required>
+                        <input type="text" name="name" class="form-control @error('name') is-invalid @enderror" required>
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Language Code</label>
-                        <input type="text" name="code" class="form-control" required>
+                        <input type="text" name="code" class="form-control @error('code') is-invalid @enderror" required>
                     </div>
                     @if(config('cms-kit.database.languages.items.flag', true))
                     <div class="mb-3">

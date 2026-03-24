@@ -74,7 +74,7 @@
                 @if($brandConfig['order'] ?? true)
                 <div class="col-md-6">
                     <label class="form-label fw-bold">Sort Order</label>
-                    <input type="number" name="order_index" class="form-control @error('order_index') is-invalid @enderror" value="{{ old('order_index', 1) }}" min="1">
+                    <input type="number" name="order_index" class="form-control @error('order_index') is-invalid @enderror" value="{{ old('order_index', $nextOrder) }}" min="1">
                     @error('order_index')
                         <div class="invalid-feedback">{{ $message }}</div>
                     @enderror

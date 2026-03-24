@@ -9,11 +9,12 @@ use CMS\SiteManager\Models\CmsKit\SectionLabel;
 use Yajra\DataTables\Facades\DataTables;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Routing\Controller;
+use CMS\SiteManager\Support\ManagesOrderIndex;
 use CMS\SiteManager\Support\ValidatesImageDimensions;
 
 class LocationController extends Controller
 {
-    use ValidatesImageDimensions;
+    use ValidatesImageDimensions, ManagesOrderIndex;
 
     protected function normalizeMultiValueInput(?string $value): array
     {
@@ -163,7 +164,8 @@ class LocationController extends Controller
         $languages = Language::where('status', true)->get();
         $imageConfig = config('cms-kit.images.locations.main_image');
         $flagConfig = config('cms-kit.images.locations.flag');
-        return view('cms-kit::locations.create', compact('languages', 'imageConfig', 'flagConfig'));
+        $nextOrder = Location::count() + 1;
+        return view('cms-kit::locations.create', compact('languages', 'imageConfig', 'flagConfig', 'nextOrder'));
     }
 
     public function store(Request $request)
@@ -198,7 +200,7 @@ class LocationController extends Controller
             $data['flag'] = $request->file('flag')->store('locations/flags', 'public');
         }
 
-        $order = $request->order_index ?? (Location::max('order_index') + 1);
+        $order = $this->resolveOrderForCreate(Location::class, $request->order_index ? (int) $request->order_index : null);
         Location::where('order_index', '>=', $order)->increment('order_index');
         $data['order_index'] = $order;
 
@@ -264,6 +266,7 @@ class LocationController extends Controller
         $location->delete();
 
         Location::where('order_index', '>', $order)->decrement('order_index');
+        $this->normalizeOrderIndex(Location::class);
 
         return response()->json(['success' => true]);
     }
@@ -285,7 +288,7 @@ class LocationController extends Controller
         ]);
 
         $location = Location::findOrFail($request->id);
-        $newOrder = $request->order_index;
+        $newOrder = $this->resolveOrderForReorder(Location::class, (int) $request->order_index);
         $oldOrder = $location->order_index;
 
         if ($newOrder != $oldOrder) {
@@ -301,6 +304,7 @@ class LocationController extends Controller
             $location->order_index = $newOrder;
             $location->save();
         }
+        $this->normalizeOrderIndex(Location::class);
 
         return response()->json(['success' => true]);
     }
@@ -348,6 +352,7 @@ class LocationController extends Controller
                 if ($loc->flag) Storage::disk('public')->delete($loc->flag);
                 $loc->delete();
             }
+            $this->normalizeOrderIndex(Location::class);
         }
 
         if (in_array($action, ['active', 'activate'], true)) {

@@ -84,7 +84,7 @@
                 @if($faqConfig['order'] ?? true)
                 <div class="col-md-4">
                     <label class="form-label">Order Index</label>
-                    <input type="number" name="order_index" value="1" class="form-control" min="1">
+                    <input type="number" name="order_index" value="{{ old('order_index', $nextOrder) }}" class="form-control" min="1">
                 </div>
                 @endif
                 @if($faqConfig['status'] ?? true)

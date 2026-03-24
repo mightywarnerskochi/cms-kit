@@ -33,17 +33,39 @@
             @csrf
             <div class="mb-3">
                 <label class="form-label small fw-bold">Email Address</label>
-                <input type="email" name="email" class="form-control" placeholder="admin@example.com" required>
+                <input type="email" name="email" class="form-control @error('email') is-invalid @enderror" placeholder="admin@example.com" value="{{ old('email') }}" required>
+                @error('email')
+                    <div class="invalid-feedback">{{ $message }}</div>
+                @enderror
             </div>
             <div class="mb-4">
                 <div class="d-flex justify-content-between">
                     <label class="form-label small fw-bold">Password</label>
-                    <a href="#" class="small text-decoration-none" style="color: var(--primary-color)">Forgot?</a>
+                    <a href="{{ route('cms.password.request') }}" class="small text-decoration-none" style="color: var(--primary-color)">Forgot?</a>
                 </div>
-                <input type="password" name="password" class="form-control" placeholder="••••••••" required>
+                <div class="input-group">
+                    <input type="password" id="loginPassword" name="password" class="form-control @error('password') is-invalid @enderror" placeholder="••••••••" required>
+                    <button class="btn btn-outline-secondary" type="button" id="togglePassword" aria-label="Toggle password visibility">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                    @error('password')
+                        <div class="invalid-feedback d-block">{{ $message }}</div>
+                    @enderror
+                </div>
             </div>
             <button type="submit" class="btn btn-primary w-100 mb-3">Login to Dashboard</button>
         </form>
     </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/js/all.min.js"></script>
+    <script>
+        document.getElementById('togglePassword')?.addEventListener('click', function () {
+            const input = document.getElementById('loginPassword');
+            const icon = this.querySelector('i');
+            const isPassword = input.type === 'password';
+            input.type = isPassword ? 'text' : 'password';
+            icon.classList.toggle('fa-eye');
+            icon.classList.toggle('fa-eye-slash');
+        });
+    </script>
 </body>
 </html>

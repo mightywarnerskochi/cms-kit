@@ -8,11 +8,13 @@ use CMS\SiteManager\Models\CmsKit\Language;
 use Yajra\DataTables\Facades\DataTables;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Routing\Controller;
+use Illuminate\Validation\ValidationException;
+use CMS\SiteManager\Support\ManagesOrderIndex;
 use CMS\SiteManager\Support\ValidatesImageDimensions;
 
 class BrandController extends Controller
 {
-    use ValidatesImageDimensions;
+    use ValidatesImageDimensions, ManagesOrderIndex;
 
     protected function getValidationRules(bool $isUpdate = false): array
     {
@@ -91,7 +93,8 @@ class BrandController extends Controller
     {
         $imageConfig = config('cms-kit.images.brands.logo');
         $languages = Language::active()->get();
-        return view('cms-kit::brands.create', compact('imageConfig', 'languages'));
+        $nextOrder = Brand::count() + 1;
+        return view('cms-kit::brands.create', compact('imageConfig', 'languages', 'nextOrder'));
     }
 
     public function store(Request $request)
@@ -107,7 +110,7 @@ class BrandController extends Controller
             $data['image'] = $request->file('image')->store('brands', 'public');
         }
 
-        $order = $request->order_index ?? (Brand::max('order_index') + 1);
+        $order = $this->resolveOrderForCreate(Brand::class, $request->order_index ? (int) $request->order_index : null);
         $data['order_index'] = $order;
         Brand::where('order_index', '>=', $order)->increment('order_index');
 
@@ -152,6 +155,7 @@ class BrandController extends Controller
         $brand->delete();
 
         Brand::where('order_index', '>', $order)->decrement('order_index');
+        $this->normalizeOrderIndex(Brand::class);
 
         return response()->json(['success' => true]);
     }
@@ -173,7 +177,7 @@ class BrandController extends Controller
         ]);
 
         $brand = Brand::findOrFail($request->id);
-        $newOrder = $request->order_index;
+        $newOrder = $this->resolveOrderForReorder(Brand::class, (int) $request->order_index);
         $oldOrder = $brand->order_index;
 
         if ($newOrder != $oldOrder) {
@@ -189,6 +193,7 @@ class BrandController extends Controller
             $brand->order_index = $newOrder;
             $brand->save();
         }
+        $this->normalizeOrderIndex(Brand::class);
 
         return response()->json(['success' => true]);
     }
@@ -210,6 +215,7 @@ class BrandController extends Controller
                 }
                 $brand->delete();
             }
+            $this->normalizeOrderIndex(Brand::class);
         }
 
         if (in_array($action, ['active', 'activate'], true)) {

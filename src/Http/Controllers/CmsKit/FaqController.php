@@ -9,9 +9,12 @@ use CMS\SiteManager\Models\CmsKit\SectionLabel;
 use CMS\SiteManager\Http\Requests\FaqRequest;
 use Yajra\DataTables\Facades\DataTables;
 use Illuminate\Routing\Controller;
+use CMS\SiteManager\Support\ManagesOrderIndex;
 
 class FaqController extends Controller
 {
+    use ManagesOrderIndex;
+
     protected function mergeFaqTranslatableExtraFields(array $translations): array
     {
         $fieldConfig = config('cms-kit.database.faqs.items.extra_fields', []);
@@ -135,7 +138,8 @@ class FaqController extends Controller
     public function create()
     {
         $languages = Language::where('status', true)->get();
-        return view('cms-kit::faqs.create', compact('languages'));
+        $nextOrder = Faq::count() + 1;
+        return view('cms-kit::faqs.create', compact('languages', 'nextOrder'));
     }
 
     public function store(FaqRequest $request)
@@ -145,7 +149,7 @@ class FaqController extends Controller
         $data['status'] = $request->has('status');
         $data['extra_fields'] = $request->input('extra_fields', []);
 
-        $order = $request->order_index ?? (Faq::max('order_index') + 1);
+        $order = $this->resolveOrderForCreate(Faq::class, $request->order_index ? (int) $request->order_index : null);
         Faq::where('order_index', '>=', $order)->increment('order_index');
         $data['order_index'] = $order;
 
@@ -181,6 +185,7 @@ class FaqController extends Controller
         $faq->delete();
 
         Faq::where('order_index', '>', $order)->decrement('order_index');
+        $this->normalizeOrderIndex(Faq::class);
 
         return response()->json(['success' => true]);
     }
@@ -202,7 +207,7 @@ class FaqController extends Controller
         ]);
 
         $faq = Faq::findOrFail($request->id);
-        $newOrder = $request->order_index;
+        $newOrder = $this->resolveOrderForReorder(Faq::class, (int) $request->order_index);
         $oldOrder = $faq->order_index;
 
         if ($newOrder != $oldOrder) {
@@ -218,6 +223,7 @@ class FaqController extends Controller
             $faq->order_index = $newOrder;
             $faq->save();
         }
+        $this->normalizeOrderIndex(Faq::class);
 
         return response()->json(['success' => true]);
     }
@@ -229,6 +235,7 @@ class FaqController extends Controller
 
         if ($action === 'delete') {
             Faq::whereIn('id', $ids)->delete();
+            $this->normalizeOrderIndex(Faq::class);
         }
         elseif ($action === 'activate') {
             Faq::whereIn('id', $ids)->update(['status' => true]);

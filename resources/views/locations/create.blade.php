@@ -141,7 +141,7 @@
                 @if($locationConfig['order'] ?? true)
                 <div class="col-md-4">
                     <label class="form-label">Sort Order</label>
-                    <input type="number" name="order_index" class="form-control" value="{{ old('order_index', 1) }}" min="1">
+                    <input type="number" name="order_index" class="form-control" value="{{ old('order_index', $nextOrder) }}" min="1">
                 </div>
                 @endif
                 @if($locationConfig['status'] ?? true)

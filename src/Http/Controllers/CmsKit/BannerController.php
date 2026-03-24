@@ -10,11 +10,12 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use CMS\SiteManager\Support\ManagesOrderIndex;
 use CMS\SiteManager\Support\ValidatesImageDimensions;
 
 class BannerController extends Controller
 {
-    use ValidatesImageDimensions;
+    use ValidatesImageDimensions, ManagesOrderIndex;
 
     public function index(Request $request)
     {
@@ -75,8 +76,9 @@ class BannerController extends Controller
         $allowedTypes = config('cms-kit.database.banners.allowed_types', ['image', 'video']);
         $mainImageConfig = config('cms-kit.images.banners.main_image', ['max_size' => 2048, 'width' => 1920, 'height' => 800]);
         $avatarConfig = config('cms-kit.images.banners.client_avatar', ['max_size' => 512, 'width' => 100, 'height' => 100]);
-        
-        return view('cms-kit::banners.create', compact('languages', 'allowedTypes', 'mainImageConfig', 'avatarConfig'));
+        $nextOrder = Banner::count() + 1;
+
+        return view('cms-kit::banners.create', compact('languages', 'allowedTypes', 'mainImageConfig', 'avatarConfig', 'nextOrder'));
     }
 
     public function store(Request $request)
@@ -185,7 +187,7 @@ class BannerController extends Controller
         }
         $data['extra_fields'] = $extraFields;
 
-        $order = $request->order_index ?? (Banner::max('order_index') + 1);
+        $order = $this->resolveOrderForCreate(Banner::class, $request->order_index ? (int) $request->order_index : null);
         Banner::where('order_index', '>=', $order)->increment('order_index');
         $data['order_index'] = $order;
 
@@ -342,6 +344,7 @@ class BannerController extends Controller
         $banner->delete();
 
         Banner::where('order_index', '>', $order)->decrement('order_index');
+        $this->normalizeOrderIndex(Banner::class);
 
         return response()->json(['success' => true]);
     }
@@ -363,7 +366,7 @@ class BannerController extends Controller
         ]);
 
         $banner = Banner::findOrFail($request->id);
-        $newOrder = $request->order_index;
+        $newOrder = $this->resolveOrderForReorder(Banner::class, (int) $request->order_index);
         $oldOrder = $banner->order_index;
 
         if ($newOrder != $oldOrder) {
@@ -379,6 +382,7 @@ class BannerController extends Controller
             $banner->order_index = $newOrder;
             $banner->save();
         }
+        $this->normalizeOrderIndex(Banner::class);
 
         return response()->json(['success' => true]);
     }
@@ -397,6 +401,7 @@ class BannerController extends Controller
                     Storage::disk('public')->delete($banner->video_file);
                 $banner->delete();
             }
+            $this->normalizeOrderIndex(Banner::class);
         } elseif ($action === 'activate') {
             Banner::whereIn('id', $ids)->update(['status' => true]);
         } elseif ($action === 'deactivate') {

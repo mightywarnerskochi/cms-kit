@@ -12,6 +12,15 @@
         <h5 class="mb-0">Add New Dynamic Banner</h5>
     </div>
     <div class="card-body p-4">
+        @if ($errors->any())
+            <div class="alert alert-danger">
+                <ul class="mb-0">
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
         <form action="{{ route('cms.banners.store') }}" method="POST" enctype="multipart/form-data">
             @csrf
             
@@ -250,7 +259,7 @@
             <div class="row align-items-center">
                 <div class="col-md-4">
                     <label class="form-label">Display Order</label>
-                    <input type="number" name="order_index" class="form-control" value="1" min="1">
+                    <input type="number" name="order_index" class="form-control" value="{{ old('order_index', $nextOrder) }}" min="1">
                 </div>
                 <div class="col-md-4">
                     <div class="form-check form-switch pt-4">
@@ -323,6 +332,18 @@ $(document).ready(function() {
             $(this).closest('.button-row').find('input').val('');
         }
     });
+
+    document.addEventListener('invalid', function(e) {
+        const invalidTabPane = e.target.closest('.tab-pane');
+        if (invalidTabPane) {
+            const tabId = invalidTabPane.id;
+            const tabBtn = document.querySelector(`[data-bs-target="#${tabId}"]`);
+            if (tabBtn && !tabBtn.classList.contains('active')) {
+                bootstrap.Tab.getOrCreateInstance(tabBtn).show();
+                setTimeout(() => { e.target.focus(); }, 150);
+            }
+        }
+    }, true);
 });
 </script>
 @endpush

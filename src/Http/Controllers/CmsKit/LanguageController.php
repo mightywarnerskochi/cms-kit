@@ -70,9 +70,15 @@ class LanguageController extends Controller
     {
         $flagConfig = config('cms-kit.images.languages.flag', []);
         $request->validate(array_merge([
-            'name' => 'required|string|max:255',
-            'code' => 'required|string|max:10|unique:languages',
-        ], $this->flagImageRules()));
+            'name' => ['required', 'string', 'max:255', 'regex:/^[\p{L}\s]+$/u'],
+            'code' => ['required', 'string', 'max:10', 'unique:languages', 'regex:/^[\p{L}]+$/u'],
+        ], $this->flagImageRules()), [
+            'name.required' => 'Language name is required.',
+            'name.regex' => 'Language name must contain only letters and spaces.',
+            'code.required' => 'Language code is required.',
+            'code.unique' => 'This language code already exists.',
+            'code.regex' => 'Language code must contain only letters (no numbers or symbols).',
+        ]);
 
         if ($request->hasFile('flag_image')) {
             $this->validateImageWithinLimits($request, 'flag_image', $flagConfig, 'Language flag');
@@ -93,9 +99,15 @@ class LanguageController extends Controller
 
         $flagConfig = config('cms-kit.images.languages.flag', []);
         $request->validate(array_merge([
-            'name' => 'required|string|max:255',
-            'code' => 'required|string|max:10|unique:languages,code,' . $id,
-        ], $this->flagImageRules()));
+            'name' => ['required', 'string', 'max:255', 'regex:/^[\p{L}\s]+$/u'],
+            'code' => ['required', 'string', 'max:10', 'unique:languages,code,' . $id, 'regex:/^[\p{L}]+$/u'],
+        ], $this->flagImageRules()), [
+            'name.required' => 'Language name is required.',
+            'name.regex' => 'Language name must contain only letters and spaces.',
+            'code.required' => 'Language code is required.',
+            'code.unique' => 'This language code already exists.',
+            'code.regex' => 'Language code must contain only letters (no numbers or symbols).',
+        ]);
 
         if ($request->hasFile('flag_image')) {
             $this->validateImageWithinLimits($request, 'flag_image', $flagConfig, 'Language flag');

@@ -23,6 +23,15 @@
         <h5 class="mb-0">Edit Blog Post</h5>
     </div>
     <div class="card-body p-4">
+        @if ($errors->any())
+            <div class="alert alert-danger">
+                <ul class="mb-0">
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
         <form action="{{ route('cms.blogs.update', $blog->id) }}" method="POST" enctype="multipart/form-data">
             @csrf
             @method('PUT')
@@ -191,5 +200,17 @@
         plugins: 'advlist autolink lists link image charmap preview anchor searchreplace visualblocks code fullscreen insertdatetime media table code help wordcount',
         toolbar: 'undo redo | blocks | bold italic | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | removeformat | help'
     });
+
+    document.addEventListener('invalid', function(e) {
+        const invalidTabPane = e.target.closest('.tab-pane');
+        if (invalidTabPane) {
+            const tabId = invalidTabPane.id;
+            const tabBtn = document.querySelector(`[data-bs-target="#${tabId}"]`);
+            if (tabBtn && !tabBtn.classList.contains('active')) {
+                bootstrap.Tab.getOrCreateInstance(tabBtn).show();
+                setTimeout(() => { e.target.focus(); }, 150);
+            }
+        }
+    }, true);
 </script>
 @endpush

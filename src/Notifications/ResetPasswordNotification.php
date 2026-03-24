@@ -10,7 +10,7 @@ class ResetPasswordNotification extends BaseResetPassword
     /**
      * Get the reset password notification mail message for the given token.
      */
-    public function toMail(object $notifiable): MailMessage
+    public function toMail($notifiable): MailMessage
     {
         $resetUrl = route('cms.password.reset', [
             'token' => $this->token,

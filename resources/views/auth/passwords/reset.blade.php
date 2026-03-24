@@ -30,7 +30,7 @@
             </div>
         @endif
 
-        <form action="{{ route('cms.password.reset') }}" method="POST">
+        <form action="{{ route('cms.password.update') }}" method="POST">
             @csrf
             <input type="hidden" name="token" value="{{ $token }}">
             

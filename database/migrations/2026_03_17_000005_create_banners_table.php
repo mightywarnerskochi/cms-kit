@@ -13,10 +13,10 @@ return new class extends Migration
             $table->string('banner_type')->default('image'); // image, video
             $table->string('image')->nullable();
             $table->string('video_url')->nullable();
+            $table->string('video_file')->nullable();
             $table->string('image_alt')->nullable();
             $table->integer('order_index')->default(0);
             $table->boolean('status')->default(true);
-
             // Multilingual and Dynamic fields
             $table->json('translations')->nullable(); // Stores localized fields like line_1, content, etc.
             $table->json('extra_fields')->nullable();

@@ -16,16 +16,29 @@
                     </div>
                     <h5 class="fw-bold mb-0">Add New Language</h5>
                 </div>
-                <form action="{{ route('cms.languages.store') }}" method="POST">
+                <form action="{{ route('cms.languages.store') }}" method="POST" enctype="multipart/form-data">
                     @csrf
                     <div class="mb-3">
                         <label class="form-label small fw-bold text-muted text-uppercase">Language Name</label>
                         <input type="text" name="name" class="form-control form-control-lg" placeholder="e.g. Arabic" required>
                     </div>
-                    <div class="mb-4">
+                    <div class="mb-3">
                         <label class="form-label small fw-bold text-muted text-uppercase">Language Code</label>
                         <input type="text" name="code" class="form-control form-control-lg" placeholder="e.g. ar" required>
                     </div>
+                    @if(config('cms-kit.database.languages.items.flag', true))
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-muted text-uppercase">Flag image</label>
+                        <input type="file" name="flag_image" class="form-control form-control-lg" accept="image/*">
+                        <small class="text-muted d-block mt-1">Max {{ config('cms-kit.images.languages.flag.max_size', 256) }} KB, up to {{ config('cms-kit.images.languages.flag.width', 64) }}×{{ config('cms-kit.images.languages.flag.height', 48) }} px.</small>
+                    </div>
+                    @endif
+                    @if(config('cms-kit.database.languages.items.flag_alt', true))
+                    <div class="mb-4">
+                        <label class="form-label small fw-bold text-muted text-uppercase">Flag ALT text</label>
+                        <input type="text" name="flag_alt" class="form-control form-control-lg" placeholder="e.g. United Kingdom flag">
+                    </div>
+                    @endif
                     <button type="submit" class="btn btn-primary btn-premium w-100 py-3 shadow-sm">
                         <i class="fas fa-save me-2"></i> Save Language
                     </button>
@@ -44,6 +57,7 @@
                         <thead>
                             <tr>
                                 <th class="ps-4">Name</th>
+                                <th class="text-center">Flag</th>
                                 <th>Code</th>
                                 <th class="text-center">Default</th>
                                 <th class="text-center">Status</th>
@@ -72,13 +86,14 @@
             autoWidth: false,
             ajax: "{{ route('cms.languages.index') }}",
             columns: [
-                {data: 'name', name: 'name', className: 'ps-4', width: '30%'},
+                {data: 'name', name: 'name', className: 'ps-4', width: '24%'},
+                {data: 'flag_thumb', name: 'flag_image', orderable: false, searchable: false, className: 'text-center', width: '10%'},
                 {data: 'code', name: 'code', render: function(data) {
                     return '<code class="text-primary fw-bold">' + data + '</code>';
-                }, width: '15%'},
-                {data: 'default_badge', name: 'is_default', className: 'text-center', width: '20%'},
-                {data: 'status_badge', name: 'status', className: 'text-center', width: '20%'},
-                {data: 'actions', name: 'actions', orderable: false, searchable: false, className: 'text-end pe-4', width: '15%'}
+                }, width: '14%'},
+                {data: 'default_badge', name: 'is_default', className: 'text-center', width: '18%'},
+                {data: 'status_badge', name: 'status', className: 'text-center', width: '18%'},
+                {data: 'actions', name: 'actions', orderable: false, searchable: false, className: 'text-end pe-4', width: '16%'}
             ],
             order: [[0, 'asc']],
             language: {
@@ -92,12 +107,22 @@
             const id = $(this).data('id');
             const name = $(this).data('name');
             const code = $(this).data('code');
+            const flagUrl = $(this).data('flagUrl');
+            const flagAlt = $(this).data('flagAlt');
             
             const form = $('#dynamicEditModal form');
             let updateUrl = "{{ route('cms.languages.update', ':id') }}";
             form.attr('action', updateUrl.replace(':id', id));
             form.find('input[name="name"]').val(name);
             form.find('input[name="code"]').val(code);
+            form.find('input[name="flag_alt"]').val(flagAlt || '');
+            form.find('input[name="flag_image"]').val('');
+            const preview = $('#editFlagPreview');
+            if (flagUrl) {
+                preview.html('<img src="' + flagUrl + '" alt="" class="rounded border" style="height: 40px; width: auto;">');
+            } else {
+                preview.empty();
+            }
             
             new bootstrap.Modal(document.getElementById('dynamicEditModal')).show();
         });
@@ -107,7 +132,7 @@
 <div class="modal fade" id="dynamicEditModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
-            <form method="POST">
+            <form method="POST" enctype="multipart/form-data">
                 @csrf @method('PUT')
                 <div class="modal-header">
                     <h5 class="modal-title">Edit Language</h5>
@@ -122,6 +147,20 @@
                         <label class="form-label">Language Code</label>
                         <input type="text" name="code" class="form-control" required>
                     </div>
+                    @if(config('cms-kit.database.languages.items.flag', true))
+                    <div class="mb-3">
+                        <label class="form-label">Flag image</label>
+                        <div id="editFlagPreview" class="mb-2"></div>
+                        <input type="file" name="flag_image" class="form-control" accept="image/*">
+                        <small class="text-muted">Leave empty to keep current image. Max {{ config('cms-kit.images.languages.flag.max_size', 256) }} KB, up to {{ config('cms-kit.images.languages.flag.width', 64) }}×{{ config('cms-kit.images.languages.flag.height', 48) }} px.</small>
+                    </div>
+                    @endif
+                    @if(config('cms-kit.database.languages.items.flag_alt', true))
+                    <div class="mb-3">
+                        <label class="form-label">Flag ALT text</label>
+                        <input type="text" name="flag_alt" class="form-control">
+                    </div>
+                    @endif
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>

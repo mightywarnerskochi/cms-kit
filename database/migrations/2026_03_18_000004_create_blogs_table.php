@@ -24,12 +24,9 @@ return new class extends Migration
             $table->string('image_4_alt')->nullable();
             $table->integer('order_index')->default(0);
             $table->boolean('status')->default(true);
-            $table->boolean('display_home')->default(true);
-            
             $table->json('translations')->nullable();
             $table->json('extra_fields')->nullable();
             $table->json('metadata')->nullable();
-            
             $table->timestamps();
         });
     }

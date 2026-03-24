@@ -93,12 +93,6 @@
                         <label class="form-check-label" for="sectionStatus">Status</label>
                     </div>
                 </div>
-                <div class="col-md-3">
-                    <div class="form-check form-switch mb-2">
-                        <input class="form-check-input" type="checkbox" name="display_home" id="sectionDisplayHome" {{ ($section->display_home ?? true) ? 'checked' : '' }}>
-                        <label class="form-check-label" for="sectionDisplayHome">Display Home</label>
-                    </div>
-                </div>
             </div>
 
             <div class="mt-3">

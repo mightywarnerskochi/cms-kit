@@ -21,7 +21,6 @@ class Blog extends Model
         'image_4_alt',
         'order_index',
         'status',
-        'display_home',
         'translations',
         'extra_fields',
         'metadata',
@@ -29,7 +28,6 @@ class Blog extends Model
 
     protected $casts = [
         'status' => 'boolean',
-        'display_home' => 'boolean',
         'translations' => 'array',
         'extra_fields' => 'array',
         'metadata' => 'array',

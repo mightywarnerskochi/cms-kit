@@ -18,6 +18,7 @@ return new class extends Migration
             $table->string('banner_alt')->nullable();
             $table->json('description')->nullable();
             $table->json('extra_fields')->nullable();
+            $table->boolean('status')->default(true);
             $table->timestamps();
         });
     }

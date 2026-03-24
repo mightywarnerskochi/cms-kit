@@ -10,6 +10,13 @@
  *   config/cms/database.php -> banners.items.extra_fields
  */
 return [
+    'languages' => [
+        'items' => [
+            'flag' => true,
+            'flag_alt' => true,
+            'required' => [],
+        ],
+    ],
     'enquiries' => [
         'columns' => [
             'name' => true,
@@ -163,7 +170,6 @@ return [
             'banner' => true,
             'banner_alt' => true,
             'status' => true,
-            'display_home' => true,
             'extra_fields' => [],
             'required' => ['title'],
         ],
@@ -184,7 +190,6 @@ return [
             'image_4_alt' => true,
             'order' => true,
             'status' => true,
-            'display_home' => true,
             'extra_fields' => [],
             'required' => ['title', 'content', 'published_at', 'feature_image', 'feature_image_alt'],
         ],

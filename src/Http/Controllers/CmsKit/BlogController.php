@@ -169,9 +169,8 @@ class BlogController extends Controller
             $this->validateImageWithinLimits($request, $field, $imagesConfig[$field] ?? [], str_replace('_', ' ', ucfirst($field)));
         }
 
-        $data = $request->except(['feature_image', 'detail_image', 'banner_image', 'image_3', 'image_4', 'status', 'display_home', 'slug']);
+        $data = $request->except(['feature_image', 'detail_image', 'banner_image', 'image_3', 'image_4', 'status', 'slug']);
         $data['status'] = $request->has('status');
-        $data['display_home'] = $request->has('display_home');
         $data['translations'] = $this->mergeBlogTranslatableExtraFields($request->input('translations', []));
         $data['slug'] = $request->filled('slug') ? Str::slug($request->slug) : Str::slug($request->translations[config('app.fallback_locale')]['title'] ?? $request->translations[array_key_first($request->translations)]['title']);
         $data['extra_fields'] = $request->input('extra_fields', []);
@@ -219,9 +218,8 @@ class BlogController extends Controller
             $this->validateImageWithinLimits($request, $field, $imagesConfig[$field] ?? [], str_replace('_', ' ', ucfirst($field)));
         }
 
-        $data = $request->except(['feature_image', 'detail_image', 'banner_image', 'image_3', 'image_4', 'status', 'display_home', 'slug']);
+        $data = $request->except(['feature_image', 'detail_image', 'banner_image', 'image_3', 'image_4', 'status', 'slug']);
         $data['status'] = $request->has('status');
-        $data['display_home'] = $request->has('display_home');
         $data['translations'] = $this->mergeBlogTranslatableExtraFields($request->input('translations', []));
         $data['extra_fields'] = $request->input('extra_fields', []);
         if ($request->filled('slug')) {
@@ -325,12 +323,10 @@ class BlogController extends Controller
             [
                 'translations' => $this->mergeBlogSectionTranslatableExtraFields($request->input('translations', [])),
                 'status' => $request->has('status'),
-                'display_home' => $request->has('display_home'),
                 'extra_fields' => array_merge(
                     $request->input('extra_fields', []),
                     [
                         'status' => $request->has('status'),
-                        'display_home' => $request->has('display_home'),
                     ]
                 )
             ]

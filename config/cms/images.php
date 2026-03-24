@@ -52,6 +52,13 @@ return [
             'max_size' => 1024, // 1MB
         ],
     ],
+    'languages' => [
+        'flag' => [
+            'width' => 64,
+            'height' => 48,
+            'max_size' => 256,
+        ],
+    ],
     'blogs' => [
         'feature_image' => [
             'width' => 370,

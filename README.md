@@ -117,6 +117,7 @@ Fields can be:
 
 Each field config supports:
 - `type`: `text`, `textarea`, `number`, `email`, `select`, `file`
+- `editor`: optional, supports `tinymce` for `textarea` fields
 - `label`: Human readable label
 - `placeholder`: Input placeholder
 - `helpText`: Description/hint shown in UI

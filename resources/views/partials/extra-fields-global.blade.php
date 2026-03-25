@@ -25,12 +25,14 @@
             @php
                 $fieldValue = old("extra_fields.{$fieldName}", $existingValues[$fieldName] ?? '');
                 $fieldType = $fieldConfig['type'] ?? 'text';
+                $usesTinyMce = ($fieldConfig['editor'] ?? null) === 'tinymce';
+                $textareaClasses = trim('form-control' . ($usesTinyMce ? ' tinymce-extra-field' : '') . ' ' . ($errors->has("extra_fields.{$fieldName}") ? 'is-invalid' : ''));
             @endphp
             <div class="col-md-6">
                 <label class="form-label">{{ $fieldConfig['label'] ?? ucfirst(str_replace('_', ' ', $fieldName)) }} {!! ($fieldConfig['required'] ?? false) ? '<span class="text-danger">*</span>' : '' !!}</label>
 
                 @if($fieldType === 'textarea')
-                    <textarea name="extra_fields[{{ $fieldName }}]" class="form-control @error("extra_fields.{$fieldName}") is-invalid @enderror" rows="3" placeholder="{{ $fieldConfig['placeholder'] ?? '' }}" {{ ($fieldConfig['required'] ?? false) ? 'required' : '' }}>{{ $fieldValue }}</textarea>
+                    <textarea name="extra_fields[{{ $fieldName }}]" class="{{ $textareaClasses }}" rows="{{ $usesTinyMce ? 6 : 3 }}" placeholder="{{ $fieldConfig['placeholder'] ?? '' }}" {{ ($fieldConfig['required'] ?? false) ? 'required' : '' }}>{{ $fieldValue }}</textarea>
                 @elseif($fieldType === 'select')
                     <select name="extra_fields[{{ $fieldName }}]" class="form-select @error("extra_fields.{$fieldName}") is-invalid @enderror" {{ ($fieldConfig['required'] ?? false) ? 'required' : '' }}>
                         <option value="">-- Select --</option>

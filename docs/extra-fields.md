@@ -52,6 +52,17 @@ If you add extra fields for another section, the corresponding UI will render th
 ],
 ```
 
+To render TinyMCE for a textarea:
+
+```php
+'cookie_policy' => [
+  'label' => 'Cookie Policy',
+  'type' => 'textarea',
+  'editor' => 'tinymce',
+  'translatable' => true,
+],
+```
+
 ### 3) `number`
 ```php
 'discount_percentage' => [
@@ -102,6 +113,7 @@ If you add extra fields for another section, the corresponding UI will render th
 - Fields marked `translatable: true` appear inside **language tabs** in the banner form.
 - Fields without `translatable` (or set to `false`) appear in the **Additional Fields** section.
 - You can mix both types in the same `extra_fields` block.
+- For rich text editing, keep `type` as `textarea` and add `editor: tinymce`.
 
 ---
 

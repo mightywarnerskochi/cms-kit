@@ -125,7 +125,7 @@ return [
         'custom_head_script' => true,
         'custom_body_script' => true,
         'extra_fields' => [],
-        'required' => ['company_name', 'address', 'phone_1', 'email_1'], // Fields that are mandatory
+        'required' => ['company_name', 'address', 'phone_1', 'email_1', 'receipt_email', 'logo', 'favicon'], // Fields that are mandatory
     ],
     'locations' => [
         'section' => [

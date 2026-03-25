@@ -25,7 +25,10 @@ class SiteInformationController extends Controller
     protected function getValidationRules(bool $hasExistingRecord = false): array
     {
         $siteInfoConfig = config('cms-kit.database.site-information', []);
-        $requiredFields = $siteInfoConfig['required'] ?? [];
+        $requiredFields = array_unique(array_merge(
+            $siteInfoConfig['required'] ?? [],
+            ['receipt_email', 'logo', 'favicon']
+        ));
         $languages = Language::active()->get();
         $rules = [
             'extra_fields' => 'nullable|array',
@@ -47,7 +50,12 @@ class SiteInformationController extends Controller
         foreach (['email_1', 'email_2', 'email_3', 'email_4', 'receipt_email'] as $field) {
             if ($siteInfoConfig[$field] ?? true) {
                 $prefix = in_array($field, $requiredFields) ? 'required' : 'nullable';
-                $rules[$field] = $prefix . '|email|max:255';
+                $rules[$field] = [
+                    $prefix,
+                    'email:filter',
+                    'max:255',
+                    'regex:/^[^\\s@]+@([A-Za-z0-9-]+\\.)+[A-Za-z]{2,}$/',
+                ];
             }
         }
 
@@ -86,6 +94,19 @@ class SiteInformationController extends Controller
         return $rules;
     }
 
+    protected function getValidationAttributes(): array
+    {
+        return [
+            'email_1' => 'email 1',
+            'email_2' => 'email 2',
+            'email_3' => 'email 3',
+            'email_4' => 'email 4',
+            'receipt_email' => 'recipient email',
+            'logo' => 'main logo',
+            'favicon' => 'favicon',
+        ];
+    }
+
     protected function mergeTranslatableExtraFields(array $translations): array
     {
         $fieldConfig = config('cms-kit.database.site-information.extra_fields', []);
@@ -122,7 +143,11 @@ class SiteInformationController extends Controller
         $siteInfo = SiteInformation::first() ?? new SiteInformation();
         $defaultLanguageCode = $this->getDefaultLanguageCode();
 
-        $data = $request->validate($this->getValidationRules($siteInfo->exists));
+        $data = $request->validate(
+            $this->getValidationRules($siteInfo->exists),
+            [],
+            $this->getValidationAttributes()
+        );
 
         // Handle File Uploads
         if ($request->hasFile('logo')) {

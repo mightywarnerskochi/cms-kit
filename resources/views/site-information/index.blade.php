@@ -230,8 +230,8 @@
                             @endif
                             @if($siteInfoConfig['receipt_email'] ?? true)
                             <div class="col-md-6 mb-3">
-                                <label class="form-label fw-bold">Receipt Email</label>
-                                <input type="email" name="receipt_email" class="form-control @error('receipt_email') is-invalid @enderror" value="{{ old('receipt_email', $siteInfo->receipt_email) }}" placeholder="e.g. billing@company.com">
+                                <label class="form-label fw-bold">Recipient Email {!! in_array('receipt_email', $siteInfoRequired) ? '<span class="text-danger">*</span>' : '' !!}</label>
+                                <input type="email" name="receipt_email" class="form-control @error('receipt_email') is-invalid @enderror" value="{{ old('receipt_email', $siteInfo->receipt_email) }}" placeholder="e.g. billing@company.com" {{ in_array('receipt_email', $siteInfoRequired) ? 'required' : '' }}>
                                 @error('receipt_email')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
@@ -250,14 +250,14 @@
                     <div class="card-body">
                         @if($siteInfoConfig['logo'] ?? true)
                         <div class="mb-4">
-                            <label class="form-label fw-bold">Main Logo</label>
+                            <label class="form-label fw-bold">Main Logo {!! in_array('logo', $siteInfoRequired) ? '<span class="text-danger">*</span>' : '' !!}</label>
                             <small class="text-muted d-block mb-1">Recommended size: 200x60px (PNG/SVG)</small>
                             @if($siteInfo->logo)
                             <div class="mb-2">
                                 <img src="{{ asset('storage/' . $siteInfo->logo) }}" class="img-thumbnail rounded" style="max-height: 80px;">
                             </div>
                             @endif
-                            <input type="file" name="logo" class="form-control mb-2 @error('logo') is-invalid @enderror">
+                            <input type="file" name="logo" class="form-control mb-2 @error('logo') is-invalid @enderror" {{ in_array('logo', $siteInfoRequired) && !$siteInfo->logo ? 'required' : '' }}>
                             @error('logo')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
@@ -272,14 +272,14 @@
 
                         @if($siteInfoConfig['favicon'] ?? true)
                         <div class="mb-4">
-                            <label class="form-label fw-bold">Favicon</label>
+                            <label class="form-label fw-bold">Favicon {!! in_array('favicon', $siteInfoRequired) ? '<span class="text-danger">*</span>' : '' !!}</label>
                             <small class="text-muted d-block mb-1">Recommended size: 32x32px (ICO/PNG)</small>
                             @if($siteInfo->favicon)
                             <div class="mb-2">
                                 <img src="{{ asset('storage/' . $siteInfo->favicon) }}" class="img-thumbnail rounded" style="max-height: 32px;">
                             </div>
                             @endif
-                            <input type="file" name="favicon" class="form-control @error('favicon') is-invalid @enderror">
+                            <input type="file" name="favicon" class="form-control @error('favicon') is-invalid @enderror" {{ in_array('favicon', $siteInfoRequired) && !$siteInfo->favicon ? 'required' : '' }}>
                             @error('favicon')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror

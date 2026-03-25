@@ -4,6 +4,8 @@ namespace CMS\SiteManager\Notifications;
 
 use Illuminate\Auth\Notifications\ResetPassword as BaseResetPassword;
 use Illuminate\Notifications\Messages\MailMessage;
+use CMS\SiteManager\Models\CmsKit\SiteInformation;
+use Illuminate\Support\Facades\Storage;
 
 class ResetPasswordNotification extends BaseResetPassword
 {
@@ -17,11 +19,21 @@ class ResetPasswordNotification extends BaseResetPassword
             'email' => $notifiable->getEmailForPasswordReset(),
         ]);
 
+        $siteInfo = SiteInformation::first();
+        $siteName = $siteInfo?->company_name ?: config('cms-kit.common.name', config('app.name', 'Laravel'));
+        $logoUrl = null;
+
+        if (!empty($siteInfo?->logo)) {
+            $logoUrl = asset(Storage::disk('public')->url($siteInfo->logo));
+        }
+
         return (new MailMessage)
-            ->subject('Reset Password Notification')
-            ->line('You are receiving this email because we received a password reset request for your account.')
-            ->action('Reset Password', $resetUrl)
-            ->line('This password reset link will expire in ' . config('auth.passwords.cms_admins.expire') . ' minutes.')
-            ->line('If you did not request a password reset, no further action is required.');
+            ->subject($siteName . ' Password Reset')
+            ->view('cms-kit::emails.reset-password', [
+                'resetUrl' => $resetUrl,
+                'siteName' => $siteName,
+                'logoUrl' => $logoUrl,
+                'expireMinutes' => config('auth.passwords.cms_admins.expire'),
+            ]);
     }
 }

@@ -35,16 +35,26 @@ class SiteInformationController extends Controller
         foreach ([
             'phone_1', 'phone_2', 'phone_3', 'phone_4',
             'whatsapp_number',
-            'email_1', 'email_2', 'email_3', 'email_4',
-            'receipt_email',
             'logo_alt', 'footer_logo_alt',
-            'facebook', 'twitter', 'linkedin', 'instagram', 'tiktok', 'snapchat',
-            'pinterest', 'youtube', 'skype', 'whatsapp_social', 'vimeo',
             'gtag'
         ] as $field) {
             if ($siteInfoConfig[$field] ?? true) {
                 $prefix = in_array($field, $requiredFields) ? 'required' : 'nullable';
                 $rules[$field] = $prefix . '|string|max:255';
+            }
+        }
+
+        foreach (['email_1', 'email_2', 'email_3', 'email_4', 'receipt_email'] as $field) {
+            if ($siteInfoConfig[$field] ?? true) {
+                $prefix = in_array($field, $requiredFields) ? 'required' : 'nullable';
+                $rules[$field] = $prefix . '|email|max:255';
+            }
+        }
+
+        foreach (['facebook', 'twitter', 'linkedin', 'instagram', 'tiktok', 'snapchat', 'pinterest', 'youtube', 'skype', 'whatsapp_social', 'vimeo'] as $field) {
+            if ($siteInfoConfig[$field] ?? true) {
+                $prefix = in_array($field, $requiredFields) ? 'required' : 'nullable';
+                $rules[$field] = $prefix . '|url|max:255';
             }
         }
 

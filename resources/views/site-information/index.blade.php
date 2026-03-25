@@ -320,8 +320,11 @@
                             <div class="mb-2">
                                 <div class="input-group">
                                     <span class="input-group-text"><i class="fab fa-{{ $inputKey == 'whatsapp_social' ? 'whatsapp' : str_replace('_', '-', $inputKey) }}"></i></span>
-                                    <input type="text" name="{{ $inputKey }}" class="form-control" placeholder="{{ $displayLabel }} URL" value="{{ old($inputKey, $siteInfo->$inputKey) }}">
+                                    <input type="url" name="{{ $inputKey }}" class="form-control @error($inputKey) is-invalid @enderror" placeholder="{{ $displayLabel }} URL" value="{{ old($inputKey, $siteInfo->$inputKey) }}">
                                 </div>
+                                @error($inputKey)
+                                    <div class="invalid-feedback d-block">{{ $message }}</div>
+                                @enderror
                             </div>
                             @endif
                         @endforeach

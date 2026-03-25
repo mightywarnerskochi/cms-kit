@@ -182,6 +182,15 @@
                 'existingValues' => $blog->extra_fields ?? [],
             ])
 
+            <div class="card bg-light border-0 mb-4">
+                <div class="card-body p-4">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" name="status" id="blogStatus" value="1" {{ old('status', $blog->status) ? 'checked' : '' }}>
+                        <label class="form-check-label fw-bold" for="blogStatus">Status (Active)</label>
+                    </div>
+                </div>
+            </div>
+
             <div class="mt-5 border-top pt-4">
                 <button type="submit" class="btn btn-primary px-5">Update Blog Post</button>
                 <a href="{{ route('cms.blogs.index') }}" class="btn btn-outline-secondary px-4">Cancel</a>

@@ -44,7 +44,7 @@
         </div>
     </div>
 
-    <form action="{{ route('cms.site-information.update') }}" method="POST" enctype="multipart/form-data">
+    <form action="{{ route('cms.site-information.update') }}" method="POST" enctype="multipart/form-data" novalidate>
         @csrf
 
         <div class="row">

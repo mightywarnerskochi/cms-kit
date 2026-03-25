@@ -1,7 +1,7 @@
-# Dev1kochi Crypto CMS (cms-kit)
+# Mighty Warners Kochi CMS (cms-kit)
 
-[![Latest Version on Packagist](https://img.shields.io/packagist/v/dev1kochi-crypto/cms.svg?style=flat-square)](https://packagist.org/packages/dev1kochi-crypto/cms)
-[![Total Downloads](https://img.shields.io/packagist/dt/dev1kochi-crypto/cms.svg?style=flat-square)](https://packagist.org/packages/dev1kochi-crypto/cms)
+[![Latest Version on Packagist](https://img.shields.io/packagist/v/mightywarnerskochi/cms.svg?style=flat-square)](https://packagist.org/packages/mightywarnerskochi/cms)
+[![Total Downloads](https://img.shields.io/packagist/dt/mightywarnerskochi/cms.svg?style=flat-square)](https://packagist.org/packages/mightywarnerskochi/cms)
 [![Software License](https://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat-square)](LICENSE.md)
 
 **CMS Site Manager** is a reusable Laravel package designed to quickly integrate essential CMS components into your service-based websites. It provides a robust foundation for managing testimonials, languages, and admin authentication with a clean, customizable interface.
@@ -32,7 +32,7 @@ If you want to install the package using the GitHub repository, add this to your
 "repositories": [
     {
         "type": "vcs",
-        "url": "https://github.com/dev1kochi-crypto/cms-kit"
+        "url": "https://github.com/mightywarnerskochi/cms-kit"
     }
 ]
 ```
@@ -40,7 +40,7 @@ If you want to install the package using the GitHub repository, add this to your
 ### 2. Install via Composer
 
 ```bash
-composer require dev1kochi-crypto/cms:dev-main
+composer require mightywarnerskochi/cms:dev-main
 ```
 
 ### 2. Publish Configuration and Assets

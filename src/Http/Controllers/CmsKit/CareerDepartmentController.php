@@ -40,15 +40,23 @@ class CareerDepartmentController extends Controller
 
     protected function validationRules(): array
     {
+        $departmentConfig = config('cms-kit.database.careers.departments', []);
         $rules = [
-            'stats_text' => ['nullable', 'string'],
             'order_index' => ['nullable', 'integer', 'min:1'],
             'status' => ['nullable', 'boolean'],
         ];
 
+        if ($departmentConfig['stats'] ?? false) {
+            $rules['stats_text'] = ['nullable', 'string'];
+        }
+
         foreach ($this->activeLanguages() as $lang) {
-            $rules["translations.{$lang->code}.title"] = $this->textRule(true);
-            $rules["translations.{$lang->code}.description"] = $this->textRule(false);
+            if ($departmentConfig['title'] ?? true) {
+                $rules["translations.{$lang->code}.title"] = $this->textRule(true);
+            }
+            if ($departmentConfig['description'] ?? true) {
+                $rules["translations.{$lang->code}.description"] = $this->textRule(false);
+            }
         }
 
         return $rules;
@@ -69,8 +77,8 @@ class CareerDepartmentController extends Controller
 
         foreach ($translations as $lang => $values) {
             $normalized[$lang] = [
-                'title' => isset($values['title']) ? trim((string) $values['title']) : null,
-                'description' => isset($values['description']) ? trim((string) $values['description']) : null,
+                'title' => (config('cms-kit.database.careers.departments.title', true) && isset($values['title'])) ? trim((string) $values['title']) : null,
+                'description' => (config('cms-kit.database.careers.departments.description', true) && isset($values['description'])) ? trim((string) $values['description']) : null,
                 'extra_fields' => (array) data_get($values, 'extra_fields', []),
             ];
         }
@@ -95,6 +103,10 @@ class CareerDepartmentController extends Controller
 
     protected function normalizeStats(?string $stats): array
     {
+        if (!(config('cms-kit.database.careers.departments.stats', false))) {
+            return [];
+        }
+
         if (!is_string($stats) || trim($stats) === '') {
             return [];
         }
@@ -107,6 +119,8 @@ class CareerDepartmentController extends Controller
 
     public function index(Request $request)
     {
+        $columns = config('cms-kit.database.careers.departments.columns', []);
+
         if ($request->ajax()) {
             $data = CareerDepartment::query()->ordered();
 
@@ -117,7 +131,6 @@ class CareerDepartmentController extends Controller
                 ->addColumn('description', function ($row) {
                     return e(Str::limit(strip_tags((string) $row->getTranslation('description')), 90));
                 })
-                ->addColumn('stats', fn ($row) => count($row->stats ?? []) ? e(implode(', ', $row->stats)) : '-')
                 ->addColumn('status', function ($row) {
                     $checked = $row->status ? 'checked' : '';
 
@@ -141,7 +154,7 @@ class CareerDepartmentController extends Controller
                 ->make(true);
         }
 
-        return view('cms-kit::careers.departments.index');
+        return view('cms-kit::careers.departments.index', compact('columns'));
     }
 
     public function create()

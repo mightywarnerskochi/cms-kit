@@ -4,13 +4,13 @@
     $showLanguageUi = config('cms-kit.common.modules.languages', true);
     $item = $career ?? null;
     $isEdit = (bool) $item;
-    $jobTypeOptions = array_values(array_unique(array_filter(array_merge(
-        $filterOptions['job_type']['options'] ?? [],
-        [old('job_type', $item->job_type ?? '')]
-    ))));
+    $jobTypeOptions = array_filter($jobTypeOptions ?? []);
+    $currentJobType = old('job_type', $item->job_type ?? '');
+    if ($currentJobType !== '' && !array_key_exists($currentJobType, $jobTypeOptions)) {
+        $jobTypeOptions[$currentJobType] = \Illuminate\Support\Str::headline(str_replace(['-', '_'], ' ', $currentJobType));
+    }
     $departmentOptions = array_values(array_unique(array_filter(array_merge(
         $departmentOptions ?? [],
-        $filterOptions['department']['options'] ?? [],
         [old('department', $item->department ?? '')]
     ))));
 @endphp
@@ -30,13 +30,14 @@
             </div>
         @endif
 
-        <form action="{{ $formAction }}" method="POST">
+        <form action="{{ $formAction }}" method="POST" enctype="multipart/form-data">
             @csrf
             @if($isEdit)
                 @method('PUT')
             @endif
 
             <div class="row g-4 mb-4">
+                @if($careerConfig['slug'] ?? true)
                 <div class="col-md-6">
                     <label class="form-label fw-bold">Slug</label>
                     <input type="text" name="slug" class="form-control @error('slug') is-invalid @enderror" value="{{ old('slug', $item->slug ?? '') }}" placeholder="Auto-generated from title if left empty">
@@ -44,6 +45,8 @@
                         <div class="invalid-feedback">{{ $message }}</div>
                     @enderror
                 </div>
+                @endif
+                @if($careerConfig['published_date'] ?? true)
                 <div class="col-md-6">
                     <label class="form-label fw-bold">Published Date {!! in_array('published_date', $careerRequired, true) ? '<span class="text-danger">*</span>' : '' !!}</label>
                     <input type="date" name="published_date" class="form-control @error('published_date') is-invalid @enderror" value="{{ old('published_date', optional($item?->published_date)->format('Y-m-d') ?? now()->format('Y-m-d')) }}" required>
@@ -51,30 +54,34 @@
                         <div class="invalid-feedback">{{ $message }}</div>
                     @enderror
                 </div>
+                @endif
             </div>
 
             <div class="card bg-light border-0 mb-4">
                 <div class="card-body p-4">
                     <h6 class="fw-bold mb-3">Classification</h6>
                     <div class="row g-4">
+                        @if($careerConfig['job_type'] ?? true)
                         <div class="col-md-6">
-                            <label class="form-label fw-bold">Job Type <span class="text-danger">*</span></label>
-                            <select name="job_type" class="form-select @error('job_type') is-invalid @enderror" required>
+                            <label class="form-label fw-bold">Job Type {!! in_array('job_type', $careerRequired, true) ? '<span class="text-danger">*</span>' : '' !!}</label>
+                            <select name="job_type" class="form-select @error('job_type') is-invalid @enderror" {{ in_array('job_type', $careerRequired, true) ? 'required' : '' }}>
                                 <option value="">Select job type</option>
-                                @foreach($jobTypeOptions as $option)
-                                    <option value="{{ $option }}" {{ old('job_type', $item->job_type ?? '') === $option ? 'selected' : '' }}>{{ $option }}</option>
+                                @foreach($jobTypeOptions as $option => $label)
+                                    <option value="{{ $option }}" {{ old('job_type', $item->job_type ?? '') === $option ? 'selected' : '' }}>{{ $label }}</option>
                                 @endforeach
                             </select>
                             @error('job_type')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                             @if(empty($jobTypeOptions))
-                                <small class="text-muted d-block mt-1">Add a `job_type` filter in the common section to populate this dropdown.</small>
+                                <small class="text-muted d-block mt-1">Add job type options in `config/cms/database.php`.</small>
                             @endif
                         </div>
+                        @endif
+                        @if($careerConfig['department'] ?? true)
                         <div class="col-md-6">
-                            <label class="form-label fw-bold">Department <span class="text-danger">*</span></label>
-                            <select name="department" class="form-select @error('department') is-invalid @enderror" required>
+                            <label class="form-label fw-bold">Department {!! in_array('department', $careerRequired, true) ? '<span class="text-danger">*</span>' : '' !!}</label>
+                            <select name="department" class="form-select @error('department') is-invalid @enderror" {{ in_array('department', $careerRequired, true) ? 'required' : '' }}>
                                 <option value="">Select department</option>
                                 @foreach($departmentOptions as $option)
                                     <option value="{{ $option }}" {{ old('department', $item->department ?? '') === $option ? 'selected' : '' }}>{{ $option }}</option>
@@ -84,16 +91,20 @@
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                             @if(empty($departmentOptions))
-                                <small class="text-muted d-block mt-1">Add departments first, or configure a `department` filter in the common section.</small>
+                                <small class="text-muted d-block mt-1">Add active departments first to populate this dropdown.</small>
                             @endif
                         </div>
+                        @endif
+                        @if($careerConfig['location'] ?? true)
                         <div class="col-md-4">
-                            <label class="form-label fw-bold">Location <span class="text-danger">*</span></label>
-                            <input type="text" name="location" class="form-control @error('location') is-invalid @enderror" value="{{ old('location', $item->location ?? '') }}" required>
+                            <label class="form-label fw-bold">Location {!! in_array('location', $careerRequired, true) ? '<span class="text-danger">*</span>' : '' !!}</label>
+                            <input type="text" name="location" class="form-control @error('location') is-invalid @enderror" value="{{ old('location', $item->location ?? '') }}" {{ in_array('location', $careerRequired, true) ? 'required' : '' }}>
                             @error('location')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
+                        @endif
+                        @if($careerConfig['country'] ?? true)
                         <div class="col-md-4">
                             <label class="form-label fw-bold">Country</label>
                             <input type="text" name="country" class="form-control @error('country') is-invalid @enderror" value="{{ old('country', $item->country ?? '') }}">
@@ -101,6 +112,8 @@
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
+                        @endif
+                        @if($careerConfig['base'] ?? true)
                         <div class="col-md-4">
                             <label class="form-label fw-bold">Base</label>
                             <input type="text" name="base" class="form-control @error('base') is-invalid @enderror" value="{{ old('base', $item->base ?? '') }}" placeholder="Optional">
@@ -108,6 +121,7 @@
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
+                        @endif
                     </div>
                 </div>
             </div>
@@ -134,13 +148,16 @@
                     @php $translation = data_get($item, "translations.{$lang->code}", []); @endphp
                     <div class="tab-pane fade {{ $loop->first ? 'show active' : '' }}" id="career-panel-{{ $lang->code }}" role="tabpanel">
                         <div class="row g-4">
+                            @if($careerConfig['title'] ?? true)
                             <div class="col-12">
-                                <label class="form-label fw-bold">Title <span class="text-danger">*</span></label>
-                                <input type="text" name="translations[{{ $lang->code }}][title]" class="form-control @error("translations.{$lang->code}.title") is-invalid @enderror" value="{{ old("translations.{$lang->code}.title", $translation['title'] ?? '') }}" required>
+                                <label class="form-label fw-bold">Title {!! in_array('title', $careerRequired, true) ? '<span class="text-danger">*</span>' : '' !!}</label>
+                                <input type="text" name="translations[{{ $lang->code }}][title]" class="form-control @error("translations.{$lang->code}.title") is-invalid @enderror" value="{{ old("translations.{$lang->code}.title", $translation['title'] ?? '') }}" {{ in_array('title', $careerRequired, true) ? 'required' : '' }}>
                                 @error("translations.{$lang->code}.title")
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
+                            @endif
+                            @if($careerConfig['short_description'] ?? true)
                             <div class="col-12">
                                 <label class="form-label fw-bold">Short Description</label>
                                 <textarea name="translations[{{ $lang->code }}][short_description]" class="form-control @error("translations.{$lang->code}.short_description") is-invalid @enderror" rows="3">{{ old("translations.{$lang->code}.short_description", $translation['short_description'] ?? '') }}</textarea>
@@ -148,7 +165,9 @@
                                     <div class="invalid-feedback d-block">{{ $message }}</div>
                                 @enderror
                             </div>
+                            @endif
                             @foreach(['about' => 'About', 'responsibilities' => 'Responsibilities', 'requirements' => 'Requirements', 'join_the_team' => 'Join the Team'] as $field => $label)
+                            @if($careerConfig[$field] ?? true)
                             <div class="col-12">
                                 <label class="form-label fw-bold">{{ $label }}</label>
                                 <textarea name="translations[{{ $lang->code }}][{{ $field }}]" class="form-control tinymce-editor @error("translations.{$lang->code}.{$field}") is-invalid @enderror" rows="8">{{ old("translations.{$lang->code}.{$field}", $translation[$field] ?? '') }}</textarea>
@@ -156,6 +175,7 @@
                                     <div class="invalid-feedback d-block">{{ $message }}</div>
                                 @enderror
                             </div>
+                            @endif
                             @endforeach
                         </div>
                     </div>
@@ -187,6 +207,46 @@
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
+                        <div class="col-12">
+                            <label class="form-label fw-bold">Canonical URL</label>
+                            <input type="url" name="metadata[canonical_url]" class="form-control @error('metadata.canonical_url') is-invalid @enderror" value="{{ old('metadata.canonical_url', $item->metadata['canonical_url'] ?? '') }}" placeholder="https://example.com/careers/job-slug">
+                            @error('metadata.canonical_url')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">OG Title</label>
+                            <input type="text" name="metadata[og_title]" class="form-control @error('metadata.og_title') is-invalid @enderror" value="{{ old('metadata.og_title', $item->metadata['og_title'] ?? '') }}">
+                            @error('metadata.og_title')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">OG Description</label>
+                            <textarea name="metadata[og_description]" class="form-control @error('metadata.og_description') is-invalid @enderror" rows="2">{{ old('metadata.og_description', $item->metadata['og_description'] ?? '') }}</textarea>
+                            @error('metadata.og_description')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-bold">OG Image</label>
+                            @if(!empty($item->metadata['og_image'] ?? null))
+                                <div class="mb-2">
+                                    <img src="{{ asset('storage/' . $item->metadata['og_image']) }}" class="rounded border" style="height: 100px;">
+                                </div>
+                            @endif
+                            <input type="file" name="metadata[og_image]" class="form-control @error('metadata.og_image') is-invalid @enderror" accept="image/*">
+                            @error('metadata.og_image')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-bold">Other Meta Tags</label>
+                            <textarea name="metadata[other_meta_tags]" class="form-control @error('metadata.other_meta_tags') is-invalid @enderror" rows="3">{{ old('metadata.other_meta_tags', $item->metadata['other_meta_tags'] ?? '') }}</textarea>
+                            @error('metadata.other_meta_tags')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
                     </div>
                 </div>
             </div>
@@ -194,6 +254,7 @@
             <div class="card bg-light border-0 mb-4">
                 <div class="card-body p-4">
                     <div class="row g-4 align-items-end">
+                        @if($careerConfig['order'] ?? true)
                         <div class="col-md-4">
                             <label class="form-label fw-bold">Order</label>
                             <input type="number" name="order_index" class="form-control @error('order_index') is-invalid @enderror" value="{{ old('order_index', $item->order_index ?? $nextOrder) }}" min="1">
@@ -201,12 +262,15 @@
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
+                        @endif
+                        @if($careerConfig['status'] ?? true)
                         <div class="col-md-4">
                             <div class="form-check form-switch mb-2">
                                 <input class="form-check-input" type="checkbox" name="status" id="careerStatus" value="1" {{ old('status', $item->status ?? true) ? 'checked' : '' }}>
                                 <label class="form-check-label fw-bold" for="careerStatus">Status (Active)</label>
                             </div>
                         </div>
+                        @endif
                     </div>
                 </div>
             </div>

@@ -27,8 +27,9 @@
                 $fieldType = $fieldConfig['type'] ?? 'text';
                 $usesTinyMce = ($fieldConfig['editor'] ?? null) === 'tinymce';
                 $textareaClasses = trim('form-control' . ($usesTinyMce ? ' tinymce-extra-field' : '') . ' ' . ($errors->has("extra_fields.{$fieldName}") ? 'is-invalid' : ''));
+                $columnClass = $fieldConfig['column_class'] ?? ($usesTinyMce ? 'col-12' : 'col-md-6');
             @endphp
-            <div class="col-md-6">
+            <div class="{{ $columnClass }}">
                 <label class="form-label">{{ $fieldConfig['label'] ?? ucfirst(str_replace('_', ' ', $fieldName)) }} {!! ($fieldConfig['required'] ?? false) ? '<span class="text-danger">*</span>' : '' !!}</label>
 
                 @if($fieldType === 'textarea')

@@ -193,18 +193,26 @@
                         </a>
                         <div class="collapse sidebar-submenu @if(request()->routeIs('cms.careers.*')) show @endif" id="careersMenu">
                             <nav class="nav flex-column">
+                                @if(config('cms-kit.common.careers.common_section', true))
                                 <a class="nav-link py-2 @if(request()->routeIs('cms.careers.common')) active @endif" href="{{ route('cms.careers.common') }}">
                                     Common Section
                                 </a>
+                                @endif
+                                @if(config('cms-kit.common.careers.vacancies', true))
                                 <a class="nav-link py-2 @if(request()->routeIs('cms.careers.vacancies.index') || request()->routeIs('cms.careers.create') || request()->routeIs('cms.careers.edit')) active @endif" href="{{ route('cms.careers.vacancies.index') }}">
                                     Vacancies
                                 </a>
+                                @endif
+                                @if(config('cms-kit.common.careers.departments', true))
                                 <a class="nav-link py-2 @if(request()->routeIs('cms.careers.departments.*')) active @endif" href="{{ route('cms.careers.departments.index') }}">
                                     Departments
                                 </a>
+                                @endif
+                                @if(config('cms-kit.common.careers.candidates', true))
                                 <a class="nav-link py-2 @if(request()->routeIs('cms.careers.candidates.*')) active @endif" href="{{ route('cms.careers.candidates.index') }}">
                                     Candidates
                                 </a>
+                                @endif
                             </nav>
                         </div>
                     </div>

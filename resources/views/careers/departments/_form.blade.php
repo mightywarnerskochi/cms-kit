@@ -1,4 +1,5 @@
 @php
+    $departmentConfig = config('cms-kit.database.careers.departments', []);
     $item = $department ?? null;
     $isEdit = (bool) $item;
     $showLanguageUi = config('cms-kit.common.modules.languages', true);
@@ -32,6 +33,7 @@
                     @php $translation = data_get($item, "translations.{$lang->code}", []); @endphp
                     <div class="tab-pane fade {{ $loop->first ? 'show active' : '' }}" id="department-panel-{{ $lang->code }}" role="tabpanel">
                         <div class="row g-4">
+                            @if($departmentConfig['title'] ?? true)
                             <div class="col-md-6">
                                 <label class="form-label fw-bold">Title <span class="text-danger">*</span></label>
                                 <input type="text" name="translations[{{ $lang->code }}][title]" class="form-control @error("translations.{$lang->code}.title") is-invalid @enderror" value="{{ old("translations.{$lang->code}.title", $translation['title'] ?? '') }}" required>
@@ -39,6 +41,8 @@
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
                             </div>
+                            @endif
+                            @if($departmentConfig['description'] ?? true)
                             <div class="col-12">
                                 <label class="form-label fw-bold">Description</label>
                                 <textarea name="translations[{{ $lang->code }}][description]" class="form-control @error("translations.{$lang->code}.description") is-invalid @enderror" rows="4">{{ old("translations.{$lang->code}.description", $translation['description'] ?? '') }}</textarea>
@@ -46,6 +50,7 @@
                                     <div class="invalid-feedback d-block">{{ $message }}</div>
                                 @enderror
                             </div>
+                            @endif
 
                             @include('cms-kit::partials.extra-fields-translatable', [
                                 'configKey' => 'careers.departments',
@@ -60,6 +65,7 @@
             <div class="card bg-light border-0 mb-4">
                 <div class="card-body p-4">
                     <div class="row g-4 align-items-end">
+                        @if($departmentConfig['stats'] ?? false)
                         <div class="col-md-6">
                             <label class="form-label fw-bold">Stats</label>
                             <textarea name="stats_text" class="form-control @error('stats_text') is-invalid @enderror" rows="5" placeholder="One stat per line">{{ old('stats_text', implode("\n", $item->stats ?? [])) }}</textarea>
@@ -67,6 +73,8 @@
                                 <div class="invalid-feedback d-block">{{ $message }}</div>
                             @enderror
                         </div>
+                        @endif
+                        @if($departmentConfig['order'] ?? true)
                         <div class="col-md-3">
                             <label class="form-label fw-bold">Order</label>
                             <input type="number" name="order_index" class="form-control @error('order_index') is-invalid @enderror" value="{{ old('order_index', $item->order_index ?? ($nextOrder ?? 1)) }}" min="1">
@@ -74,12 +82,15 @@
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
+                        @endif
+                        @if($departmentConfig['status'] ?? true)
                         <div class="col-md-3">
                             <div class="form-check form-switch mb-2">
                                 <input class="form-check-input" type="checkbox" name="status" id="departmentStatus" value="1" {{ old('status', $item->status ?? true) ? 'checked' : '' }}>
                                 <label class="form-check-label fw-bold" for="departmentStatus">Status (Active)</label>
                             </div>
                         </div>
+                        @endif
                     </div>
                 </div>
             </div>

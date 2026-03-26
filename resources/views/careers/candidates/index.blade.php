@@ -8,6 +8,7 @@
 <div class="card mb-4">
     <div class="card-body">
         <form id="filterForm" class="row g-3 align-items-end">
+            @if($columns['apply_for'] ?? true)
             <div class="col-md-3">
                 <label class="form-label small fw-bold">Apply for</label>
                 <select name="apply_for" id="filterApplyFor" class="form-select form-select-sm">
@@ -17,6 +18,8 @@
                     @endforeach
                 </select>
             </div>
+            @endif
+            @if($columns['state'] ?? true)
             <div class="col-md-2">
                 <label class="form-label small fw-bold">State</label>
                 <select name="state" id="filterState" class="form-select form-select-sm">
@@ -26,6 +29,8 @@
                     @endforeach
                 </select>
             </div>
+            @endif
+            @if($columns['country'] ?? true)
             <div class="col-md-2">
                 <label class="form-label small fw-bold">Country</label>
                 <select name="country" id="filterCountry" class="form-select form-select-sm">
@@ -35,6 +40,8 @@
                     @endforeach
                 </select>
             </div>
+            @endif
+            @if($columns['submitted_at'] ?? true)
             <div class="col-md-2">
                 <label class="form-label small fw-bold">From date</label>
                 <input type="date" name="from_date" id="filterFromDate" class="form-control form-control-sm">
@@ -43,6 +50,7 @@
                 <label class="form-label small fw-bold">To date</label>
                 <input type="date" name="to_date" id="filterToDate" class="form-control form-control-sm">
             </div>
+            @endif
             <div class="col-auto">
                 <button type="button" id="applyFilter" class="btn btn-sm btn-outline-primary">Filter</button>
                 @if($hasData && $cmsUser->can('careers.export'))
@@ -116,11 +124,19 @@
             ajax: {
                 url: "{{ route('cms.careers.candidates.index') }}",
                 data: function(d) {
+                    @if($columns['apply_for'] ?? true)
                     d.apply_for = $('#filterApplyFor').val();
+                    @endif
+                    @if($columns['state'] ?? true)
                     d.state = $('#filterState').val();
+                    @endif
+                    @if($columns['country'] ?? true)
                     d.country = $('#filterCountry').val();
+                    @endif
+                    @if($columns['submitted_at'] ?? true)
                     d.from_date = $('#filterFromDate').val();
                     d.to_date = $('#filterToDate').val();
+                    @endif
                 }
             },
             columns: [
@@ -148,11 +164,19 @@
 
         $('#exportCsv').on('click', function() {
             const params = $.param({
+                @if($columns['apply_for'] ?? true)
                 apply_for: $('#filterApplyFor').val(),
+                @endif
+                @if($columns['state'] ?? true)
                 state: $('#filterState').val(),
+                @endif
+                @if($columns['country'] ?? true)
                 country: $('#filterCountry').val(),
+                @endif
+                @if($columns['submitted_at'] ?? true)
                 from_date: $('#filterFromDate').val(),
                 to_date: $('#filterToDate').val()
+                @endif
             });
             window.location.href = "{{ route('cms.careers.candidates.export') }}?" + params;
         });
@@ -161,7 +185,7 @@
             const id = $(this).data('id');
             $.get(`{{ url(config('cms-kit.common.auth.prefix', 'admin')) }}/careers/candidates/${id}`)
             .done(function(data) {
-                const baseFields = {
+                const baseFieldMap = {
                     name: 'Name',
                     email: 'Email',
                     phone: 'Phone',
@@ -172,12 +196,14 @@
                     designation: 'Designation',
                     submitted_at: 'Submitted',
                     additional_information: 'Additional Information',
+                    attachment: 'Attachment',
                     privacy: 'Privacy Accepted'
                 };
+                const visibleFields = @json($detailColumns);
 
                 let html = '<div class="row g-3">';
 
-                for (const key in baseFields) {
+                visibleFields.forEach((key) => {
                     let value = data[key];
                     if (key === 'privacy') {
                         value = data[key] ? 'Yes' : 'No';
@@ -185,14 +211,13 @@
                     if (key === 'submitted_at' && value) {
                         value = new Date(value).toLocaleString();
                     }
-                    html += `<div class="col-md-6"><p><strong>${baseFields[key]}:</strong><br>${value || '-'}</p></div>`;
-                }
-
-                const attachmentHtml = data.attachment
-                    ? `<a href="{{ asset('storage') }}/${data.attachment}" target="_blank" class="btn btn-sm btn-outline-primary">Open Attachment</a>`
-                    : '-';
-
-                html += `<div class="col-md-6"><p><strong>Attachment:</strong><br>${attachmentHtml}</p></div>`;
+                    if (key === 'attachment') {
+                        value = data.attachment
+                            ? `<a href="{{ asset('storage') }}/${data.attachment}" target="_blank" class="btn btn-sm btn-outline-primary">Open Attachment</a>`
+                            : '-';
+                    }
+                    html += `<div class="col-md-6"><p><strong>${baseFieldMap[key] || key}:</strong><br>${value || '-'}</p></div>`;
+                });
 
                 @foreach(config('cms-kit.database.careers.candidates.extra_fields', []) as $key => $field)
                 html += `<div class="col-md-6"><p><strong>{{ $field['label'] ?? ucfirst(str_replace('_', ' ', $key)) }}:</strong><br>${(data.extra_fields && data.extra_fields['{{ $key }}']) ? data.extra_fields['{{ $key }}'] : '-'}</p></div>`;

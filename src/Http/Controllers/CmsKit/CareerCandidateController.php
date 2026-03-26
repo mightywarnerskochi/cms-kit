@@ -21,19 +21,32 @@ class CareerCandidateController extends Controller
             'apply_for' => true,
             'experience' => true,
             'designation' => true,
+            'additional_information' => true,
+            'attachment' => true,
             'privacy' => true,
             'submitted_at' => true,
         ]);
     }
 
+    protected function visibleColumns(): array
+    {
+        return collect($this->configuredColumns())
+            ->filter(fn ($show) => (bool) $show)
+            ->keys()
+            ->values()
+            ->all();
+    }
+
     protected function applyFilters(Request $request)
     {
+        $columns = $this->configuredColumns();
+
         return CareerCandidate::query()
-            ->when($request->filled('apply_for') && $request->apply_for !== 'All', fn ($query) => $query->where('apply_for', $request->apply_for))
-            ->when($request->filled('state') && $request->state !== 'All', fn ($query) => $query->where('state', $request->state))
-            ->when($request->filled('country') && $request->country !== 'All', fn ($query) => $query->where('country', $request->country))
-            ->when($request->filled('from_date'), fn ($query) => $query->whereDate('submitted_at', '>=', Carbon::parse($request->from_date)))
-            ->when($request->filled('to_date'), fn ($query) => $query->whereDate('submitted_at', '<=', Carbon::parse($request->to_date)));
+            ->when(($columns['apply_for'] ?? true) && $request->filled('apply_for') && $request->apply_for !== 'All', fn ($query) => $query->where('apply_for', $request->apply_for))
+            ->when(($columns['state'] ?? true) && $request->filled('state') && $request->state !== 'All', fn ($query) => $query->where('state', $request->state))
+            ->when(($columns['country'] ?? true) && $request->filled('country') && $request->country !== 'All', fn ($query) => $query->where('country', $request->country))
+            ->when(($columns['submitted_at'] ?? true) && $request->filled('from_date'), fn ($query) => $query->whereDate('submitted_at', '>=', Carbon::parse($request->from_date)))
+            ->when(($columns['submitted_at'] ?? true) && $request->filled('to_date'), fn ($query) => $query->whereDate('submitted_at', '<=', Carbon::parse($request->to_date)));
     }
 
     public function index(Request $request)
@@ -68,12 +81,19 @@ class CareerCandidateController extends Controller
         }
 
         $columns = $this->configuredColumns();
-        $applyForOptions = CareerCandidate::query()->select('apply_for')->distinct()->pluck('apply_for')->filter()->values();
-        $stateOptions = CareerCandidate::query()->select('state')->distinct()->pluck('state')->filter()->values();
-        $countryOptions = CareerCandidate::query()->select('country')->distinct()->pluck('country')->filter()->values();
+        $applyForOptions = ($columns['apply_for'] ?? true)
+            ? CareerCandidate::query()->select('apply_for')->distinct()->pluck('apply_for')->filter()->values()
+            : collect();
+        $stateOptions = ($columns['state'] ?? true)
+            ? CareerCandidate::query()->select('state')->distinct()->pluck('state')->filter()->values()
+            : collect();
+        $countryOptions = ($columns['country'] ?? true)
+            ? CareerCandidate::query()->select('country')->distinct()->pluck('country')->filter()->values()
+            : collect();
         $hasData = CareerCandidate::exists();
+        $detailColumns = $this->visibleColumns();
 
-        return view('cms-kit::careers.candidates.index', compact('applyForOptions', 'stateOptions', 'countryOptions', 'hasData', 'columns'));
+        return view('cms-kit::careers.candidates.index', compact('applyForOptions', 'stateOptions', 'countryOptions', 'hasData', 'columns', 'detailColumns'));
     }
 
     public function show($id)
@@ -96,32 +116,53 @@ class CareerCandidateController extends Controller
 
         $callback = function () use ($candidates) {
             $file = fopen('php://output', 'w');
+            $visibleColumns = $this->visibleColumns();
             $extraFieldLabels = collect(config('cms-kit.database.careers.candidates.extra_fields', []))
                 ->map(fn ($field, $key) => $field['label'] ?? ucfirst(str_replace('_', ' ', $key)))
                 ->values()
                 ->all();
 
+            $baseHeaderMap = [
+                'name' => 'Name',
+                'email' => 'Email',
+                'phone' => 'Phone',
+                'state' => 'State',
+                'country' => 'Country',
+                'apply_for' => 'Apply For',
+                'experience' => 'Experience',
+                'designation' => 'Designation',
+                'submitted_at' => 'Submitted',
+                'additional_information' => 'Additional Information',
+                'attachment' => 'Attachment',
+                'privacy' => 'Privacy',
+            ];
+
             fputcsv($file, array_merge(
-                ['ID', 'Name', 'Email', 'Phone', 'State', 'Country', 'Apply For', 'Experience', 'Designation', 'Submitted', 'Additional Information', 'Attachment', 'Privacy'],
+                ['ID'],
+                collect($visibleColumns)->map(fn ($key) => $baseHeaderMap[$key] ?? ucfirst(str_replace('_', ' ', $key)))->all(),
                 $extraFieldLabels
             ));
 
             foreach ($candidates as $candidate) {
-                $row = [
-                    $candidate->id,
-                    $candidate->name,
-                    $candidate->email,
-                    $candidate->phone,
-                    $candidate->state,
-                    $candidate->country,
-                    $candidate->apply_for,
-                    $candidate->experience,
-                    $candidate->designation,
-                    optional($candidate->submitted_at)->format('Y-m-d H:i:s'),
-                    $candidate->additional_information,
-                    $candidate->attachment ? asset('storage/' . $candidate->attachment) : '',
-                    $candidate->privacy ? 'Yes' : 'No',
+                $rowMap = [
+                    'name' => $candidate->name,
+                    'email' => $candidate->email,
+                    'phone' => $candidate->phone,
+                    'state' => $candidate->state,
+                    'country' => $candidate->country,
+                    'apply_for' => $candidate->apply_for,
+                    'experience' => $candidate->experience,
+                    'designation' => $candidate->designation,
+                    'submitted_at' => optional($candidate->submitted_at)->format('Y-m-d H:i:s'),
+                    'additional_information' => $candidate->additional_information,
+                    'attachment' => $candidate->attachment ? asset('storage/' . $candidate->attachment) : '',
+                    'privacy' => $candidate->privacy ? 'Yes' : 'No',
                 ];
+
+                $row = array_merge(
+                    [$candidate->id],
+                    collect($visibleColumns)->map(fn ($key) => $rowMap[$key] ?? '')->all()
+                );
 
                 foreach (array_keys(config('cms-kit.database.careers.candidates.extra_fields', [])) as $key) {
                     $row[] = $candidate->extra_fields[$key] ?? '';

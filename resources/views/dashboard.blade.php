@@ -159,12 +159,12 @@
                 </div>
                 <div class="card-body">
                     <div class="d-grid gap-2">
-                        @if($cmsUser->can('banners.edit'))
+                        @if(config('cms-kit.common.modules.banners', true) && $cmsUser->can('banners.edit'))
                         <a href="{{ route('cms.banners.create') }}" class="btn btn-primary text-start">
                             <i class="fas fa-plus-circle me-2"></i> Add New Banner
                         </a>
                         @endif
-                        @if($cmsUser->can('faqs.edit'))
+                        @if(config('cms-kit.common.modules.faqs', true) && $cmsUser->can('faqs.edit'))
                         <a href="{{ route('cms.faqs.create') }}" class="btn btn-success text-start">
                             <i class="fas fa-plus-circle me-2"></i> Add New FAQ
                         </a>
@@ -174,7 +174,7 @@
                             <i class="fas fa-cog me-2"></i> Site Settings
                         </a>
                         @endif
-                        @if($cmsUser->can('careers.create'))
+                        @if(config('cms-kit.common.modules.careers', true) && $cmsUser->can('careers.create'))
                         <a href="{{ route('cms.careers.create') }}" class="btn text-white text-start" style="background-color: #e76f51;">
                             <i class="fas fa-plus-circle me-2"></i> Add New Vacancy
                         </a>

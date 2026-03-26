@@ -76,22 +76,44 @@ class CareerController extends Controller
         $careerConfig = config('cms-kit.database.careers.items', []);
         $requiredFields = $careerConfig['required'] ?? [];
         $rules = [
-            'slug' => ['nullable', 'string', 'max:255'],
-            'job_type' => $this->requiredTextRule(),
-            'department' => $this->requiredTextRule(),
-            'location' => $this->requiredTextRule(),
-            'country' => $this->optionalTextRule(),
-            'base' => $this->optionalTextRule(),
-            'published_date' => ['required', 'date'],
             'order_index' => ['nullable', 'integer', 'min:1'],
             'status' => ['nullable', 'boolean'],
             'metadata.meta_title' => $this->optionalTextRule(),
             'metadata.meta_description' => $this->optionalTextRule(),
             'metadata.meta_keywords' => $this->optionalTextRule(),
+            'metadata.canonical_url' => ['nullable', 'url'],
+            'metadata.og_title' => $this->optionalTextRule(),
+            'metadata.og_description' => $this->optionalTextRule(),
+            'metadata.og_image' => ['nullable', 'image', 'max:512'],
+            'metadata.other_meta_tags' => ['nullable', 'string'],
         ];
+
+        if ($careerConfig['slug'] ?? true) {
+            $rules['slug'] = ['nullable', 'string', 'max:255'];
+        }
+
+        foreach (['job_type', 'department', 'location', 'country', 'base'] as $field) {
+            if (!($careerConfig[$field] ?? true)) {
+                continue;
+            }
+
+            $rules[$field] = in_array($field, $requiredFields, true)
+                ? $this->requiredTextRule()
+                : $this->optionalTextRule();
+        }
+
+        if ($careerConfig['published_date'] ?? true) {
+            $rules['published_date'] = in_array('published_date', $requiredFields, true)
+                ? ['required', 'date']
+                : ['nullable', 'date'];
+        }
 
         foreach ($this->activeLanguages() as $lang) {
             foreach ($this->translatableFields as $field) {
+                if (!($careerConfig[$field] ?? true)) {
+                    continue;
+                }
+
                 $isRequired = in_array($field, $requiredFields, true);
                 $rules["translations.{$lang->code}.{$field}"] = $isRequired
                     ? $this->requiredTextRule()
@@ -104,24 +126,39 @@ class CareerController extends Controller
 
     protected function getCareerSectionValidationRules(): array
     {
+        $sectionConfig = config('cms-kit.database.careers.section', []);
         $rules = [
-            'filter_enabled' => ['required', 'boolean'],
-            'banner' => ['nullable', 'image', 'max:2048'],
-            'banner_alt' => ['nullable', 'string', 'max:255'],
             'section_filters' => ['nullable', 'array'],
-            'section_filters.*.key' => ['nullable', 'string', 'max:255'],
-            'section_filters.*.label' => ['nullable', 'string', 'max:255'],
-            'section_filters.*.options' => ['nullable', 'string'],
         ];
 
-        $sectionConfig = config('cms-kit.database.careers.section', []);
         $requiredFields = $sectionConfig['required'] ?? [];
 
+        if ($sectionConfig['filter_enabled'] ?? true) {
+            $rules['filter_enabled'] = ['required', 'boolean'];
+        }
+
+        if ($sectionConfig['banner'] ?? true) {
+            $rules['banner'] = ['nullable', 'image', 'max:2048'];
+        }
+
+        if ($sectionConfig['banner_alt'] ?? true) {
+            $rules['banner_alt'] = ['nullable', 'string', 'max:255'];
+        }
+
+        if ($sectionConfig['filters'] ?? true) {
+            $rules['section_filters.*.column'] = ['nullable', 'string', Rule::in($this->getFilterableColumns())];
+        }
+
         foreach ($this->activeLanguages() as $lang) {
-            $rules["translations.{$lang->code}.title"] = in_array('title', $requiredFields, true)
-                ? $this->requiredTextRule('Title is required')
-                : $this->optionalTextRule();
-            $rules["translations.{$lang->code}.description"] = $this->optionalTextRule();
+            if ($sectionConfig['title'] ?? true) {
+                $rules["translations.{$lang->code}.title"] = in_array('title', $requiredFields, true)
+                    ? $this->requiredTextRule('Title is required')
+                    : $this->optionalTextRule();
+            }
+
+            if ($sectionConfig['description'] ?? true) {
+                $rules["translations.{$lang->code}.description"] = $this->optionalTextRule();
+            }
         }
 
         return $rules;
@@ -143,11 +180,16 @@ class CareerController extends Controller
 
     protected function normalizeSectionTranslations(array $translations): array
     {
+        $sectionConfig = config('cms-kit.database.careers.section', []);
         $normalized = [];
 
         foreach ($translations as $lang => $values) {
-            $normalized[$lang]['title'] = isset($values['title']) ? trim((string) $values['title']) : null;
-            $normalized[$lang]['description'] = isset($values['description']) ? trim((string) $values['description']) : null;
+            $normalized[$lang]['title'] = ($sectionConfig['title'] ?? true) && isset($values['title'])
+                ? trim((string) $values['title'])
+                : null;
+            $normalized[$lang]['description'] = ($sectionConfig['description'] ?? true) && isset($values['description'])
+                ? trim((string) $values['description'])
+                : null;
             $normalized[$lang]['extra_fields'] = (array) data_get($values, 'extra_fields', []);
         }
 
@@ -172,28 +214,85 @@ class CareerController extends Controller
     protected function normalizeSectionFilters(array $filters): array
     {
         $normalized = [];
+        $allowedColumns = $this->getFilterableColumns();
 
         foreach ($filters as $filter) {
-            $label = trim((string) ($filter['label'] ?? ''));
-            $key = Str::slug((string) ($filter['key'] ?? $label), '_');
-            $optionsText = (string) ($filter['options'] ?? '');
-            $options = array_values(array_unique(array_filter(array_map(
-                static fn ($option) => trim($option),
-                preg_split('/\r\n|\r|\n/', $optionsText) ?: []
-            ))));
+            $column = trim((string) ($filter['column'] ?? $filter['key'] ?? ''));
 
-            if ($label === '' || $key === '' || empty($options)) {
+            if ($column === '' || !in_array($column, $allowedColumns, true)) {
                 continue;
             }
 
-            $normalized[] = [
-                'key' => $key,
-                'label' => $label,
-                'options' => $options,
-            ];
+            $normalized[] = ['key' => $column];
         }
 
-        return $normalized;
+        return collect($normalized)->unique('key')->values()->all();
+    }
+
+    protected function getFilterableColumns(): array
+    {
+        $itemConfig = config('cms-kit.database.careers.items', []);
+        $configured = $itemConfig['columns'] ?? [];
+        $defaultColumns = config('cms-kit.database.careers.section.filterable_columns', ['job_type', 'department', 'location', 'country', 'base']);
+
+        return collect($defaultColumns)
+            ->filter(fn ($column) => ($itemConfig[$column] ?? true) && ($configured[$column] ?? true))
+            ->values()
+            ->all();
+    }
+
+    protected function getDistinctCareerColumnOptions(string $column): array
+    {
+        if ($column === 'job_type') {
+            $configured = collect(config('cms-kit.database.careers.items.job_type_options', []))
+                ->keys()
+                ->all();
+
+            $stored = Career::query()
+                ->whereNotNull($column)
+                ->where($column, '!=', '')
+                ->distinct()
+                ->orderBy($column)
+                ->pluck($column)
+                ->all();
+
+            return array_values(array_unique(array_filter(array_merge($configured, $stored))));
+        }
+
+        return Career::query()
+            ->whereNotNull($column)
+            ->where($column, '!=', '')
+            ->distinct()
+            ->orderBy($column)
+            ->pluck($column)
+            ->all();
+    }
+
+    protected function getJobTypeOptions(): array
+    {
+        return config('cms-kit.database.careers.items.job_type_options', []);
+    }
+
+    protected function getDepartmentOptions(): array
+    {
+        return CareerDepartment::query()
+            ->where('status', true)
+            ->ordered()
+            ->get()
+            ->map(fn ($department) => $department->getTranslation('title'))
+            ->filter()
+            ->values()
+            ->all();
+    }
+
+    protected function formatJobType(?string $value): string
+    {
+        $value = trim((string) $value);
+        if ($value === '') {
+            return '';
+        }
+
+        return $this->getJobTypeOptions()[$value] ?? Str::headline(str_replace(['-', '_'], ' ', $value));
     }
 
     protected function resolveUniqueSlug(Request $request, array $translations, ?int $ignoreId = null): string
@@ -236,8 +335,8 @@ class CareerController extends Controller
             ->filter(fn ($filter) => !empty($filter['key']))
             ->mapWithKeys(fn ($filter) => [
                 $filter['key'] => [
-                    'label' => $filter['label'] ?? Str::headline($filter['key']),
-                    'options' => array_values($filter['options'] ?? []),
+                    'label' => Str::headline($filter['key']),
+                    'options' => $this->getDistinctCareerColumnOptions($filter['key']),
                 ],
             ])->all();
     }
@@ -248,6 +347,9 @@ class CareerController extends Controller
             'translations.*.title.required' => 'Title is required',
             'banner.image' => 'Banner must be an image.',
             'banner.max' => 'Banner image is too large.',
+            'metadata.canonical_url.url' => 'Canonical URL must be a valid URL.',
+            'metadata.og_image.image' => 'OG image must be an image.',
+            'metadata.og_image.max' => 'OG image is too large.',
             'job_type.required' => 'Job type is required',
             'department.required' => 'Department is required',
             'location.required' => 'Location is required',
@@ -269,8 +371,9 @@ class CareerController extends Controller
     {
         $section = SectionLabel::firstOrCreate(['section_key' => 'careers']);
         $languages = $this->activeLanguages();
+        $filterableColumns = $this->getFilterableColumns();
 
-        return view('cms-kit::careers.common', compact('section', 'languages'));
+        return view('cms-kit::careers.common', compact('section', 'languages', 'filterableColumns'));
     }
 
     public function vacancies(Request $request)
@@ -282,6 +385,7 @@ class CareerController extends Controller
                 ->addIndexColumn()
                 ->addColumn('select_all', fn ($row) => '<input type="checkbox" class="row-checkbox form-check-input" value="' . $row->id . '">')
                 ->addColumn('title', fn ($row) => e($row->getTranslation('title')))
+                ->editColumn('job_type', fn ($row) => e($this->formatJobType($row->job_type)))
                 ->editColumn('published_date', fn ($row) => optional($row->published_date)->format('d M Y'))
                 ->addColumn('status', function ($row) {
                     $checked = $row->status ? 'checked' : '';
@@ -321,9 +425,10 @@ class CareerController extends Controller
         $languages = $this->activeLanguages();
         $nextOrder = Career::count() + 1;
         $filterOptions = $this->getSectionFilterOptions();
-        $departmentOptions = CareerDepartment::query()->ordered()->get()->map(fn ($department) => $department->getTranslation('title'))->filter()->values()->all();
+        $jobTypeOptions = $this->getJobTypeOptions();
+        $departmentOptions = $this->getDepartmentOptions();
 
-        return view('cms-kit::careers.create', compact('languages', 'nextOrder', 'filterOptions', 'departmentOptions'));
+        return view('cms-kit::careers.create', compact('languages', 'nextOrder', 'filterOptions', 'departmentOptions', 'jobTypeOptions'));
     }
 
     public function store(Request $request)
@@ -339,18 +444,23 @@ class CareerController extends Controller
 
         Career::where('order_index', '>=', $order)->increment('order_index');
 
+        $metadata = $request->input('metadata', []);
+        if ($request->hasFile('metadata.og_image')) {
+            $metadata['og_image'] = $request->file('metadata.og_image')->store('careers/metadata', 'public');
+        }
+
         Career::create([
             'slug' => $this->resolveUniqueSlug($request, $translations),
-            'job_type' => trim((string) $validated['job_type']),
-            'department' => trim((string) $validated['department']),
-            'location' => trim((string) $validated['location']),
+            'job_type' => trim((string) ($validated['job_type'] ?? '')),
+            'department' => trim((string) ($validated['department'] ?? '')),
+            'location' => trim((string) ($validated['location'] ?? '')),
             'country' => trim((string) ($validated['country'] ?? '')),
             'base' => trim((string) ($validated['base'] ?? '')),
-            'published_date' => $validated['published_date'],
+            'published_date' => $validated['published_date'] ?? now()->toDateString(),
             'order_index' => $order,
             'status' => $request->boolean('status', true),
             'translations' => $translations,
-            'metadata' => $request->input('metadata', []),
+            'metadata' => $metadata,
             'extra_fields' => [],
         ]);
 
@@ -362,9 +472,10 @@ class CareerController extends Controller
         $career = Career::findOrFail($id);
         $languages = $this->activeLanguages();
         $filterOptions = $this->getSectionFilterOptions();
-        $departmentOptions = CareerDepartment::query()->ordered()->get()->map(fn ($department) => $department->getTranslation('title'))->filter()->values()->all();
+        $jobTypeOptions = $this->getJobTypeOptions();
+        $departmentOptions = $this->getDepartmentOptions();
 
-        return view('cms-kit::careers.edit', compact('career', 'languages', 'filterOptions', 'departmentOptions'));
+        return view('cms-kit::careers.edit', compact('career', 'languages', 'filterOptions', 'departmentOptions', 'jobTypeOptions'));
     }
 
     public function update(Request $request, $id)
@@ -376,17 +487,28 @@ class CareerController extends Controller
             ['translations.*.title' => 'title']
         );
 
+        $metadata = $request->input('metadata', []);
+        $existingMetadata = $career->metadata ?? [];
+        if ($request->hasFile('metadata.og_image')) {
+            if (!empty($existingMetadata['og_image'])) {
+                Storage::disk('public')->delete($existingMetadata['og_image']);
+            }
+            $metadata['og_image'] = $request->file('metadata.og_image')->store('careers/metadata', 'public');
+        } else {
+            $metadata['og_image'] = $existingMetadata['og_image'] ?? null;
+        }
+
         $career->update([
             'slug' => $this->resolveUniqueSlug($request, $this->normalizeTranslations($request->input('translations', [])), $career->id),
-            'job_type' => trim((string) $validated['job_type']),
-            'department' => trim((string) $validated['department']),
-            'location' => trim((string) $validated['location']),
-            'country' => trim((string) ($validated['country'] ?? '')),
-            'base' => trim((string) ($validated['base'] ?? '')),
-            'published_date' => $validated['published_date'],
+            'job_type' => trim((string) ($validated['job_type'] ?? $career->job_type)),
+            'department' => trim((string) ($validated['department'] ?? $career->department)),
+            'location' => trim((string) ($validated['location'] ?? $career->location)),
+            'country' => trim((string) ($validated['country'] ?? $career->country)),
+            'base' => trim((string) ($validated['base'] ?? $career->base)),
+            'published_date' => $validated['published_date'] ?? optional($career->published_date)->toDateString(),
             'status' => $request->has('status') ? $request->boolean('status') : $career->status,
             'translations' => $this->normalizeTranslations($request->input('translations', [])),
-            'metadata' => $request->input('metadata', []),
+            'metadata' => $metadata,
         ]);
 
         return redirect()->route('cms.careers.vacancies.index')->with('success', 'Career updated successfully.');
@@ -451,6 +573,7 @@ class CareerController extends Controller
 
     public function updateSection(Request $request)
     {
+        $sectionConfig = config('cms-kit.database.careers.section', []);
         $request->validate($this->getCareerSectionValidationRules(), $this->validationMessages());
 
         $section = SectionLabel::firstOrCreate(['section_key' => 'careers']);
@@ -459,10 +582,10 @@ class CareerController extends Controller
                 $this->normalizeSectionTranslations($request->input('translations', []))
             ),
             'extra_fields' => [
-                'filter_enabled' => $request->boolean('filter_enabled'),
-                'filters' => $this->normalizeSectionFilters($request->input('section_filters', [])),
+                'filter_enabled' => ($sectionConfig['filter_enabled'] ?? true) ? $request->boolean('filter_enabled') : false,
+                'filters' => ($sectionConfig['filters'] ?? true) ? $this->normalizeSectionFilters($request->input('section_filters', [])) : [],
             ],
-            'banner_alt' => trim((string) $request->input('banner_alt', '')),
+            'banner_alt' => ($sectionConfig['banner_alt'] ?? true) ? trim((string) $request->input('banner_alt', '')) : '',
         ];
 
         foreach (config('cms-kit.database.careers.section.extra_fields', []) as $key => $field) {
@@ -473,7 +596,7 @@ class CareerController extends Controller
             $data['extra_fields'][$key] = $request->input("extra_fields.{$key}");
         }
 
-        if ($request->hasFile('banner')) {
+        if (($sectionConfig['banner'] ?? true) && $request->hasFile('banner')) {
             if ($section->banner) {
                 Storage::disk('public')->delete($section->banner);
             }
@@ -481,7 +604,7 @@ class CareerController extends Controller
             $data['banner'] = $request->file('banner')->store('careers/section', 'public');
         }
 
-        $data['banner_alt'] = trim((string) $request->input('banner_alt', ''));
+        $data['banner_alt'] = ($sectionConfig['banner_alt'] ?? true) ? trim((string) $request->input('banner_alt', '')) : '';
 
         $section->update($data);
 

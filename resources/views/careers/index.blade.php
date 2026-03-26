@@ -5,6 +5,9 @@
 @endsection
 
 @section('content')
+@php
+    $vacancyColumns = config('cms-kit.database.careers.items.columns', []);
+@endphp
 <div class="row">
     <div class="col-12">
         <div class="card">
@@ -42,13 +45,27 @@
                             <tr>
                                 <th style="width: 40px;"><input type="checkbox" class="form-check-input" id="selectAll"></th>
                                 <th style="width: 40px;">#</th>
+                                @if($vacancyColumns['title'] ?? true)
                                 <th>Title</th>
+                                @endif
+                                @if($vacancyColumns['job_type'] ?? true)
                                 <th>Job Type</th>
+                                @endif
+                                @if($vacancyColumns['department'] ?? true)
                                 <th>Department</th>
+                                @endif
+                                @if($vacancyColumns['location'] ?? true)
                                 <th>Location</th>
+                                @endif
+                                @if($vacancyColumns['published_date'] ?? true)
                                 <th style="width: 130px;">Published</th>
+                                @endif
+                                @if($vacancyColumns['order'] ?? true)
                                 <th style="width: 100px;">Order</th>
+                                @endif
+                                @if($vacancyColumns['status'] ?? true)
                                 <th style="width: 100px;" class="text-center">Status</th>
+                                @endif
                                 <th style="width: 100px;" class="text-end pe-4">Actions</th>
                             </tr>
                         </thead>
@@ -67,23 +84,40 @@
 <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
 <script>
     $(function() {
+        const columns = [
+            {data: 'select_all', name: 'select_all', orderable: false, searchable: false},
+            {data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false},
+            @if($vacancyColumns['title'] ?? true)
+            {data: 'title', name: 'title'},
+            @endif
+            @if($vacancyColumns['job_type'] ?? true)
+            {data: 'job_type', name: 'job_type'},
+            @endif
+            @if($vacancyColumns['department'] ?? true)
+            {data: 'department', name: 'department'},
+            @endif
+            @if($vacancyColumns['location'] ?? true)
+            {data: 'location', name: 'location'},
+            @endif
+            @if($vacancyColumns['published_date'] ?? true)
+            {data: 'published_date', name: 'published_date'},
+            @endif
+            @if($vacancyColumns['order'] ?? true)
+            {data: 'order', name: 'order'},
+            @endif
+            @if($vacancyColumns['status'] ?? true)
+            {data: 'status', name: 'status', className: 'text-center'},
+            @endif
+            {data: 'action', name: 'action', orderable: false, searchable: false, className: 'text-end pe-4'}
+        ];
+
+        const orderIndex = columns.findIndex((column) => column.data === 'order');
         const table = $('#careersTable').DataTable({
             processing: true,
             serverSide: true,
             ajax: "{{ route('cms.careers.vacancies.index') }}",
-            columns: [
-                {data: 'select_all', name: 'select_all', orderable: false, searchable: false},
-                {data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false},
-                {data: 'title', name: 'title'},
-                {data: 'job_type', name: 'job_type'},
-                {data: 'department', name: 'department'},
-                {data: 'location', name: 'location'},
-                {data: 'published_date', name: 'published_date'},
-                {data: 'order', name: 'order'},
-                {data: 'status', name: 'status', className: 'text-center'},
-                {data: 'action', name: 'action', orderable: false, searchable: false, className: 'text-end pe-4'}
-            ],
-            order: [[7, 'asc']],
+            columns: columns,
+            order: [[orderIndex > -1 ? orderIndex : 1, 'asc']],
             drawCallback: function() {
                 updateBulkVisibility();
             }

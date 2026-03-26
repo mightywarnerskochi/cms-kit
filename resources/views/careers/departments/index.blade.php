@@ -5,6 +5,9 @@
 @endsection
 
 @section('content')
+@php
+    $columns = $columns ?? config('cms-kit.database.careers.departments.columns', []);
+@endphp
 <div class="card">
     <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
         <h5 class="mb-0">Departments</h5>
@@ -40,11 +43,18 @@
                     <tr>
                         <th style="width: 40px;"><input type="checkbox" class="form-check-input" id="selectAll"></th>
                         <th style="width: 40px;">#</th>
+                        @if($columns['title'] ?? true)
                         <th>Title</th>
+                        @endif
+                        @if($columns['description'] ?? true)
                         <th>Description</th>
-                        <th>Stats</th>
+                        @endif
+                        @if($columns['order'] ?? true)
                         <th style="width: 100px;">Order</th>
+                        @endif
+                        @if($columns['status'] ?? true)
                         <th style="width: 100px;" class="text-center">Status</th>
+                        @endif
                         <th style="width: 100px;" class="text-end pe-4">Actions</th>
                     </tr>
                 </thead>
@@ -61,21 +71,31 @@
 <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
 <script>
     $(function() {
+        const columns = [
+            {data: 'select_all', name: 'select_all', orderable: false, searchable: false},
+            {data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false},
+            @if($columns['title'] ?? true)
+            {data: 'title', name: 'title'},
+            @endif
+            @if($columns['description'] ?? true)
+            {data: 'description', name: 'description'},
+            @endif
+            @if($columns['order'] ?? true)
+            {data: 'order', name: 'order'},
+            @endif
+            @if($columns['status'] ?? true)
+            {data: 'status', name: 'status', className: 'text-center'},
+            @endif
+            {data: 'action', name: 'action', orderable: false, searchable: false, className: 'text-end pe-4'}
+        ];
+
+        const orderIndex = columns.findIndex((column) => column.data === 'order');
         const table = $('#careerDepartmentsTable').DataTable({
             processing: true,
             serverSide: true,
             ajax: "{{ route('cms.careers.departments.index') }}",
-            columns: [
-                {data: 'select_all', name: 'select_all', orderable: false, searchable: false},
-                {data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false},
-                {data: 'title', name: 'title'},
-                {data: 'description', name: 'description'},
-                {data: 'stats', name: 'stats', orderable: false},
-                {data: 'order', name: 'order'},
-                {data: 'status', name: 'status', className: 'text-center'},
-                {data: 'action', name: 'action', orderable: false, searchable: false, className: 'text-end pe-4'}
-            ],
-            order: [[5, 'asc']],
+            columns: columns,
+            order: [[orderIndex > -1 ? orderIndex : 1, 'asc']],
             drawCallback: function() {
                 updateBulkVisibility();
             }

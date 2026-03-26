@@ -33,6 +33,13 @@ return [
         'careers' => true,
     ],
 
+    'careers' => [
+        'common_section' => true,
+        'vacancies' => true,
+        'departments' => true,
+        'candidates' => true,
+    ],
+
     'tinymce' => [
         'selector' => '.tinymce-editor',
         'plugins' => 'advlist autolink lists link image charmap preview anchor searchreplace visualblocks code fullscreen insertdatetime media table code help wordcount',

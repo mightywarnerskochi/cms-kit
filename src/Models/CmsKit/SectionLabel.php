@@ -15,12 +15,14 @@ class SectionLabel extends Model
         'banner',
         'banner_alt',
         'extra_fields',
+        'status',
     ];
 
     protected $casts = [
         'translations' => 'array',
         'description' => 'array',
         'extra_fields' => 'array',
+        'status' => 'boolean',
     ];
 
     /**

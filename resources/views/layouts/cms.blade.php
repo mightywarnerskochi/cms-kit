@@ -182,6 +182,34 @@
                     </a>
                     @endif
 
+                    @if(config('cms-kit.common.modules.careers', true) && $cmsUser->can('careers.view'))
+                    <div class="nav-item sidebar-group">
+                        <a class="nav-link d-flex align-items-center sidebar-group-toggle @if(request()->routeIs('cms.careers.*')) active @endif" 
+                           data-bs-toggle="collapse" href="#careersMenu" role="button" 
+                           aria-expanded="@if(request()->routeIs('cms.careers.*')) true @else false @endif">
+                            <i class="fas fa-briefcase"></i>
+                            <span>Careers</span>
+                            <i class="fas fa-chevron-down ms-auto sidebar-chevron"></i>
+                        </a>
+                        <div class="collapse sidebar-submenu @if(request()->routeIs('cms.careers.*')) show @endif" id="careersMenu">
+                            <nav class="nav flex-column">
+                                <a class="nav-link py-2 @if(request()->routeIs('cms.careers.common')) active @endif" href="{{ route('cms.careers.common') }}">
+                                    Common Section
+                                </a>
+                                <a class="nav-link py-2 @if(request()->routeIs('cms.careers.vacancies.index') || request()->routeIs('cms.careers.create') || request()->routeIs('cms.careers.edit')) active @endif" href="{{ route('cms.careers.vacancies.index') }}">
+                                    Vacancies
+                                </a>
+                                <a class="nav-link py-2 @if(request()->routeIs('cms.careers.departments.*')) active @endif" href="{{ route('cms.careers.departments.index') }}">
+                                    Departments
+                                </a>
+                                <a class="nav-link py-2 @if(request()->routeIs('cms.careers.candidates.*')) active @endif" href="{{ route('cms.careers.candidates.index') }}">
+                                    Candidates
+                                </a>
+                            </nav>
+                        </div>
+                    </div>
+                    @endif
+
                     {{-- User Management Group --}}
                     @if($cmsUser->hasRole('superadmin') || $cmsUser->can('users.view') || $cmsUser->can('roles.view'))
                     <div class="nav-item sidebar-group">

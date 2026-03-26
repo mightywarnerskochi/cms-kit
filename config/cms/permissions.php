@@ -29,6 +29,7 @@ return [
                 'faqs.edit',
                 'enquiries.view',
                 'enquiries.edit',
+                'careers.view',
             ]
         ],
     ],

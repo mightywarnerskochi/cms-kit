@@ -7,6 +7,7 @@ use CMS\SiteManager\Models\CmsKit\Banner;
 use CMS\SiteManager\Models\CmsKit\Faq;
 use CMS\SiteManager\Models\CmsKit\Enquiry;
 use CMS\SiteManager\Models\CmsKit\Testimonial;
+use CMS\SiteManager\Models\CmsKit\Career;
 
 class DashboardController extends Controller
 {
@@ -17,6 +18,7 @@ class DashboardController extends Controller
             'faqs' => Faq::count(),
             'enquiries' => Enquiry::count(),
             'testimonials' => Testimonial::count(),
+            'careers' => class_exists(Career::class) ? Career::count() : 0,
         ];
 
         $recentEnquiries = Enquiry::latest()->take(5)->get();

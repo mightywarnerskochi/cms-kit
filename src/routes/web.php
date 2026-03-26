@@ -8,6 +8,10 @@ use CMS\SiteManager\Http\Controllers\CmsKit\ResetPasswordController;
 use CMS\SiteManager\Http\Controllers\CmsKit\LanguageController;
 use CMS\SiteManager\Http\Controllers\CmsKit\MetadataController;
 use CMS\SiteManager\Http\Controllers\CmsKit\BannerController;
+use CMS\SiteManager\Http\Controllers\CmsKit\CareerController;
+use CMS\SiteManager\Http\Controllers\CmsKit\CareerCandidateController;
+use CMS\SiteManager\Http\Controllers\CmsKit\CareerDepartmentController;
+use Illuminate\Support\Facades\Redirect;
 
 Route::middleware(['web'])->group(function () {
     Route::prefix(config('cms-kit.common.auth.prefix', 'admin'))->group(function () {
@@ -202,6 +206,40 @@ Route::middleware(['web'])->group(function () {
                     Route::post('/blogs/reorder', [\CMS\SiteManager\Http\Controllers\CmsKit\BlogController::class, 'reorder'])->name('cms.blogs.reorder')->middleware('cms.permission:blogs.edit');
                     Route::post('/blogs/update-section', [\CMS\SiteManager\Http\Controllers\CmsKit\BlogController::class, 'updateSection'])->name('cms.blogs.update-section')->middleware('cms.permission:blogs.edit');
                     Route::post('/blogs/bulk-action', [\CMS\SiteManager\Http\Controllers\CmsKit\BlogController::class, 'bulkAction'])->name('cms.blogs.bulk-action')->middleware('cms.permission:blogs.delete');
+                }
+            });
+
+            // Careers
+            Route::middleware(['cms.permission:careers.view'])->group(function () {
+                if (config('cms-kit.common.modules.careers', true)) {
+                    Route::get('/careers', fn () => Redirect::route('cms.careers.common'))->name('cms.careers.index');
+                    Route::get('/careers/common', [CareerController::class, 'common'])->name('cms.careers.common');
+                    Route::post('/careers/common', [CareerController::class, 'updateSection'])->name('cms.careers.update-section')->middleware('cms.permission:careers.edit');
+                    Route::get('/careers/vacancies', [CareerController::class, 'vacancies'])->name('cms.careers.vacancies.index');
+                    Route::get('/careers/create', [CareerController::class, 'create'])->name('cms.careers.create')->middleware('cms.permission:careers.create');
+                    Route::post('/careers', [CareerController::class, 'store'])->name('cms.careers.store')->middleware('cms.permission:careers.create');
+                    Route::get('/careers/{id}/edit', [CareerController::class, 'edit'])->name('cms.careers.edit')->middleware('cms.permission:careers.edit');
+                    Route::put('/careers/{id}', [CareerController::class, 'update'])->name('cms.careers.update')->middleware('cms.permission:careers.edit');
+                    Route::delete('/careers/{id}', [CareerController::class, 'destroy'])->name('cms.careers.destroy')->middleware('cms.permission:careers.delete');
+                    Route::post('/careers/{id}/toggle-status', [CareerController::class, 'toggleStatus'])->name('cms.careers.toggle-status')->middleware('cms.permission:careers.edit');
+                    Route::post('/careers/reorder', [CareerController::class, 'reorder'])->name('cms.careers.reorder')->middleware('cms.permission:careers.edit');
+                    Route::post('/careers/bulk-action', [CareerController::class, 'bulkAction'])->name('cms.careers.bulk-action')->middleware('cms.permission:careers.edit');
+
+                    Route::get('/careers/departments', [CareerDepartmentController::class, 'index'])->name('cms.careers.departments.index');
+                    Route::get('/careers/departments/create', [CareerDepartmentController::class, 'create'])->name('cms.careers.departments.create')->middleware('cms.permission:careers.create');
+                    Route::post('/careers/departments', [CareerDepartmentController::class, 'store'])->name('cms.careers.departments.store')->middleware('cms.permission:careers.create');
+                    Route::get('/careers/departments/{id}/edit', [CareerDepartmentController::class, 'edit'])->name('cms.careers.departments.edit')->middleware('cms.permission:careers.edit');
+                    Route::put('/careers/departments/{id}', [CareerDepartmentController::class, 'update'])->name('cms.careers.departments.update')->middleware('cms.permission:careers.edit');
+                    Route::delete('/careers/departments/{id}', [CareerDepartmentController::class, 'destroy'])->name('cms.careers.departments.destroy')->middleware('cms.permission:careers.delete');
+                    Route::post('/careers/departments/{id}/toggle-status', [CareerDepartmentController::class, 'toggleStatus'])->name('cms.careers.departments.toggle-status')->middleware('cms.permission:careers.edit');
+                    Route::post('/careers/departments/reorder', [CareerDepartmentController::class, 'reorder'])->name('cms.careers.departments.reorder')->middleware('cms.permission:careers.edit');
+                    Route::post('/careers/departments/bulk-action', [CareerDepartmentController::class, 'bulkAction'])->name('cms.careers.departments.bulk-action')->middleware('cms.permission:careers.edit');
+
+                    Route::get('/careers/candidates', [CareerCandidateController::class, 'index'])->name('cms.careers.candidates.index');
+                    Route::get('/careers/candidates/export', [CareerCandidateController::class, 'export'])->name('cms.careers.candidates.export')->middleware('cms.permission:careers.export');
+                    Route::get('/careers/candidates/{id}', [CareerCandidateController::class, 'show'])->name('cms.careers.candidates.show')->middleware('cms.permission:careers.show');
+                    Route::delete('/careers/candidates/{id}', [CareerCandidateController::class, 'destroy'])->name('cms.careers.candidates.destroy')->middleware('cms.permission:careers.delete');
+                    Route::post('/careers/candidates/bulk-action', [CareerCandidateController::class, 'bulkAction'])->name('cms.careers.candidates.bulk-action')->middleware('cms.permission:careers.delete');
                 }
             });
 

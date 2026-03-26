@@ -30,6 +30,7 @@ return [
         'brands' => true,
         'newsletter-signups' => true,
         'blogs' => true,
+        'careers' => true,
     ],
 
     'tinymce' => [

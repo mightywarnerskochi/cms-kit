@@ -89,6 +89,25 @@
             </div>
         </div>
         @endif
+
+        @if(config('cms-kit.common.modules.careers', true) && $cmsUser->can('careers.view'))
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-0 shadow-sm h-100 py-2" style="border-left: 4px solid #e76f51 !important;">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-uppercase mb-1" style="color: #e76f51;">
+                                Careers</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $stats['careers'] }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-briefcase fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        @endif
     </div>
 
     <div class="row mt-4">
@@ -153,6 +172,11 @@
                         @if($cmsUser->can('site-information.view'))
                         <a href="{{ route('cms.site-information.index') }}" class="btn btn-info text-white text-start">
                             <i class="fas fa-cog me-2"></i> Site Settings
+                        </a>
+                        @endif
+                        @if($cmsUser->can('careers.create'))
+                        <a href="{{ route('cms.careers.create') }}" class="btn text-white text-start" style="background-color: #e76f51;">
+                            <i class="fas fa-plus-circle me-2"></i> Add New Vacancy
                         </a>
                         @endif
                     </div>

@@ -77,7 +77,7 @@
     </div>
     <div class="card-body p-4">
         <div class="table-responsive">
-            <table class="table premium-table mb-0 w-100" id="careerCandidatesTable">
+            <table class="table premium-table table-hover align-middle mb-0 w-100" id="careerCandidatesTable">
                 <thead>
                     <tr>
                         <th style="width: 40px;"><input type="checkbox" class="form-check-input" id="selectAll"></th>
@@ -98,29 +98,23 @@
         </div>
     </div>
 </div>
-
-<div class="modal fade" id="viewCandidateModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Candidate Details</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body" id="candidateDetails"></div>
-        </div>
-    </div>
-</div>
 @endsection
 
 @push('scripts')
 <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+<link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.bootstrap5.min.css">
 <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+<script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
+<script src="https://cdn.datatables.net/responsive/2.5.0/js/responsive.bootstrap5.min.js"></script>
 <script>
     $(function() {
         const table = $('#careerCandidatesTable').DataTable({
             processing: true,
             serverSide: true,
+            responsive: true,
+            autoWidth: false,
+            scrollX: true,
             ajax: {
                 url: "{{ route('cms.careers.candidates.index') }}",
                 data: function(d) {
@@ -179,55 +173,6 @@
                 @endif
             });
             window.location.href = "{{ route('cms.careers.candidates.export') }}?" + params;
-        });
-
-        $(document).on('click', '.view-candidate', function() {
-            const id = $(this).data('id');
-            $.get(`{{ url(config('cms-kit.common.auth.prefix', 'admin')) }}/careers/candidates/${id}`)
-            .done(function(data) {
-                const baseFieldMap = {
-                    name: 'Name',
-                    email: 'Email',
-                    phone: 'Phone',
-                    state: 'State',
-                    country: 'Country',
-                    apply_for: 'Apply For',
-                    experience: 'Experience',
-                    designation: 'Designation',
-                    submitted_at: 'Submitted',
-                    additional_information: 'Additional Information',
-                    attachment: 'Attachment',
-                    privacy: 'Privacy Accepted'
-                };
-                const visibleFields = @json($detailColumns);
-
-                let html = '<div class="row g-3">';
-
-                visibleFields.forEach((key) => {
-                    let value = data[key];
-                    if (key === 'privacy') {
-                        value = data[key] ? 'Yes' : 'No';
-                    }
-                    if (key === 'submitted_at' && value) {
-                        value = new Date(value).toLocaleString();
-                    }
-                    if (key === 'attachment') {
-                        value = data.attachment
-                            ? `<a href="{{ asset('storage') }}/${data.attachment}" target="_blank" class="btn btn-sm btn-outline-primary">Open Attachment</a>`
-                            : '-';
-                    }
-                    html += `<div class="col-md-6"><p><strong>${baseFieldMap[key] || key}:</strong><br>${value || '-'}</p></div>`;
-                });
-
-                @foreach(config('cms-kit.database.careers.candidates.extra_fields', []) as $key => $field)
-                html += `<div class="col-md-6"><p><strong>{{ $field['label'] ?? ucfirst(str_replace('_', ' ', $key)) }}:</strong><br>${(data.extra_fields && data.extra_fields['{{ $key }}']) ? data.extra_fields['{{ $key }}'] : '-'}</p></div>`;
-                @endforeach
-
-                html += '</div>';
-
-                $('#candidateDetails').html(html);
-                $('#viewCandidateModal').modal('show');
-            });
         });
 
         $(document).on('click', '.delete-item', function() {

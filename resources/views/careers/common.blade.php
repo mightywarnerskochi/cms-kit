@@ -115,58 +115,56 @@
             ])
 
             @if($careerSectionConfig['filters'] ?? true)
-            <div class="card bg-light border-0 mb-4">
-                <div class="card-body p-4">
-                    <h6 class="fw-bold mb-3">Filter Settings</h6>
+            <div class="mb-4">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div>
+                        <h6 class="fw-bold mb-1">Filter Settings</h6>
+                        <small class="text-muted">Choose which vacancy columns should appear as frontend filters.</small>
+                    </div>
                     @if($careerSectionConfig['filter_enabled'] ?? true)
-                    <div class="mb-3">
-                        <label class="form-label fw-bold d-block">Enable Filters</label>
-                        <div class="form-check form-check-inline">
+                    <div class="d-flex align-items-center gap-3">
+                        <span class="small text-muted">Enable filters</span>
+                        <div class="form-check form-check-inline mb-0">
                             <input class="form-check-input" type="radio" name="filter_enabled" id="filterEnabledYes" value="1" {{ (string) $filterEnabled === '1' ? 'checked' : '' }}>
                             <label class="form-check-label" for="filterEnabledYes">Yes</label>
                         </div>
-                        <div class="form-check form-check-inline">
+                        <div class="form-check form-check-inline mb-0">
                             <input class="form-check-input" type="radio" name="filter_enabled" id="filterEnabledNo" value="0" {{ (string) $filterEnabled !== '1' ? 'checked' : '' }}>
                             <label class="form-check-label" for="filterEnabledNo">No</label>
                         </div>
                     </div>
                     @endif
+                </div>
 
-                    <div id="careerFiltersPanel" style="{{ ($careerSectionConfig['filter_enabled'] ?? true) && (string) $filterEnabled !== '1' ? 'display:none;' : '' }}">
-                        <div class="d-flex justify-content-between align-items-center mb-3">
-                            <div>
-                                <h6 class="mb-1">Filter Items</h6>
-                                <small class="text-muted">Choose vacancy columns. Frontend values will be taken automatically from vacancy records.</small>
-                            </div>
-                            <button type="button" class="btn btn-outline-primary btn-sm" id="addCareerFilter">
-                                <i class="fas fa-plus me-1"></i>Add Filter
-                            </button>
-                        </div>
+                <div id="careerFiltersPanel" class="border rounded-3 p-3" style="{{ ($careerSectionConfig['filter_enabled'] ?? true) && (string) $filterEnabled !== '1' ? 'display:none;' : '' }}">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <small class="text-muted">Values are picked automatically from saved vacancies.</small>
+                        <button type="button" class="btn btn-outline-primary btn-sm" id="addCareerFilter">
+                            <i class="fas fa-plus me-1"></i>Add Filter
+                        </button>
+                    </div>
 
-                        <div id="careerFiltersList">
-                            @forelse($existingFilters as $index => $filter)
-                                <div class="card border mb-3 career-filter-item">
-                                    <div class="card-body">
-                                        <div class="row g-3">
-                                            <div class="col-md-10">
-                                                <label class="form-label fw-bold">Vacancy Column</label>
-                                                <select name="section_filters[{{ $index }}][column]" class="form-select">
-                                                    <option value="">Select column</option>
-                                                    @foreach($filterableColumns as $column => $label)
-                                                        <option value="{{ $column }}" {{ ($filter['column'] ?? '') === $column ? 'selected' : '' }}>{{ $label }}</option>
-                                                    @endforeach
-                                                </select>
-                                            </div>
-                                            <div class="col-md-2 d-flex align-items-end">
-                                                <button type="button" class="btn btn-outline-danger btn-sm remove-career-filter w-100">Remove</button>
-                                            </div>
-                                        </div>
+                    <div id="careerFiltersList" class="d-flex flex-column gap-2">
+                        @forelse($existingFilters as $index => $filter)
+                            <div class="career-filter-item border rounded-3 p-3">
+                                <div class="row g-3 align-items-end">
+                                    <div class="col-md-10">
+                                        <label class="form-label fw-bold mb-1">Vacancy Column</label>
+                                        <select name="section_filters[{{ $index }}][column]" class="form-select">
+                                            <option value="">Select column</option>
+                                            @foreach($filterableColumns as $column => $label)
+                                                <option value="{{ $column }}" {{ ($filter['column'] ?? '') === $column ? 'selected' : '' }}>{{ $label }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <button type="button" class="btn btn-outline-danger btn-sm remove-career-filter w-100">Remove</button>
                                     </div>
                                 </div>
-                            @empty
-                                <div class="text-muted small" id="careerFiltersEmpty">No filters added yet.</div>
-                            @endforelse
-                        </div>
+                            </div>
+                        @empty
+                            <div class="text-muted small" id="careerFiltersEmpty">No filters added yet.</div>
+                        @endforelse
                     </div>
                 </div>
             </div>
@@ -242,21 +240,19 @@
                 }
 
                 filtersList.insertAdjacentHTML('beforeend', `
-                    <div class="card border mb-3 career-filter-item">
-                        <div class="card-body">
-                            <div class="row g-3">
-                                <div class="col-md-10">
-                                    <label class="form-label fw-bold">Vacancy Column</label>
-                                    <select name="section_filters[${index}][column]" class="form-select">
-                                        <option value="">Select column</option>
-                                        @foreach($filterableColumns as $column => $label)
-                                        <option value="{{ $column }}">{{ $label }}</option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                                <div class="col-md-2 d-flex align-items-end">
-                                    <button type="button" class="btn btn-outline-danger btn-sm remove-career-filter w-100">Remove</button>
-                                </div>
+                    <div class="career-filter-item border rounded-3 p-3">
+                        <div class="row g-3 align-items-end">
+                            <div class="col-md-10">
+                                <label class="form-label fw-bold mb-1">Vacancy Column</label>
+                                <select name="section_filters[${index}][column]" class="form-select">
+                                    <option value="">Select column</option>
+                                    @foreach($filterableColumns as $column => $label)
+                                    <option value="{{ $column }}">{{ $label }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <button type="button" class="btn btn-outline-danger btn-sm remove-career-filter w-100">Remove</button>
                             </div>
                         </div>
                     </div>

@@ -4,15 +4,37 @@
     $showLanguageUi = config('cms-kit.common.modules.languages', true);
     $item = $career ?? null;
     $isEdit = (bool) $item;
-    $jobTypeOptions = array_filter($jobTypeOptions ?? []);
-    $currentJobType = old('job_type', $item->job_type ?? '');
-    if ($currentJobType !== '' && !array_key_exists($currentJobType, $jobTypeOptions)) {
-        $jobTypeOptions[$currentJobType] = \Illuminate\Support\Str::headline(str_replace(['-', '_'], ' ', $currentJobType));
+    $fallbackLocale = config('app.fallback_locale', 'en');
+    $jobTypeOptionsByLanguage = $jobTypeOptions ?? [];
+    $departmentOptionsByLanguage = $departmentOptions ?? [];
+    $baseOptionsByLanguage = $baseOptions ?? [];
+    $classificationValues = [
+        'job_type' => old('job_type', $item->job_type ?? ''),
+        'department' => old('department', $item->department ?? ''),
+        'location' => old('location', $item->location ?? ''),
+        'country' => old('country', $item->country ?? ''),
+        'base' => old('base', $item->base ?? ''),
+    ];
+
+    foreach ($languages as $lang) {
+        $code = $lang->code;
+
+        $jobTypeOptionsByLanguage[$code] = $jobTypeOptionsByLanguage[$code] ?? ($jobTypeOptionsByLanguage[$fallbackLocale] ?? []);
+        $departmentOptionsByLanguage[$code] = $departmentOptionsByLanguage[$code] ?? ($departmentOptionsByLanguage[$fallbackLocale] ?? []);
+        $baseOptionsByLanguage[$code] = $baseOptionsByLanguage[$code] ?? ($baseOptionsByLanguage[$fallbackLocale] ?? []);
+
+        if ($classificationValues['job_type'] !== '' && !array_key_exists($classificationValues['job_type'], $jobTypeOptionsByLanguage[$code])) {
+            $jobTypeOptionsByLanguage[$code][$classificationValues['job_type']] = \Illuminate\Support\Str::headline(str_replace(['-', '_'], ' ', $classificationValues['job_type']));
+        }
+
+        if ($classificationValues['department'] !== '' && !array_key_exists($classificationValues['department'], $departmentOptionsByLanguage[$code])) {
+            $departmentOptionsByLanguage[$code][$classificationValues['department']] = $classificationValues['department'];
+        }
+
+        if ($classificationValues['base'] !== '' && !array_key_exists($classificationValues['base'], $baseOptionsByLanguage[$code])) {
+            $baseOptionsByLanguage[$code][$classificationValues['base']] = \Illuminate\Support\Str::headline(str_replace(['-', '_'], ' ', $classificationValues['base']));
+        }
     }
-    $departmentOptions = array_values(array_unique(array_filter(array_merge(
-        $departmentOptions ?? [],
-        [old('department', $item->department ?? '')]
-    ))));
 @endphp
 
 <div class="card">
@@ -36,6 +58,12 @@
                 @method('PUT')
             @endif
 
+            <input type="hidden" name="job_type" id="careerJobTypeMaster" value="{{ $classificationValues['job_type'] }}">
+            <input type="hidden" name="department" id="careerDepartmentMaster" value="{{ $classificationValues['department'] }}">
+            <input type="hidden" name="location" id="careerLocationMaster" value="{{ $classificationValues['location'] }}">
+            <input type="hidden" name="country" id="careerCountryMaster" value="{{ $classificationValues['country'] }}">
+            <input type="hidden" name="base" id="careerBaseMaster" value="{{ $classificationValues['base'] }}">
+
             <div class="row g-4 mb-4">
                 @if($careerConfig['slug'] ?? true)
                 <div class="col-md-6">
@@ -49,7 +77,7 @@
                 @if($careerConfig['published_date'] ?? true)
                 <div class="col-md-6">
                     <label class="form-label fw-bold">Published Date {!! in_array('published_date', $careerRequired, true) ? '<span class="text-danger">*</span>' : '' !!}</label>
-                    <input type="date" name="published_date" class="form-control @error('published_date') is-invalid @enderror" value="{{ old('published_date', optional($item?->published_date)->format('Y-m-d') ?? now()->format('Y-m-d')) }}" required>
+                    <input type="date" name="published_date" class="form-control @error('published_date') is-invalid @enderror" value="{{ old('published_date', optional($item?->published_date)->format('Y-m-d') ?? now()->format('Y-m-d')) }}" {{ in_array('published_date', $careerRequired, true) ? 'required' : '' }}>
                     @error('published_date')
                         <div class="invalid-feedback">{{ $message }}</div>
                     @enderror
@@ -57,78 +85,9 @@
                 @endif
             </div>
 
-            <div class="card bg-light border-0 mb-4">
-                <div class="card-body p-4">
-                    <h6 class="fw-bold mb-3">Classification</h6>
-                    <div class="row g-4">
-                        @if($careerConfig['job_type'] ?? true)
-                        <div class="col-md-6">
-                            <label class="form-label fw-bold">Job Type {!! in_array('job_type', $careerRequired, true) ? '<span class="text-danger">*</span>' : '' !!}</label>
-                            <select name="job_type" class="form-select @error('job_type') is-invalid @enderror" {{ in_array('job_type', $careerRequired, true) ? 'required' : '' }}>
-                                <option value="">Select job type</option>
-                                @foreach($jobTypeOptions as $option => $label)
-                                    <option value="{{ $option }}" {{ old('job_type', $item->job_type ?? '') === $option ? 'selected' : '' }}>{{ $label }}</option>
-                                @endforeach
-                            </select>
-                            @error('job_type')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                            @if(empty($jobTypeOptions))
-                                <small class="text-muted d-block mt-1">Add job type options in `config/cms/database.php`.</small>
-                            @endif
-                        </div>
-                        @endif
-                        @if($careerConfig['department'] ?? true)
-                        <div class="col-md-6">
-                            <label class="form-label fw-bold">Department {!! in_array('department', $careerRequired, true) ? '<span class="text-danger">*</span>' : '' !!}</label>
-                            <select name="department" class="form-select @error('department') is-invalid @enderror" {{ in_array('department', $careerRequired, true) ? 'required' : '' }}>
-                                <option value="">Select department</option>
-                                @foreach($departmentOptions as $option)
-                                    <option value="{{ $option }}" {{ old('department', $item->department ?? '') === $option ? 'selected' : '' }}>{{ $option }}</option>
-                                @endforeach
-                            </select>
-                            @error('department')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                            @if(empty($departmentOptions))
-                                <small class="text-muted d-block mt-1">Add active departments first to populate this dropdown.</small>
-                            @endif
-                        </div>
-                        @endif
-                        @if($careerConfig['location'] ?? true)
-                        <div class="col-md-4">
-                            <label class="form-label fw-bold">Location {!! in_array('location', $careerRequired, true) ? '<span class="text-danger">*</span>' : '' !!}</label>
-                            <input type="text" name="location" class="form-control @error('location') is-invalid @enderror" value="{{ old('location', $item->location ?? '') }}" {{ in_array('location', $careerRequired, true) ? 'required' : '' }}>
-                            @error('location')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                        </div>
-                        @endif
-                        @if($careerConfig['country'] ?? true)
-                        <div class="col-md-4">
-                            <label class="form-label fw-bold">Country</label>
-                            <input type="text" name="country" class="form-control @error('country') is-invalid @enderror" value="{{ old('country', $item->country ?? '') }}">
-                            @error('country')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                        </div>
-                        @endif
-                        @if($careerConfig['base'] ?? true)
-                        <div class="col-md-4">
-                            <label class="form-label fw-bold">Base</label>
-                            <input type="text" name="base" class="form-control @error('base') is-invalid @enderror" value="{{ old('base', $item->base ?? '') }}" placeholder="Optional">
-                            @error('base')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                        </div>
-                        @endif
-                    </div>
-                </div>
-            </div>
-
             <div class="alert alert-light border-start border-primary border-4 py-2 mb-4 shadow-sm" style="font-size: 0.9rem;">
                 <i class="fas fa-info-circle text-primary me-2"></i>
-                <strong>Note:</strong> Fill the translated title, summary, and content{{ $showLanguageUi ? ' across all language tabs' : '' }}.
+                <strong>Note:</strong> Classification labels follow the selected language tab. Non-English dropdowns also show the English value for reference.
             </div>
 
             @if($showLanguageUi)
@@ -148,6 +107,78 @@
                     @php $translation = data_get($item, "translations.{$lang->code}", []); @endphp
                     <div class="tab-pane fade {{ $loop->first ? 'show active' : '' }}" id="career-panel-{{ $lang->code }}" role="tabpanel">
                         <div class="row g-4">
+                            <div class="col-12">
+                                <div class="card bg-light border-0">
+                                    <div class="card-body p-4">
+                                        <h6 class="fw-bold mb-3">Classification</h6>
+                                        <div class="row g-4">
+                                            @if($careerConfig['job_type'] ?? true)
+                                            <div class="col-md-6">
+                                                <label class="form-label fw-bold">Job Type {!! in_array('job_type', $careerRequired, true) ? '<span class="text-danger">*</span>' : '' !!}</label>
+                                                <select class="form-select career-classification-proxy @error('job_type') is-invalid @enderror" data-master-field="job_type">
+                                                    <option value="">Select job type</option>
+                                                    @foreach($jobTypeOptionsByLanguage[$lang->code] ?? [] as $option => $label)
+                                                        <option value="{{ $option }}" {{ $classificationValues['job_type'] === $option ? 'selected' : '' }}>{{ $label }}</option>
+                                                    @endforeach
+                                                </select>
+                                                @error('job_type')
+                                                    <div class="invalid-feedback d-block">{{ $message }}</div>
+                                                @enderror
+                                            </div>
+                                            @endif
+                                            @if($careerConfig['department'] ?? true)
+                                            <div class="col-md-6">
+                                                <label class="form-label fw-bold">Department {!! in_array('department', $careerRequired, true) ? '<span class="text-danger">*</span>' : '' !!}</label>
+                                                <select class="form-select career-classification-proxy @error('department') is-invalid @enderror" data-master-field="department">
+                                                    <option value="">Select department</option>
+                                                    @foreach($departmentOptionsByLanguage[$lang->code] ?? [] as $option => $label)
+                                                        <option value="{{ $option }}" {{ $classificationValues['department'] === $option ? 'selected' : '' }}>{{ $label }}</option>
+                                                    @endforeach
+                                                </select>
+                                                @error('department')
+                                                    <div class="invalid-feedback d-block">{{ $message }}</div>
+                                                @enderror
+                                                @if(empty($departmentOptionsByLanguage[$lang->code] ?? []))
+                                                    <small class="text-muted d-block mt-1">Add active departments first to populate this dropdown.</small>
+                                                @endif
+                                            </div>
+                                            @endif
+                                            @if($careerConfig['location'] ?? true)
+                                            <div class="col-md-4">
+                                                <label class="form-label fw-bold">Location {!! in_array('location', $careerRequired, true) ? '<span class="text-danger">*</span>' : '' !!}</label>
+                                                <input type="text" class="form-control career-classification-proxy @error('location') is-invalid @enderror" data-master-field="location" value="{{ $classificationValues['location'] }}">
+                                                @error('location')
+                                                    <div class="invalid-feedback d-block">{{ $message }}</div>
+                                                @enderror
+                                            </div>
+                                            @endif
+                                            @if($careerConfig['country'] ?? true)
+                                            <div class="col-md-4">
+                                                <label class="form-label fw-bold">Country</label>
+                                                <input type="text" class="form-control career-classification-proxy @error('country') is-invalid @enderror" data-master-field="country" value="{{ $classificationValues['country'] }}">
+                                                @error('country')
+                                                    <div class="invalid-feedback d-block">{{ $message }}</div>
+                                                @enderror
+                                            </div>
+                                            @endif
+                                            @if($careerConfig['base'] ?? true)
+                                            <div class="col-md-4">
+                                                <label class="form-label fw-bold">Base</label>
+                                                <select class="form-select career-classification-proxy @error('base') is-invalid @enderror" data-master-field="base">
+                                                    <option value="">Select base</option>
+                                                    @foreach($baseOptionsByLanguage[$lang->code] ?? [] as $option => $label)
+                                                        <option value="{{ $option }}" {{ $classificationValues['base'] === $option ? 'selected' : '' }}>{{ $label }}</option>
+                                                    @endforeach
+                                                </select>
+                                                @error('base')
+                                                    <div class="invalid-feedback d-block">{{ $message }}</div>
+                                                @enderror
+                                            </div>
+                                            @endif
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                             @if($careerConfig['title'] ?? true)
                             <div class="col-12">
                                 <label class="form-label fw-bold">Title {!! in_array('title', $careerRequired, true) ? '<span class="text-danger">*</span>' : '' !!}</label>
@@ -285,11 +316,48 @@
 
 @push('scripts')
 <script>
+    const careerClassificationMasterIds = {
+        job_type: 'careerJobTypeMaster',
+        department: 'careerDepartmentMaster',
+        location: 'careerLocationMaster',
+        country: 'careerCountryMaster',
+        base: 'careerBaseMaster'
+    };
+
     tinymce.init({
         selector: '.tinymce-editor',
         height: 360,
         plugins: 'advlist autolink lists link image charmap preview anchor searchreplace visualblocks code fullscreen insertdatetime media table code help wordcount',
         toolbar: 'undo redo | blocks | bold italic | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | removeformat | help'
+    });
+
+    function syncCareerClassification(field, value, source) {
+        const masterInput = document.getElementById(careerClassificationMasterIds[field] || '');
+        if (masterInput) {
+            masterInput.value = value;
+        }
+
+        document.querySelectorAll(`.career-classification-proxy[data-master-field="${field}"]`).forEach((element) => {
+            if (element !== source) {
+                element.value = value;
+            }
+        });
+    }
+
+    document.querySelectorAll('.career-classification-proxy').forEach((element) => {
+        const field = element.dataset.masterField;
+        const eventName = element.tagName === 'SELECT' ? 'change' : 'input';
+
+        element.addEventListener(eventName, function() {
+            syncCareerClassification(field, this.value, this);
+        });
+    });
+
+    ['job_type', 'department', 'location', 'country', 'base'].forEach((field) => {
+        const masterInput = document.getElementById(careerClassificationMasterIds[field] || '');
+        if (masterInput) {
+            syncCareerClassification(field, masterInput.value, null);
+        }
     });
 
     document.addEventListener('invalid', function(e) {

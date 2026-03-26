@@ -221,14 +221,31 @@ return [
             'short_description' => true,
             'job_type' => true,
             'job_type_options' => [
-                'full_time' => 'Full Time',
-                'part_time' => 'Part Time',
-                'remote' => 'Remote',
+                'full_time' => [
+                    'en' => 'Full Time',
+                ],
+                'part_time' => [
+                    'en' => 'Part Time',
+                ],
+                'remote' => [
+                    'en' => 'Remote',
+                ],
             ],
             'department' => true,
             'location' => true,
             'country' => true,
             'base' => true,
+            'base_options' => [
+                'temporary' => [
+                    'en' => 'Temporary',
+                ],
+                'permanent' => [
+                    'en' => 'Permanent',
+                ],
+                'contract' => [
+                    'en' => 'Contract',
+                ],
+            ],
             'about' => true,
             'responsibilities' => true,
             'requirements' => true,

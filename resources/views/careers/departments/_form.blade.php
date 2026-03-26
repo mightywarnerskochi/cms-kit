@@ -62,37 +62,33 @@
                 @endforeach
             </div>
 
-            <div class="card bg-light border-0 mb-4">
-                <div class="card-body p-4">
-                    <div class="row g-4 align-items-end">
-                        @if($departmentConfig['stats'] ?? false)
-                        <div class="col-md-6">
-                            <label class="form-label fw-bold">Stats</label>
-                            <textarea name="stats_text" class="form-control @error('stats_text') is-invalid @enderror" rows="5" placeholder="One stat per line">{{ old('stats_text', implode("\n", $item->stats ?? [])) }}</textarea>
-                            @error('stats_text')
-                                <div class="invalid-feedback d-block">{{ $message }}</div>
-                            @enderror
-                        </div>
-                        @endif
-                        @if($departmentConfig['order'] ?? true)
-                        <div class="col-md-3">
-                            <label class="form-label fw-bold">Order</label>
-                            <input type="number" name="order_index" class="form-control @error('order_index') is-invalid @enderror" value="{{ old('order_index', $item->order_index ?? ($nextOrder ?? 1)) }}" min="1">
-                            @error('order_index')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                        </div>
-                        @endif
-                        @if($departmentConfig['status'] ?? true)
-                        <div class="col-md-3">
-                            <div class="form-check form-switch mb-2">
-                                <input class="form-check-input" type="checkbox" name="status" id="departmentStatus" value="1" {{ old('status', $item->status ?? true) ? 'checked' : '' }}>
-                                <label class="form-check-label fw-bold" for="departmentStatus">Status (Active)</label>
-                            </div>
-                        </div>
-                        @endif
+            <div class="row g-4 align-items-end mb-4">
+                @if($departmentConfig['stats'] ?? false)
+                <div class="col-md-6">
+                    <label class="form-label fw-bold">Stats</label>
+                    <textarea name="stats_text" class="form-control @error('stats_text') is-invalid @enderror" rows="5" placeholder="One stat per line">{{ old('stats_text', implode("\n", $item->stats ?? [])) }}</textarea>
+                    @error('stats_text')
+                        <div class="invalid-feedback d-block">{{ $message }}</div>
+                    @enderror
+                </div>
+                @endif
+                @if($departmentConfig['order'] ?? true)
+                <div class="col-md-4">
+                    <label class="form-label fw-bold">Order</label>
+                    <input type="number" name="order_index" class="form-control @error('order_index') is-invalid @enderror" value="{{ old('order_index', $item->order_index ?? ($nextOrder ?? 1)) }}" min="1">
+                    @error('order_index')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
+                </div>
+                @endif
+                @if($departmentConfig['status'] ?? true)
+                <div class="col-md-4">
+                    <div class="form-check form-switch mt-md-4 pt-md-2">
+                        <input class="form-check-input" type="checkbox" name="status" id="departmentStatus" value="1" {{ old('status', $item->status ?? true) ? 'checked' : '' }}>
+                        <label class="form-check-label fw-bold" for="departmentStatus">Status (Active)</label>
                     </div>
                 </div>
+                @endif
             </div>
 
             @include('cms-kit::partials.extra-fields-global', [

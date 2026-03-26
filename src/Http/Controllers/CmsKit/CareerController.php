@@ -97,9 +97,23 @@ class CareerController extends Controller
                 continue;
             }
 
-            $rules[$field] = in_array($field, $requiredFields, true)
+            $fieldRules = in_array($field, $requiredFields, true)
                 ? $this->requiredTextRule()
                 : $this->optionalTextRule();
+
+            if ($field === 'job_type') {
+                $fieldRules[] = Rule::in(array_keys($this->getStaticOptionDefinitions('job_type_options')));
+            }
+
+            if ($field === 'base') {
+                $fieldRules[] = Rule::in(array_keys($this->getStaticOptionDefinitions('base_options')));
+            }
+
+            if ($field === 'department') {
+                $fieldRules[] = Rule::in(array_keys($this->getDepartmentOptions()[config('app.fallback_locale', 'en')] ?? []));
+            }
+
+            $rules[$field] = $fieldRules;
         }
 
         if ($careerConfig['published_date'] ?? true) {
@@ -244,9 +258,21 @@ class CareerController extends Controller
     protected function getDistinctCareerColumnOptions(string $column): array
     {
         if ($column === 'job_type') {
-            $configured = collect(config('cms-kit.database.careers.items.job_type_options', []))
-                ->keys()
+            $configured = array_keys($this->getStaticOptionDefinitions('job_type_options'));
+
+            $stored = Career::query()
+                ->whereNotNull($column)
+                ->where($column, '!=', '')
+                ->distinct()
+                ->orderBy($column)
+                ->pluck($column)
                 ->all();
+
+            return array_values(array_unique(array_filter(array_merge($configured, $stored))));
+        }
+
+        if ($column === 'base') {
+            $configured = array_keys($this->getStaticOptionDefinitions('base_options'));
 
             $stored = Career::query()
                 ->whereNotNull($column)
@@ -270,19 +296,88 @@ class CareerController extends Controller
 
     protected function getJobTypeOptions(): array
     {
-        return config('cms-kit.database.careers.items.job_type_options', []);
+        return $this->getLocalizedStaticOptions('job_type_options');
+    }
+
+    protected function getBaseOptions(): array
+    {
+        return $this->getLocalizedStaticOptions('base_options');
+    }
+
+    protected function getStaticOptionDefinitions(string $configKey): array
+    {
+        $fallbackLocale = config('app.fallback_locale', 'en');
+
+        return collect(config("cms-kit.database.careers.items.{$configKey}", []))
+            ->map(function ($labels) use ($fallbackLocale) {
+                if (is_array($labels)) {
+                    return $labels;
+                }
+
+                return [$fallbackLocale => (string) $labels];
+            })
+            ->all();
+    }
+
+    protected function formatLocalizedOptionLabel(array $labels, string $langCode): string
+    {
+        $fallbackLocale = config('app.fallback_locale', 'en');
+        $fallbackLabel = trim((string) ($labels[$fallbackLocale] ?? reset($labels) ?: ''));
+        $currentLabel = trim((string) ($labels[$langCode] ?? $fallbackLabel));
+
+        if ($langCode !== $fallbackLocale && $fallbackLabel !== '' && $currentLabel !== $fallbackLabel) {
+            return "{$currentLabel} ({$fallbackLabel})";
+        }
+
+        return $currentLabel !== '' ? $currentLabel : $fallbackLabel;
+    }
+
+    protected function getLocalizedStaticOptions(string $configKey): array
+    {
+        $definitions = $this->getStaticOptionDefinitions($configKey);
+        $options = [];
+
+        foreach ($this->activeLanguages() as $language) {
+            $options[$language->code] = collect($definitions)
+                ->mapWithKeys(fn ($labels, $value) => [$value => $this->formatLocalizedOptionLabel((array) $labels, $language->code)])
+                ->all();
+        }
+
+        return $options;
     }
 
     protected function getDepartmentOptions(): array
     {
-        return CareerDepartment::query()
+        $departments = CareerDepartment::query()
             ->where('status', true)
             ->ordered()
-            ->get()
-            ->map(fn ($department) => $department->getTranslation('title'))
-            ->filter()
-            ->values()
-            ->all();
+            ->get();
+        $options = [];
+        $fallbackLocale = config('app.fallback_locale', 'en');
+
+        foreach ($this->activeLanguages() as $language) {
+            $options[$language->code] = $departments
+                ->mapWithKeys(function ($department) use ($language, $fallbackLocale) {
+                    $fallbackTitle = trim((string) ($department->translations[$fallbackLocale]['title'] ?? ''));
+                    $localizedTitle = trim((string) ($department->translations[$language->code]['title'] ?? $fallbackTitle));
+
+                    if ($fallbackTitle === '' && $localizedTitle === '') {
+                        return [];
+                    }
+
+                    $label = $localizedTitle;
+                    if ($language->code !== $fallbackLocale && $fallbackTitle !== '' && $localizedTitle !== $fallbackTitle) {
+                        $label .= " ({$fallbackTitle})";
+                    }
+
+                    $value = $fallbackTitle !== '' ? $fallbackTitle : $localizedTitle;
+
+                    return [$value => $label];
+                })
+                ->all();
+        }
+
+        return $options;
     }
 
     protected function formatJobType(?string $value): string
@@ -292,7 +387,9 @@ class CareerController extends Controller
             return '';
         }
 
-        return $this->getJobTypeOptions()[$value] ?? Str::headline(str_replace(['-', '_'], ' ', $value));
+        $fallbackLocale = config('app.fallback_locale', 'en');
+
+        return $this->getJobTypeOptions()[$fallbackLocale][$value] ?? Str::headline(str_replace(['-', '_'], ' ', $value));
     }
 
     protected function resolveUniqueSlug(Request $request, array $translations, ?int $ignoreId = null): string
@@ -351,8 +448,11 @@ class CareerController extends Controller
             'metadata.og_image.image' => 'OG image must be an image.',
             'metadata.og_image.max' => 'OG image is too large.',
             'job_type.required' => 'Job type is required',
+            'job_type.in' => 'Invalid job type selected.',
             'department.required' => 'Department is required',
+            'department.in' => 'Invalid department selected.',
             'location.required' => 'Location is required',
+            'base.in' => 'Invalid base selected.',
             'published_date.required' => 'Published date is required',
             'published_date.date' => 'Invalid input',
             'order_index.integer' => 'Invalid input',
@@ -426,9 +526,10 @@ class CareerController extends Controller
         $nextOrder = Career::count() + 1;
         $filterOptions = $this->getSectionFilterOptions();
         $jobTypeOptions = $this->getJobTypeOptions();
+        $baseOptions = $this->getBaseOptions();
         $departmentOptions = $this->getDepartmentOptions();
 
-        return view('cms-kit::careers.create', compact('languages', 'nextOrder', 'filterOptions', 'departmentOptions', 'jobTypeOptions'));
+        return view('cms-kit::careers.create', compact('languages', 'nextOrder', 'filterOptions', 'departmentOptions', 'jobTypeOptions', 'baseOptions'));
     }
 
     public function store(Request $request)
@@ -473,9 +574,10 @@ class CareerController extends Controller
         $languages = $this->activeLanguages();
         $filterOptions = $this->getSectionFilterOptions();
         $jobTypeOptions = $this->getJobTypeOptions();
+        $baseOptions = $this->getBaseOptions();
         $departmentOptions = $this->getDepartmentOptions();
 
-        return view('cms-kit::careers.edit', compact('career', 'languages', 'filterOptions', 'departmentOptions', 'jobTypeOptions'));
+        return view('cms-kit::careers.edit', compact('career', 'languages', 'filterOptions', 'departmentOptions', 'jobTypeOptions', 'baseOptions'));
     }
 
     public function update(Request $request, $id)

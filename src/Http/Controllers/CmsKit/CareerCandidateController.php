@@ -28,9 +28,22 @@ class CareerCandidateController extends Controller
         ]);
     }
 
+    protected function listColumns(): array
+    {
+        $columns = $this->configuredColumns();
+
+        foreach (['state', 'additional_information', 'attachment', 'privacy'] as $field) {
+            if (array_key_exists($field, $columns)) {
+                $columns[$field] = false;
+            }
+        }
+
+        return $columns;
+    }
+
     protected function visibleColumns(): array
     {
-        return collect($this->configuredColumns())
+        return collect($this->listColumns())
             ->filter(fn ($show) => (bool) $show)
             ->keys()
             ->values()
@@ -67,7 +80,7 @@ class CareerCandidateController extends Controller
             return $dataTable->addColumn('action', function ($row) {
                     $buttons = '<div class="btn-group">';
                     if (auth('cms')->user()?->can('careers.show')) {
-                        $buttons .= '<button type="button" class="btn btn-sm btn-outline-primary view-candidate" data-id="' . $row->id . '"><i class="fas fa-eye"></i> View</button>';
+                        $buttons .= '<a href="' . route('cms.careers.candidates.show', $row->id) . '" class="btn btn-sm btn-outline-primary"><i class="fas fa-eye"></i> View</a>';
                     }
 
                     if (auth('cms')->user()?->can('careers.delete')) {
@@ -80,7 +93,7 @@ class CareerCandidateController extends Controller
                 ->make(true);
         }
 
-        $columns = $this->configuredColumns();
+        $columns = $this->listColumns();
         $applyForOptions = ($columns['apply_for'] ?? true)
             ? CareerCandidate::query()->select('apply_for')->distinct()->pluck('apply_for')->filter()->values()
             : collect();
@@ -98,7 +111,23 @@ class CareerCandidateController extends Controller
 
     public function show($id)
     {
-        return response()->json(CareerCandidate::findOrFail($id));
+        $candidate = CareerCandidate::findOrFail($id);
+        $detailColumns = [
+            'name',
+            'email',
+            'phone',
+            'country',
+            'apply_for',
+            'experience',
+            'designation',
+            'submitted_at',
+            'state',
+            'additional_information',
+            'attachment',
+            'privacy',
+        ];
+
+        return view('cms-kit::careers.candidates.show', compact('candidate', 'detailColumns'));
     }
 
     public function export(Request $request)

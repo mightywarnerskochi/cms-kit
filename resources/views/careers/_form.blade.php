@@ -119,10 +119,10 @@
                     <div class="tab-pane fade {{ $loop->first ? 'show active' : '' }}" id="career-panel-{{ $lang->code }}" role="tabpanel">
                         <div class="row g-4">
                             <div class="col-12">
-                                <div class="card bg-light border-0">
+                                <div class="card bg-light border-0 career-classification-card">
                                     <div class="card-body p-4">
                                         <h6 class="fw-bold mb-3">Classification</h6>
-                                        <div class="row g-4">
+                                        <div class="row g-4 career-classification-row">
                                             @if($careerConfig['job_type'] ?? true)
                                             <div class="col-md-6">
                                                 <label class="form-label fw-bold">Job Type {!! in_array('job_type', $careerRequired, true) ? '<span class="text-danger">*</span>' : '' !!}</label>
@@ -355,11 +355,28 @@
 
     const careerDualDropdownStyles = `
         <style>
+            .career-classification-card,
+            .career-classification-card .card-body,
+            .career-classification-row,
+            .career-classification-row > div {
+                overflow: visible !important;
+            }
             .career-dual-dropdown { position: relative; }
+            .career-dual-dropdown-input {
+                cursor: pointer;
+                background-image: linear-gradient(45deg, transparent 50%, #6b7280 50%), linear-gradient(135deg, #6b7280 50%, transparent 50%);
+                background-position: calc(100% - 18px) calc(50% - 3px), calc(100% - 12px) calc(50% - 3px);
+                background-size: 6px 6px, 6px 6px;
+                background-repeat: no-repeat;
+                padding-right: 2.5rem;
+            }
             .career-dual-dropdown-menu {
-                position: relative;
+                position: absolute;
+                top: calc(100% + 6px);
+                left: 0;
+                right: 0;
+                z-index: 1055;
                 display: none;
-                margin-top: 0.5rem;
                 max-height: 260px;
                 overflow-y: auto;
                 background: #fff;
@@ -439,12 +456,9 @@
         emptyState.classList.toggle('d-none', hasVisibleOptions);
     }
 
-    function filterCareerDualDropdownOptions(dropdown, keyword) {
-        const normalizedKeyword = keyword.trim().toLowerCase();
-
+    function resetCareerDualDropdownOptions(dropdown) {
         dropdown.querySelectorAll('.career-dual-dropdown-option').forEach((option) => {
-            const haystack = `${option.dataset.label} ${option.querySelector('.career-dual-dropdown-secondary')?.textContent || ''}`.toLowerCase();
-            option.classList.toggle('is-hidden', normalizedKeyword !== '' && !haystack.includes(normalizedKeyword));
+            option.classList.remove('is-hidden');
         });
 
         toggleCareerDualDropdownEmpty(dropdown);
@@ -472,15 +486,15 @@
 
         if (element.classList.contains('career-dual-dropdown')) {
             const input = element.querySelector('.career-dual-dropdown-input');
+            input.setAttribute('readonly', 'readonly');
 
-            input.addEventListener('focus', function() {
-                element.classList.add('open');
-                filterCareerDualDropdownOptions(element, this.value);
-            });
-
-            input.addEventListener('input', function() {
-                element.classList.add('open');
-                filterCareerDualDropdownOptions(element, this.value);
+            input.addEventListener('click', function() {
+                const willOpen = !element.classList.contains('open');
+                document.querySelectorAll('.career-dual-dropdown').forEach((dropdown) => dropdown.classList.remove('open'));
+                if (willOpen) {
+                    resetCareerDualDropdownOptions(element);
+                    element.classList.add('open');
+                }
             });
 
             element.querySelectorAll('.career-dual-dropdown-option').forEach((option) => {

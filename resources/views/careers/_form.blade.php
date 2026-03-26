@@ -135,6 +135,7 @@
                                                                 <span class="career-dual-dropdown-secondary">{{ $meta['english'] ?? '' }}</span>
                                                             </button>
                                                         @endforeach
+                                                        <div class="career-dual-dropdown-empty d-none">No options found.</div>
                                                     </div>
                                                 </div>
                                                 @error('job_type')
@@ -154,6 +155,7 @@
                                                                 <span class="career-dual-dropdown-secondary">{{ $meta['english'] ?? '' }}</span>
                                                             </button>
                                                         @endforeach
+                                                        <div class="career-dual-dropdown-empty d-none">No options found.</div>
                                                     </div>
                                                 </div>
                                                 @error('department')
@@ -194,6 +196,7 @@
                                                                 <span class="career-dual-dropdown-secondary">{{ $meta['english'] ?? '' }}</span>
                                                             </button>
                                                         @endforeach
+                                                        <div class="career-dual-dropdown-empty d-none">No options found.</div>
                                                     </div>
                                                 </div>
                                                 @error('base')
@@ -354,12 +357,9 @@
         <style>
             .career-dual-dropdown { position: relative; }
             .career-dual-dropdown-menu {
-                position: absolute;
-                top: calc(100% + 6px);
-                left: 0;
-                right: 0;
-                z-index: 30;
+                position: relative;
                 display: none;
+                margin-top: 0.5rem;
                 max-height: 260px;
                 overflow-y: auto;
                 background: #fff;
@@ -393,6 +393,11 @@
                 white-space: nowrap;
             }
             .career-dual-dropdown-option.is-hidden { display: none; }
+            .career-dual-dropdown-empty {
+                padding: 0.9rem 1rem;
+                color: #6b7280;
+                font-size: 0.9rem;
+            }
         </style>
     `;
 
@@ -419,6 +424,30 @@
 
         input.value = selectedOption ? (selectedOption.dataset.label || '') : '';
         input.placeholder = placeholder;
+        toggleCareerDualDropdownEmpty(dropdown);
+    }
+
+    function toggleCareerDualDropdownEmpty(dropdown) {
+        const emptyState = dropdown.querySelector('.career-dual-dropdown-empty');
+        if (!emptyState) {
+            return;
+        }
+
+        const hasVisibleOptions = Array.from(dropdown.querySelectorAll('.career-dual-dropdown-option'))
+            .some((option) => !option.classList.contains('is-hidden'));
+
+        emptyState.classList.toggle('d-none', hasVisibleOptions);
+    }
+
+    function filterCareerDualDropdownOptions(dropdown, keyword) {
+        const normalizedKeyword = keyword.trim().toLowerCase();
+
+        dropdown.querySelectorAll('.career-dual-dropdown-option').forEach((option) => {
+            const haystack = `${option.dataset.label} ${option.querySelector('.career-dual-dropdown-secondary')?.textContent || ''}`.toLowerCase();
+            option.classList.toggle('is-hidden', normalizedKeyword !== '' && !haystack.includes(normalizedKeyword));
+        });
+
+        toggleCareerDualDropdownEmpty(dropdown);
     }
 
     function syncCareerClassification(field, value, source) {
@@ -446,15 +475,12 @@
 
             input.addEventListener('focus', function() {
                 element.classList.add('open');
+                filterCareerDualDropdownOptions(element, this.value);
             });
 
             input.addEventListener('input', function() {
-                const keyword = this.value.trim().toLowerCase();
                 element.classList.add('open');
-                element.querySelectorAll('.career-dual-dropdown-option').forEach((option) => {
-                    const haystack = `${option.dataset.label} ${option.querySelector('.career-dual-dropdown-secondary')?.textContent || ''}`.toLowerCase();
-                    option.classList.toggle('is-hidden', keyword !== '' && !haystack.includes(keyword));
-                });
+                filterCareerDualDropdownOptions(element, this.value);
             });
 
             element.querySelectorAll('.career-dual-dropdown-option').forEach((option) => {

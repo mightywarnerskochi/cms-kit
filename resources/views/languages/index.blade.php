@@ -19,13 +19,16 @@
                         </ul>
                     </div>
                 @endif
-                <div class="d-flex align-items-center mb-4">
-                    <div class="avatar-sm bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 32px; height: 32px;">
-                        <i class="fas fa-plus ps-0" style="font-size: 0.8rem;"></i>
-                    </div>
-                    <h5 class="fw-bold mb-0">Add New Language</h5>
+            <div class="d-flex align-items-center mb-4">
+                <div class="avatar-sm bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 32px; height: 32px;">
+                    <i class="fas fa-plus ps-0" style="font-size: 0.8rem;"></i>
                 </div>
-                <form action="{{ route('cms.languages.store') }}" method="POST" enctype="multipart/form-data">
+                <h5 class="fw-bold mb-0">Add New Language</h5>
+            </div>
+            <div class="alert alert-light border-start border-primary border-4 py-2 mb-4">
+                <small class="text-muted mb-0 d-block">English stays as the permanent default language and cannot be deleted.</small>
+            </div>
+            <form action="{{ route('cms.languages.store') }}" method="POST" enctype="multipart/form-data">
                     @csrf
                     <div class="mb-3">
                         <label class="form-label small fw-bold text-muted text-uppercase">Language Name <span class="text-danger">*</span></label>
@@ -128,6 +131,7 @@
             const id = $(this).data('id');
             const name = $(this).data('name');
             const code = $(this).data('code');
+            const isEnglish = String(code).toLowerCase() === 'en';
             const flagUrl = $(this).data('flagUrl');
             const flagAlt = $(this).data('flagAlt');
             
@@ -135,9 +139,10 @@
             let updateUrl = "{{ route('cms.languages.update', ':id') }}";
             form.attr('action', updateUrl.replace(':id', id));
             form.find('input[name="name"]').val(name);
-            form.find('input[name="code"]').val(code);
+            form.find('input[name="code"]').val(code).prop('readonly', isEnglish);
             form.find('input[name="flag_alt"]').val(flagAlt || '');
             form.find('input[name="flag_image"]').val('');
+            $('#editLanguageCodeHelp').toggleClass('d-none', !isEnglish);
             const preview = $('#editFlagPreview');
             if (flagUrl) {
                 preview.html('<img src="' + flagUrl + '" alt="" class="rounded border" style="height: 40px; width: auto;">');
@@ -167,6 +172,7 @@
                     <div class="mb-3">
                         <label class="form-label">Language Code</label>
                         <input type="text" name="code" class="form-control @error('code') is-invalid @enderror" required>
+                        <small id="editLanguageCodeHelp" class="text-muted d-none">English code is locked as <code>en</code>.</small>
                     </div>
                     @if(config('cms-kit.database.languages.items.flag', true))
                     <div class="mb-3">

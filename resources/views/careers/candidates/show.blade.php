@@ -34,7 +34,7 @@
                 @php
                     $value = $candidate->{$field};
                     if ($field === 'submitted_at') {
-                        $value = optional($candidate->submitted_at)->format('d M Y H:i');
+                        $value = optional($candidate->submitted_at)->format('d M Y H:i') ?: '-';
                     }
                     if ($field === 'privacy') {
                         $value = $candidate->privacy ? 'Yes' : 'No';
@@ -42,21 +42,23 @@
                 @endphp
 
                 @if($field === 'attachment')
-                    @if($candidate->attachment)
                     <div class="col-md-6">
                         <label class="form-label fw-bold">{{ $fieldLabels[$field] }}</label>
                         <div>
-                            <a href="{{ asset('storage/' . $candidate->attachment) }}" target="_blank" class="btn btn-outline-primary btn-sm">Open Attachment</a>
+                            @if($candidate->attachment)
+                                <a href="{{ asset('storage/' . $candidate->attachment) }}" target="_blank" class="btn btn-outline-primary btn-sm">Open Attachment</a>
+                            @else
+                                <div class="form-control bg-light">-</div>
+                            @endif
                         </div>
                     </div>
-                    @endif
-                @elseif(filled($value))
+                @else
                     <div class="col-md-6">
                         <label class="form-label fw-bold">{{ $fieldLabels[$field] }}</label>
                         @if($field === 'additional_information')
-                            <div class="border rounded p-3 bg-light-subtle">{{ $value }}</div>
+                            <div class="border rounded p-3 bg-light-subtle">{{ filled($value) ? $value : '-' }}</div>
                         @else
-                            <div class="form-control bg-light">{{ $value }}</div>
+                            <div class="form-control bg-light">{{ filled($value) ? $value : '-' }}</div>
                         @endif
                     </div>
                 @endif
@@ -64,12 +66,10 @@
 
             @foreach(config('cms-kit.database.careers.candidates.extra_fields', []) as $key => $field)
                 @php $value = data_get($candidate->extra_fields, $key); @endphp
-                @if(filled($value))
                 <div class="col-md-6">
                     <label class="form-label fw-bold">{{ $field['label'] ?? ucfirst(str_replace('_', ' ', $key)) }}</label>
-                    <div class="form-control bg-light">{{ $value }}</div>
+                    <div class="form-control bg-light">{{ filled($value) ? $value : '-' }}</div>
                 </div>
-                @endif
             @endforeach
         </div>
     </div>

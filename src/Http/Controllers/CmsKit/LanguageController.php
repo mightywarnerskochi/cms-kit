@@ -12,6 +12,11 @@ class LanguageController extends Controller
 {
     use ValidatesImageDimensions;
 
+    protected function isEnglishLanguage(Language $language): bool
+    {
+        return strtolower((string) $language->code) === 'en';
+    }
+
     protected function flagImageRules(): array
     {
         $maxKb = config('cms-kit.images.languages.flag.max_size', 256);
@@ -43,19 +48,17 @@ class LanguageController extends Controller
                             </form>';
                 })
                 ->addColumn('default_badge', function ($row) {
-                    if ($row->is_default) {
+                    if ($this->isEnglishLanguage($row) || $row->is_default) {
                         return '<span class="badge bg-primary">Default</span>';
                     }
-                    return '<form action="' . route('cms.languages.set-default', $row->id) . '" method="POST" style="display:inline;">
-                                ' . csrf_field() . '
-                                <button type="submit" class="btn btn-sm btn-outline-primary py-0">Set Default</button>
-                            </form>';
+
+                    return '<span class="text-muted">-</span>';
                 })
                 ->addColumn('actions', function ($row) {
                     $flagUrl = $row->flag_image ? asset('storage/' . $row->flag_image) : '';
                     $editBtn = '<button class="btn btn-sm btn-light border me-1 edit-language" data-id="' . $row->id . '" data-name="' . e($row->name) . '" data-code="' . e($row->code) . '" data-flag-url="' . e($flagUrl) . '" data-flag-alt="' . e($row->flag_alt ?? '') . '"><i class="fas fa-edit text-primary"></i></button>';
                     $deleteBtn = '';
-                    if (!$row->is_default) {
+                    if (!$row->is_default && !$this->isEnglishLanguage($row)) {
                         $deleteBtn = '<form action="' . route('cms.languages.destroy', $row->id) . '" method="POST" style="display:inline;" onsubmit="return confirm(\'Delete this language?\')">' . csrf_field() . method_field('DELETE') . '<button type="submit" class="btn btn-sm btn-light border text-danger"><i class="fas fa-trash"></i></button></form>';
                     }
                     return '<div class="text-end">' . $editBtn . $deleteBtn . '</div>';
@@ -96,17 +99,21 @@ class LanguageController extends Controller
     public function update(Request $request, $id)
     {
         $language = Language::findOrFail($id);
+        $isEnglish = $this->isEnglishLanguage($language);
 
         $flagConfig = config('cms-kit.images.languages.flag', []);
         $request->validate(array_merge([
             'name' => ['required', 'string', 'max:255', 'regex:/^[\p{L}\s]+$/u'],
-            'code' => ['required', 'string', 'max:10', 'unique:languages,code,' . $id, 'regex:/^[\p{L}]+$/u'],
+            'code' => $isEnglish
+                ? ['required', 'string', 'in:en']
+                : ['required', 'string', 'max:10', 'unique:languages,code,' . $id, 'regex:/^[\p{L}]+$/u'],
         ], $this->flagImageRules()), [
             'name.required' => 'Language name is required.',
             'name.regex' => 'Language name must contain only letters and spaces.',
             'code.required' => 'Language code is required.',
             'code.unique' => 'This language code already exists.',
             'code.regex' => 'Language code must contain only letters (no numbers or symbols).',
+            'code.in' => 'English language code must remain en.',
         ]);
 
         if ($request->hasFile('flag_image')) {
@@ -122,6 +129,13 @@ class LanguageController extends Controller
         }
 
         $language->update($data);
+        if ($isEnglish && (!$language->is_default || !$language->status)) {
+            $language->update([
+                'is_default' => true,
+                'status' => true,
+            ]);
+        }
+
         return redirect()->back()->with('success', 'Language updated.');
     }
 
@@ -129,7 +143,7 @@ class LanguageController extends Controller
     {
         $language = Language::findOrFail($id);
 
-        if ($language->is_default && $language->status) {
+        if (($language->is_default || $this->isEnglishLanguage($language)) && $language->status) {
             return redirect()->back()->with('error', 'Cannot deactivate the default language.');
         }
 
@@ -139,21 +153,25 @@ class LanguageController extends Controller
 
     public function setDefault($id)
     {
-        Language::query()->update(['is_default' => false]);
-
         $language = Language::findOrFail($id);
+
+        if (!$this->isEnglishLanguage($language)) {
+            return redirect()->back()->with('error', 'English must remain the default language.');
+        }
+
+        Language::query()->update(['is_default' => false]);
         $language->update([
             'is_default' => true,
             'status' => true,
         ]);
 
-        return redirect()->back()->with('success', 'Default language changed to ' . $language->name);
+        return redirect()->back()->with('success', 'English remains the default language.');
     }
 
     public function destroy($id)
     {
         $language = Language::findOrFail($id);
-        if ($language->is_default) {
+        if ($language->is_default || $this->isEnglishLanguage($language)) {
             return redirect()->back()->with('error', 'Cannot delete default language.');
         }
         if ($language->flag_image) {

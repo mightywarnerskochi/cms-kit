@@ -336,10 +336,19 @@ class CareerController extends Controller
     {
         $definitions = $this->getStaticOptionDefinitions($configKey);
         $options = [];
+        $fallbackLocale = config('app.fallback_locale', 'en');
 
         foreach ($this->activeLanguages() as $language) {
             $options[$language->code] = collect($definitions)
-                ->mapWithKeys(fn ($labels, $value) => [$value => $this->formatLocalizedOptionLabel((array) $labels, $language->code)])
+                ->mapWithKeys(function ($labels, $value) use ($language, $fallbackLocale) {
+                    $label = trim((string) ($labels[$language->code] ?? $labels[$fallbackLocale] ?? reset($labels) ?: ''));
+                    $english = trim((string) ($labels[$fallbackLocale] ?? reset($labels) ?: $label));
+
+                    return [$value => [
+                        'label' => $label !== '' ? $label : $english,
+                        'english' => $english,
+                    ]];
+                })
                 ->all();
         }
 
@@ -365,14 +374,12 @@ class CareerController extends Controller
                         return [];
                     }
 
-                    $label = $localizedTitle;
-                    if ($language->code !== $fallbackLocale && $fallbackTitle !== '' && $localizedTitle !== $fallbackTitle) {
-                        $label .= " ({$fallbackTitle})";
-                    }
-
                     $value = $fallbackTitle !== '' ? $fallbackTitle : $localizedTitle;
 
-                    return [$value => $label];
+                    return [$value => [
+                        'label' => $localizedTitle !== '' ? $localizedTitle : $fallbackTitle,
+                        'english' => $fallbackTitle !== '' ? $fallbackTitle : $localizedTitle,
+                    ]];
                 })
                 ->all();
         }
@@ -389,7 +396,9 @@ class CareerController extends Controller
 
         $fallbackLocale = config('app.fallback_locale', 'en');
 
-        return $this->getJobTypeOptions()[$fallbackLocale][$value] ?? Str::headline(str_replace(['-', '_'], ' ', $value));
+        return data_get($this->getJobTypeOptions(), "{$fallbackLocale}.{$value}.english")
+            ?? data_get($this->getJobTypeOptions(), "{$fallbackLocale}.{$value}.label")
+            ?? Str::headline(str_replace(['-', '_'], ' ', $value));
     }
 
     protected function resolveUniqueSlug(Request $request, array $translations, ?int $ignoreId = null): string

@@ -24,15 +24,26 @@
         $baseOptionsByLanguage[$code] = $baseOptionsByLanguage[$code] ?? ($baseOptionsByLanguage[$fallbackLocale] ?? []);
 
         if ($classificationValues['job_type'] !== '' && !array_key_exists($classificationValues['job_type'], $jobTypeOptionsByLanguage[$code])) {
-            $jobTypeOptionsByLanguage[$code][$classificationValues['job_type']] = \Illuminate\Support\Str::headline(str_replace(['-', '_'], ' ', $classificationValues['job_type']));
+            $fallbackLabel = \Illuminate\Support\Str::headline(str_replace(['-', '_'], ' ', $classificationValues['job_type']));
+            $jobTypeOptionsByLanguage[$code][$classificationValues['job_type']] = [
+                'label' => $fallbackLabel,
+                'english' => $fallbackLabel,
+            ];
         }
 
         if ($classificationValues['department'] !== '' && !array_key_exists($classificationValues['department'], $departmentOptionsByLanguage[$code])) {
-            $departmentOptionsByLanguage[$code][$classificationValues['department']] = $classificationValues['department'];
+            $departmentOptionsByLanguage[$code][$classificationValues['department']] = [
+                'label' => $classificationValues['department'],
+                'english' => $classificationValues['department'],
+            ];
         }
 
         if ($classificationValues['base'] !== '' && !array_key_exists($classificationValues['base'], $baseOptionsByLanguage[$code])) {
-            $baseOptionsByLanguage[$code][$classificationValues['base']] = \Illuminate\Support\Str::headline(str_replace(['-', '_'], ' ', $classificationValues['base']));
+            $fallbackLabel = \Illuminate\Support\Str::headline(str_replace(['-', '_'], ' ', $classificationValues['base']));
+            $baseOptionsByLanguage[$code][$classificationValues['base']] = [
+                'label' => $fallbackLabel,
+                'english' => $fallbackLabel,
+            ];
         }
     }
 @endphp
@@ -87,7 +98,7 @@
 
             <div class="alert alert-light border-start border-primary border-4 py-2 mb-4 shadow-sm" style="font-size: 0.9rem;">
                 <i class="fas fa-info-circle text-primary me-2"></i>
-                <strong>Note:</strong> Classification labels follow the selected language tab. Non-English dropdowns also show the English value for reference.
+                <strong>Note:</strong> Classification dropdowns follow the selected language tab and keep the English value visible on the right.
             </div>
 
             @if($showLanguageUi)
@@ -115,12 +126,17 @@
                                             @if($careerConfig['job_type'] ?? true)
                                             <div class="col-md-6">
                                                 <label class="form-label fw-bold">Job Type {!! in_array('job_type', $careerRequired, true) ? '<span class="text-danger">*</span>' : '' !!}</label>
-                                                <select class="form-select career-classification-proxy @error('job_type') is-invalid @enderror" data-master-field="job_type">
-                                                    <option value="">Select job type</option>
-                                                    @foreach($jobTypeOptionsByLanguage[$lang->code] ?? [] as $option => $label)
-                                                        <option value="{{ $option }}" {{ $classificationValues['job_type'] === $option ? 'selected' : '' }}>{{ $label }}</option>
-                                                    @endforeach
-                                                </select>
+                                                <div class="career-dual-dropdown career-classification-proxy @error('job_type') is-invalid @enderror" data-master-field="job_type" data-placeholder="Search job type">
+                                                    <input type="text" class="form-control career-dual-dropdown-input" value="{{ data_get($jobTypeOptionsByLanguage, $lang->code . '.' . $classificationValues['job_type'] . '.label', '') }}" placeholder="Search job type" autocomplete="off">
+                                                    <div class="career-dual-dropdown-menu">
+                                                        @foreach($jobTypeOptionsByLanguage[$lang->code] ?? [] as $option => $meta)
+                                                            <button type="button" class="career-dual-dropdown-option {{ $classificationValues['job_type'] === $option ? 'active' : '' }}" data-value="{{ $option }}" data-label="{{ $meta['label'] ?? '' }}">
+                                                                <span class="career-dual-dropdown-primary">{{ $meta['label'] ?? '' }}</span>
+                                                                <span class="career-dual-dropdown-secondary">{{ $meta['english'] ?? '' }}</span>
+                                                            </button>
+                                                        @endforeach
+                                                    </div>
+                                                </div>
                                                 @error('job_type')
                                                     <div class="invalid-feedback d-block">{{ $message }}</div>
                                                 @enderror
@@ -129,12 +145,17 @@
                                             @if($careerConfig['department'] ?? true)
                                             <div class="col-md-6">
                                                 <label class="form-label fw-bold">Department {!! in_array('department', $careerRequired, true) ? '<span class="text-danger">*</span>' : '' !!}</label>
-                                                <select class="form-select career-classification-proxy @error('department') is-invalid @enderror" data-master-field="department">
-                                                    <option value="">Select department</option>
-                                                    @foreach($departmentOptionsByLanguage[$lang->code] ?? [] as $option => $label)
-                                                        <option value="{{ $option }}" {{ $classificationValues['department'] === $option ? 'selected' : '' }}>{{ $label }}</option>
-                                                    @endforeach
-                                                </select>
+                                                <div class="career-dual-dropdown career-classification-proxy @error('department') is-invalid @enderror" data-master-field="department" data-placeholder="Search department">
+                                                    <input type="text" class="form-control career-dual-dropdown-input" value="{{ data_get($departmentOptionsByLanguage, $lang->code . '.' . $classificationValues['department'] . '.label', '') }}" placeholder="Search department" autocomplete="off">
+                                                    <div class="career-dual-dropdown-menu">
+                                                        @foreach($departmentOptionsByLanguage[$lang->code] ?? [] as $option => $meta)
+                                                            <button type="button" class="career-dual-dropdown-option {{ $classificationValues['department'] === $option ? 'active' : '' }}" data-value="{{ $option }}" data-label="{{ $meta['label'] ?? '' }}">
+                                                                <span class="career-dual-dropdown-primary">{{ $meta['label'] ?? '' }}</span>
+                                                                <span class="career-dual-dropdown-secondary">{{ $meta['english'] ?? '' }}</span>
+                                                            </button>
+                                                        @endforeach
+                                                    </div>
+                                                </div>
                                                 @error('department')
                                                     <div class="invalid-feedback d-block">{{ $message }}</div>
                                                 @enderror
@@ -164,12 +185,17 @@
                                             @if($careerConfig['base'] ?? true)
                                             <div class="col-md-4">
                                                 <label class="form-label fw-bold">Base</label>
-                                                <select class="form-select career-classification-proxy @error('base') is-invalid @enderror" data-master-field="base">
-                                                    <option value="">Select base</option>
-                                                    @foreach($baseOptionsByLanguage[$lang->code] ?? [] as $option => $label)
-                                                        <option value="{{ $option }}" {{ $classificationValues['base'] === $option ? 'selected' : '' }}>{{ $label }}</option>
-                                                    @endforeach
-                                                </select>
+                                                <div class="career-dual-dropdown career-classification-proxy @error('base') is-invalid @enderror" data-master-field="base" data-placeholder="Search base">
+                                                    <input type="text" class="form-control career-dual-dropdown-input" value="{{ data_get($baseOptionsByLanguage, $lang->code . '.' . $classificationValues['base'] . '.label', '') }}" placeholder="Search base" autocomplete="off">
+                                                    <div class="career-dual-dropdown-menu">
+                                                        @foreach($baseOptionsByLanguage[$lang->code] ?? [] as $option => $meta)
+                                                            <button type="button" class="career-dual-dropdown-option {{ $classificationValues['base'] === $option ? 'active' : '' }}" data-value="{{ $option }}" data-label="{{ $meta['label'] ?? '' }}">
+                                                                <span class="career-dual-dropdown-primary">{{ $meta['label'] ?? '' }}</span>
+                                                                <span class="career-dual-dropdown-secondary">{{ $meta['english'] ?? '' }}</span>
+                                                            </button>
+                                                        @endforeach
+                                                    </div>
+                                                </div>
                                                 @error('base')
                                                     <div class="invalid-feedback d-block">{{ $message }}</div>
                                                 @enderror
@@ -324,12 +350,76 @@
         base: 'careerBaseMaster'
     };
 
+    const careerDualDropdownStyles = `
+        <style>
+            .career-dual-dropdown { position: relative; }
+            .career-dual-dropdown-menu {
+                position: absolute;
+                top: calc(100% + 6px);
+                left: 0;
+                right: 0;
+                z-index: 30;
+                display: none;
+                max-height: 260px;
+                overflow-y: auto;
+                background: #fff;
+                border: 1px solid #dfe5ec;
+                border-radius: 12px;
+                box-shadow: 0 12px 30px rgba(15, 23, 42, 0.12);
+            }
+            .career-dual-dropdown.open .career-dual-dropdown-menu { display: block; }
+            .career-dual-dropdown-option {
+                width: 100%;
+                padding: 0.85rem 1rem;
+                display: flex;
+                justify-content: space-between;
+                gap: 1rem;
+                border: 0;
+                background: transparent;
+                text-align: left;
+            }
+            .career-dual-dropdown-option + .career-dual-dropdown-option { border-top: 1px solid #edf1f5; }
+            .career-dual-dropdown-option:hover,
+            .career-dual-dropdown-option.active {
+                background: #f8fafc;
+            }
+            .career-dual-dropdown-primary {
+                color: #1f2937;
+                font-weight: 500;
+            }
+            .career-dual-dropdown-secondary {
+                color: #6b7280;
+                font-size: 0.875rem;
+                white-space: nowrap;
+            }
+            .career-dual-dropdown-option.is-hidden { display: none; }
+        </style>
+    `;
+
+    if (!document.getElementById('careerDualDropdownStyles')) {
+        document.head.insertAdjacentHTML('beforeend', careerDualDropdownStyles.replace('<style>', '<style id="careerDualDropdownStyles">'));
+    }
+
     tinymce.init({
         selector: '.tinymce-editor',
         height: 360,
         plugins: 'advlist autolink lists link image charmap preview anchor searchreplace visualblocks code fullscreen insertdatetime media table code help wordcount',
         toolbar: 'undo redo | blocks | bold italic | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | removeformat | help'
     });
+
+    function updateCareerDualDropdownState(dropdown, value) {
+        const input = dropdown.querySelector('.career-dual-dropdown-input');
+        const selectedOption = dropdown.querySelector(`.career-dual-dropdown-option[data-value="${CSS.escape(value)}"]`);
+        const placeholder = dropdown.dataset.placeholder || '';
+
+        dropdown.querySelectorAll('.career-dual-dropdown-option').forEach((option) => {
+            option.classList.toggle('active', option.dataset.value === value);
+            option.classList.remove('is-hidden');
+        });
+
+        input.value = selectedOption ? (selectedOption.dataset.label || '') : '';
+        input.placeholder = placeholder;
+    }
 
     function syncCareerClassification(field, value, source) {
         const masterInput = document.getElementById(careerClassificationMasterIds[field] || '');
@@ -339,18 +429,46 @@
 
         document.querySelectorAll(`.career-classification-proxy[data-master-field="${field}"]`).forEach((element) => {
             if (element !== source) {
-                element.value = value;
+                if (element.classList.contains('career-dual-dropdown')) {
+                    updateCareerDualDropdownState(element, value);
+                } else {
+                    element.value = value;
+                }
             }
         });
     }
 
     document.querySelectorAll('.career-classification-proxy').forEach((element) => {
         const field = element.dataset.masterField;
-        const eventName = element.tagName === 'SELECT' ? 'change' : 'input';
 
-        element.addEventListener(eventName, function() {
-            syncCareerClassification(field, this.value, this);
-        });
+        if (element.classList.contains('career-dual-dropdown')) {
+            const input = element.querySelector('.career-dual-dropdown-input');
+
+            input.addEventListener('focus', function() {
+                element.classList.add('open');
+            });
+
+            input.addEventListener('input', function() {
+                const keyword = this.value.trim().toLowerCase();
+                element.classList.add('open');
+                element.querySelectorAll('.career-dual-dropdown-option').forEach((option) => {
+                    const haystack = `${option.dataset.label} ${option.querySelector('.career-dual-dropdown-secondary')?.textContent || ''}`.toLowerCase();
+                    option.classList.toggle('is-hidden', keyword !== '' && !haystack.includes(keyword));
+                });
+            });
+
+            element.querySelectorAll('.career-dual-dropdown-option').forEach((option) => {
+                option.addEventListener('click', function() {
+                    syncCareerClassification(field, this.dataset.value, element);
+                    updateCareerDualDropdownState(element, this.dataset.value);
+                    element.classList.remove('open');
+                });
+            });
+        } else {
+            element.addEventListener('input', function() {
+                syncCareerClassification(field, this.value, this);
+            });
+        }
     });
 
     ['job_type', 'department', 'location', 'country', 'base'].forEach((field) => {
@@ -358,6 +476,17 @@
         if (masterInput) {
             syncCareerClassification(field, masterInput.value, null);
         }
+    });
+
+    document.addEventListener('click', function(e) {
+        document.querySelectorAll('.career-dual-dropdown').forEach((dropdown) => {
+            if (!dropdown.contains(e.target)) {
+                dropdown.classList.remove('open');
+                const field = dropdown.dataset.masterField;
+                const masterInput = document.getElementById(careerClassificationMasterIds[field] || '');
+                updateCareerDualDropdownState(dropdown, masterInput ? masterInput.value : '');
+            }
+        });
     });
 
     document.addEventListener('invalid', function(e) {

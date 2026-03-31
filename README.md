@@ -57,8 +57,6 @@ Optional publish tags:
 php artisan vendor:publish --tag=cms-kit-config
 php artisan vendor:publish --tag=cms-kit-assets
 php artisan vendor:publish --tag=cms-kit-views
-php artisan vendor:publish --tag=cms-kit-controllers
-php artisan vendor:publish --tag=cms-kit-models
 ```
 
 Published paths:
@@ -66,7 +64,41 @@ Published paths:
 - Controllers: `app/Http/Controllers/CmsKit`
 - Models: `app/Models/CmsKit`
 
+To publish controllers and models for customization, use the package command instead of raw `vendor:publish`:
+
+```bash
+php artisan cms-kit:publish-overrides
+```
+
+You can also publish only one type:
+
+```bash
+php artisan cms-kit:publish-overrides controllers
+php artisan cms-kit:publish-overrides models
+```
+
 When these published override classes exist, the package will automatically prefer them over the built-in package classes.
+
+Important: do not publish `cms-kit-controllers` or `cms-kit-models` with `vendor:publish`. Those files keep the package namespace and can trigger duplicate class errors during `php artisan optimize`. The `cms-kit:publish-overrides` command rewrites them to your app namespace (`App\\Http\\Controllers\\CmsKit` and `App\\Models\\CmsKit`).
+
+To avoid Composer classmap conflicts, add this to your application's `composer.json`:
+
+```json
+"autoload": {
+    "exclude-from-classmap": [
+        "app/Models/CmsKit/",
+        "app/Http/Controllers/CmsKit/"
+    ]
+}
+```
+
+Then refresh Composer's autoloader:
+
+```bash
+composer dump-autoload
+```
+
+If you already published override files with the package namespace, either delete and republish them with `php artisan cms-kit:publish-overrides --force` or update their namespaces manually before running `php artisan optimize`.
 
 ### 3. Run Migrations
 

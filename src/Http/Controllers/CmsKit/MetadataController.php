@@ -68,6 +68,8 @@ class MetadataController extends Controller
             $rules["{$field}.en"] = 'required';
         }
 
+        $rules['remove_og_image'] = 'nullable|boolean';
+
         $request->validate($rules);
 
         $data = $request->only([
@@ -86,6 +88,9 @@ class MetadataController extends Controller
                 Storage::disk('public')->delete($metadata->og_image);
             }
             $data['og_image'] = $request->file('og_image')->store('metadata', 'public');
+        } elseif ($request->boolean('remove_og_image') && $metadata->og_image) {
+            Storage::disk('public')->delete($metadata->og_image);
+            $data['og_image'] = null;
         }
 
         $metadata->update($data);

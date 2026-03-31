@@ -7,6 +7,7 @@ use CMS\SiteManager\Models\CmsKit\SectionLabel;
 use CMS\SiteManager\Models\CmsKit\Language;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Illuminate\Support\Facades\Storage;
 use Yajra\DataTables\Facades\DataTables;
 use CMS\SiteManager\Support\ManagesOrderIndex;
 use CMS\SiteManager\Support\ValidatesImageDimensions;
@@ -101,9 +102,16 @@ class TestimonialController extends Controller
             }
         }
 
-        if (in_array('section_image', $requiredFields) && !$request->hasFile('section_image') && !$section->section_image) {
+        if (in_array('section_image', $requiredFields) && !$request->hasFile('section_image') && (!$section->section_image || $request->boolean('remove_section_image'))) {
              $rules['section_image'] = 'required';
         }
+
+        if (in_array('banner', $requiredFields) && !$request->hasFile('banner') && (!$section->banner || $request->boolean('remove_banner'))) {
+             $rules['banner'] = 'required';
+        }
+
+        $rules['remove_section_image'] = 'nullable|boolean';
+        $rules['remove_banner'] = 'nullable|boolean';
 
         $request->validate($rules);
 
@@ -129,18 +137,31 @@ class TestimonialController extends Controller
 
         $data = [
             'translations' => $translations,
-            'description' => $description
+            'description' => $description,
+            'status' => $request->has('status'),
         ];
 
         if (($sectionConfig['section_image'] ?? false) && $request->hasFile('section_image')) {
+            if ($section->section_image) {
+                Storage::disk('public')->delete($section->section_image);
+            }
             $data['section_image'] = $request->file('section_image')->store('testimonials', 'public');
+        } elseif ($request->boolean('remove_section_image') && $section->section_image) {
+            Storage::disk('public')->delete($section->section_image);
+            $data['section_image'] = null;
         }
-        $data['section_image_alt'] = $request->input('section_image_alt');
+        $data['section_image_alt'] = $request->boolean('remove_section_image') ? null : $request->input('section_image_alt');
 
         if (($sectionConfig['banner'] ?? false) && $request->hasFile('banner')) {
+            if ($section->banner) {
+                Storage::disk('public')->delete($section->banner);
+            }
             $data['banner'] = $request->file('banner')->store('testimonials', 'public');
+        } elseif ($request->boolean('remove_banner') && $section->banner) {
+            Storage::disk('public')->delete($section->banner);
+            $data['banner'] = null;
         }
-        $data['banner_alt'] = $request->input('banner_alt');
+        $data['banner_alt'] = $request->boolean('remove_banner') ? null : $request->input('banner_alt');
 
         $extra_fields = [];
 
@@ -155,7 +176,7 @@ class TestimonialController extends Controller
         return redirect()->back()->with('success', 'Section settings updated.');
     }
 
-    protected function validateItem(Request $request, array $itemConfig, $languages)
+    protected function validateItem(Request $request, array $itemConfig, $languages, ?Testimonial $testimonial = null)
     {
         $requiredFields = $itemConfig['required'] ?? [];
         $rules = [];
@@ -176,10 +197,19 @@ class TestimonialController extends Controller
             $rules['rating'] = 'required';
         }
 
-        if (in_array('image', $requiredFields) && !$request->hasFile('image') && $request->isMethod('post')) {
+        if (
+            in_array('image', $requiredFields)
+            && !$request->hasFile('image')
+            && (
+                $request->isMethod('post')
+                || !$testimonial?->image
+                || $request->boolean('remove_image')
+            )
+        ) {
             $rules['image'] = 'required';
         }
 
+        $rules['remove_image'] = 'nullable|boolean';
         $rules['order_index'] = 'nullable|integer|min:1';
 
         $request->validate($rules);
@@ -247,7 +277,7 @@ class TestimonialController extends Controller
         $languages = Language::active()->get();
         $itemConfig = config('cms-kit.database.testimonials.items', []);
         
-        $this->validateItem($request, $itemConfig, $languages);
+        $this->validateItem($request, $itemConfig, $languages, $testimonial);
         $this->validateImageWithinLimits($request, 'image', config('cms-kit.images.testimonials.item_image', []), 'Testimonial image');
 
         $newOrder = $request->order_index ? (int) $request->order_index : $testimonial->order_index;
@@ -288,9 +318,15 @@ class TestimonialController extends Controller
         }
 
         if (($itemConfig['image'] ?? false) && $request->hasFile('image')) {
+            if ($testimonial->image) {
+                Storage::disk('public')->delete($testimonial->image);
+            }
             $data['image'] = $request->file('image')->store('testimonials', 'public');
+        } elseif ($request->boolean('remove_image') && $testimonial->image) {
+            Storage::disk('public')->delete($testimonial->image);
+            $data['image'] = null;
         }
-        $data['image_alt'] = $request->input('image_alt');
+        $data['image_alt'] = $request->boolean('remove_image') ? null : $request->input('image_alt');
 
         $testimonial->update($data);
         $this->normalizeOrderIndex(Testimonial::class);
@@ -316,6 +352,9 @@ class TestimonialController extends Controller
     {
         $testimonial = Testimonial::findOrFail($id);
         $order = $testimonial->order_index;
+        if ($testimonial->image) {
+            Storage::disk('public')->delete($testimonial->image);
+        }
         $testimonial->delete();
         
         // Fill the gap
@@ -362,6 +401,9 @@ class TestimonialController extends Controller
                 $testimonial = Testimonial::find($id);
                 if ($testimonial) {
                     $order = $testimonial->order_index;
+                    if ($testimonial->image) {
+                        Storage::disk('public')->delete($testimonial->image);
+                    }
                     $testimonial->delete();
                     Testimonial::where('order_index', '>', $order)->decrement('order_index');
                 }

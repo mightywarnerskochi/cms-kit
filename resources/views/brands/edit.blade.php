@@ -66,6 +66,10 @@
                     <div class="mb-3">
                         <img src="{{ asset('storage/' . $brand->image) }}" class="img-thumbnail rounded" style="height: 100px;">
                     </div>
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" name="remove_image" id="removeBrandImage" value="1" {{ old('remove_image') ? 'checked' : '' }}>
+                        <label class="form-check-label" for="removeBrandImage">Remove current logo</label>
+                    </div>
                     <label class="form-label fw-bold">Update Logo</label>
                     <input type="file" name="image" class="form-control @error('image') is-invalid @enderror">
                     @error('image')

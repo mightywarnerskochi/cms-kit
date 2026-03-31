@@ -223,9 +223,16 @@ class BannerController extends Controller
         $typeRule = 'required|in:' . implode(',', $allowedTypes);
         $mainImageConfig = config('cms-kit.images.banners.main_image', ['max_size' => 2048, 'width' => 1920, 'height' => 800]);
         $avatarConfig = config('cms-kit.images.banners.client_avatar', ['max_size' => 512, 'width' => 100, 'height' => 100]);
+        $removeImage = $request->boolean('remove_image');
         $request->validate([
             'banner_type' => $typeRule,
-            'image' => 'nullable|image|max:' . $mainImageConfig['max_size'],
+            'image' => [
+                Rule::requiredIf(fn () => $resolvedBannerType === 'image' && (!$banner->image || $removeImage)),
+                'nullable',
+                'image',
+                'max:' . $mainImageConfig['max_size'],
+            ],
+            'remove_image' => 'nullable|boolean',
             'google_avatars.*' => 'nullable|image|max:' . $avatarConfig['max_size'],
             'video_source' => [
                 Rule::requiredIf(fn () => $resolvedBannerType === 'video'),
@@ -282,6 +289,9 @@ class BannerController extends Controller
             if ($banner->image)
                 Storage::disk('public')->delete($banner->image);
             $data['image'] = $request->file('image')->store('banners', 'public');
+        } elseif ($removeImage && $banner->image) {
+            Storage::disk('public')->delete($banner->image);
+            $data['image'] = null;
         }
 
         // Handle Video File
@@ -303,7 +313,7 @@ class BannerController extends Controller
             $data['video_url'] = null;
         }
 
-        $data['image_alt'] = $request->input('image_alt');
+        $data['image_alt'] = $removeImage ? null : $request->input('image_alt');
 
         // Social Proof Extra Fields + Config Extra Fields
         $extraFields = $request->only(['google_rating', 'google_review_count', 'google_avatars_alt']);

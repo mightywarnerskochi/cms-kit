@@ -159,6 +159,10 @@
                             <div class="mt-2 p-2 border rounded d-inline-block bg-white">
                                 <img src="{{ asset('storage/' . $banner->image) }}" style="height: 80px;">
                             </div>
+                            <div class="form-check mt-2">
+                                <input class="form-check-input" type="checkbox" name="remove_image" id="removeBannerImage" value="1" {{ old('remove_image') ? 'checked' : '' }}>
+                                <label class="form-check-label" for="removeBannerImage">Remove current image</label>
+                            </div>
                             @endif
                             <small class="text-muted d-block mt-1">Recommended: {{ $mainImageConfig['width'] }}x{{ $mainImageConfig['height'] }}px (Max: {{ $mainImageConfig['max_size'] / 1024 }}MB)</small>
                         </div>

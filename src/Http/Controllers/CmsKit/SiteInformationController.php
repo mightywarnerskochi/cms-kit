@@ -74,8 +74,15 @@ class SiteInformationController extends Controller
 
         foreach (['logo' => 2048, 'favicon' => 1024, 'footer_logo' => 2048] as $field => $maxSize) {
             if ($siteInfoConfig[$field] ?? true) {
-                $needsFile = in_array($field, $requiredFields) && !$hasExistingRecord;
+                $existingRecord = SiteInformation::first();
+                $needsFile = in_array($field, $requiredFields)
+                    && (
+                        !$hasExistingRecord
+                        || !$existingRecord?->{$field}
+                        || request()->boolean("remove_{$field}")
+                    );
                 $rules[$field] = ($needsFile ? 'required' : 'nullable') . '|image|max:' . $maxSize;
+                $rules["remove_{$field}"] = 'nullable|boolean';
             }
         }
 
@@ -155,6 +162,10 @@ class SiteInformationController extends Controller
                 Storage::delete($siteInfo->logo);
             }
             $data['logo'] = $request->file('logo')->store('site-info', 'public');
+        } elseif ($request->boolean('remove_logo') && $siteInfo->logo) {
+            Storage::disk('public')->delete($siteInfo->logo);
+            $data['logo'] = null;
+            $data['logo_alt'] = null;
         }
         
         if ($request->hasFile('favicon')) {
@@ -162,6 +173,9 @@ class SiteInformationController extends Controller
                 Storage::delete($siteInfo->favicon);
             }
             $data['favicon'] = $request->file('favicon')->store('site-info', 'public');
+        } elseif ($request->boolean('remove_favicon') && $siteInfo->favicon) {
+            Storage::disk('public')->delete($siteInfo->favicon);
+            $data['favicon'] = null;
         }
 
         if ($request->hasFile('footer_logo')) {
@@ -169,6 +183,10 @@ class SiteInformationController extends Controller
                 Storage::delete($siteInfo->footer_logo);
             }
             $data['footer_logo'] = $request->file('footer_logo')->store('site-info', 'public');
+        } elseif ($request->boolean('remove_footer_logo') && $siteInfo->footer_logo) {
+            Storage::disk('public')->delete($siteInfo->footer_logo);
+            $data['footer_logo'] = null;
+            $data['footer_logo_alt'] = null;
         }
 
         $extraFields = [];

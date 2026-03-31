@@ -84,6 +84,10 @@
                         <div class="mb-3">
                             <img src="{{ asset('storage/' . $metadata->og_image) }}" class="img-thumbnail rounded shadow-sm" style="max-height: 120px;">
                         </div>
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" name="remove_og_image" id="removeMetadataOgImage" value="1" {{ old('remove_og_image') ? 'checked' : '' }}>
+                            <label class="form-check-label" for="removeMetadataOgImage">Remove current OG image</label>
+                        </div>
                     @endif
                     <input type="file" name="og_image" class="form-control @error('og_image') is-invalid @enderror">
                     @error('og_image') <div class="invalid-feedback">{{ $message }}</div> @enderror

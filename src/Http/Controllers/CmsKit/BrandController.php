@@ -21,10 +21,14 @@ class BrandController extends Controller
         $imageConfig = config('cms-kit.images.brands.logo');
         $brandConfig = config('cms-kit.database.brands.items', []);
         $requiredFields = $brandConfig['required'] ?? [];
+        $brand = $isUpdate ? Brand::find(request()->route('id')) : null;
+        $requiresImage = in_array('image', $requiredFields)
+            && (!$isUpdate || !$brand?->image || request()->boolean('remove_image'));
 
         return [
-            'image' => (in_array('image', $requiredFields) && !$isUpdate ? 'required' : 'nullable') . '|image|max:' . ($imageConfig['max_size'] ?? 512),
+            'image' => ($requiresImage ? 'required' : 'nullable') . '|image|max:' . ($imageConfig['max_size'] ?? 512),
             'image_alt' => in_array('image_alt', $requiredFields) ? 'required|string|max:255' : 'nullable|string|max:255',
+            'remove_image' => 'nullable|boolean',
             'order_index' => 'nullable|integer|min:1',
         ];
     }
@@ -140,6 +144,10 @@ class BrandController extends Controller
         if ($request->hasFile('image')) {
             if ($brand->image) Storage::disk('public')->delete($brand->image);
             $data['image'] = $request->file('image')->store('brands', 'public');
+        } elseif ($request->boolean('remove_image') && $brand->image) {
+            Storage::disk('public')->delete($brand->image);
+            $data['image'] = null;
+            $data['image_alt'] = null;
         }
 
         $brand->update($data);

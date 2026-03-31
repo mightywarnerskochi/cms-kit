@@ -28,7 +28,7 @@ class LocationController extends Controller
         )));
     }
 
-    protected function getLocationItemValidationRules(bool $isUpdate = false): array
+    protected function getLocationItemValidationRules(bool $isUpdate = false, ?Location $location = null): array
     {
         $imageConfig = config('cms-kit.images.locations.main_image');
         $flagConfig = config('cms-kit.images.locations.flag');
@@ -54,11 +54,15 @@ class LocationController extends Controller
         }
 
         if ($itemConfig['image'] ?? true) {
-            $rules['image'] = (in_array('image', $requiredFields) && !$isUpdate ? 'required' : 'nullable') . '|image|max:' . ($imageConfig['max_size'] ?? 2048);
+            $requiresImage = in_array('image', $requiredFields) && (!$isUpdate || !$location?->image || request()->boolean('remove_image'));
+            $rules['image'] = ($requiresImage ? 'required' : 'nullable') . '|image|max:' . ($imageConfig['max_size'] ?? 2048);
+            $rules['remove_image'] = 'nullable|boolean';
         }
 
         if ($itemConfig['flag'] ?? true) {
-            $rules['flag'] = (in_array('flag', $requiredFields) && !$isUpdate ? 'required' : 'nullable') . '|image|max:' . ($flagConfig['max_size'] ?? 1024);
+            $requiresFlag = in_array('flag', $requiredFields) && (!$isUpdate || !$location?->flag || request()->boolean('remove_flag'));
+            $rules['flag'] = ($requiresFlag ? 'required' : 'nullable') . '|image|max:' . ($flagConfig['max_size'] ?? 1024);
+            $rules['remove_flag'] = 'nullable|boolean';
         }
 
         return $rules;
@@ -221,7 +225,7 @@ class LocationController extends Controller
     public function update(Request $request, $id)
     {
         $location = Location::findOrFail($id);
-        $request->validate($this->getLocationItemValidationRules(true));
+        $request->validate($this->getLocationItemValidationRules(true, $location));
         $this->validateImageWithinLimits($request, 'image', config('cms-kit.images.locations.main_image', []), 'Location image');
         $this->validateImageWithinLimits($request, 'flag', config('cms-kit.images.locations.flag', []), 'Flag image');
 
@@ -245,12 +249,21 @@ class LocationController extends Controller
         if ($request->hasFile('image')) {
             if ($location->image) Storage::disk('public')->delete($location->image);
             $data['image'] = $request->file('image')->store('locations', 'public');
+        } elseif ($request->boolean('remove_image') && $location->image) {
+            Storage::disk('public')->delete($location->image);
+            $data['image'] = null;
         }
 
         if ($request->hasFile('flag')) {
             if ($location->flag) Storage::disk('public')->delete($location->flag);
             $data['flag'] = $request->file('flag')->store('locations/flags', 'public');
+        } elseif ($request->boolean('remove_flag') && $location->flag) {
+            Storage::disk('public')->delete($location->flag);
+            $data['flag'] = null;
         }
+
+        $data['image_alt'] = $request->boolean('remove_image') ? null : $request->input('image_alt');
+        $data['flag_alt'] = $request->boolean('remove_flag') ? null : $request->input('flag_alt');
 
         $location->update($data);
 

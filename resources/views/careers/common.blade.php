@@ -92,6 +92,10 @@
                             <div class="mt-3">
                                 <img src="{{ asset('storage/' . $section->banner) }}" alt="{{ $section->banner_alt }}" class="img-fluid rounded border" style="max-height: 160px;">
                             </div>
+                            <div class="form-check mt-2">
+                                <input class="form-check-input" type="checkbox" name="remove_banner" id="removeCareerBanner" value="1" {{ old('remove_banner') ? 'checked' : '' }}>
+                                <label class="form-check-label" for="removeCareerBanner">Remove current banner</label>
+                            </div>
                             @endif
                         </div>
                         @endif

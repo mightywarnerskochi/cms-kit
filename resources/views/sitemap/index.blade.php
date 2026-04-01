@@ -16,11 +16,11 @@
                     </div>
                     <div>
                         @if($exists)
-                            <span class="badge rounded-pill px-3 py-2" style="background: rgba(25, 135, 84, 0.12); color: #198754;">
+                            <span class="badge rounded-pill px-3 py-2 theme-status-badge-success">
                                 <i class="fas fa-check-circle me-2"></i>sitemap.xml exists
                             </span>
                         @else
-                            <span class="badge rounded-pill px-3 py-2" style="background: rgba(220, 53, 69, 0.12); color: #dc3545;">
+                            <span class="badge rounded-pill px-3 py-2 theme-status-badge-danger">
                                 <i class="fas fa-times-circle me-2"></i>sitemap.xml is missing
                             </span>
                         @endif
@@ -42,7 +42,7 @@
                     <div class="col-md-6">
                         <div class="border rounded-4 p-4 h-100 bg-light-subtle">
                             <div class="d-flex align-items-center mb-3">
-                                <div class="rounded-circle d-inline-flex align-items-center justify-content-center me-3" style="width: 44px; height: 44px; background: rgba(var(--primary-rgb), 0.12); color: var(--primary-color);">
+                                <div class="theme-icon-chip me-3">
                                     <i class="fas fa-robot"></i>
                                 </div>
                                 <div>
@@ -61,7 +61,7 @@
                     <div class="col-md-6">
                         <div class="border rounded-4 p-4 h-100">
                             <div class="d-flex align-items-center mb-3">
-                                <div class="rounded-circle d-inline-flex align-items-center justify-content-center me-3" style="width: 44px; height: 44px; background: rgba(255, 193, 7, 0.18); color: #b58100;">
+                                <div class="theme-icon-chip me-3">
                                     <i class="fas fa-pen"></i>
                                 </div>
                                 <div>

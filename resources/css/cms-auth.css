@@ -21,7 +21,7 @@ body {
 }
 
 .btn-primary {
-    background: var(--primary-gradient);
+    background: var(--primary-fill);
     border: 1px solid var(--primary-color);
     padding: 0.8rem;
     border-radius: 0.75rem;
@@ -32,7 +32,7 @@ body {
 .btn-primary:hover,
 .btn-primary:focus,
 .btn-primary:active {
-    background: var(--primary-gradient) !important;
+    background: var(--primary-fill) !important;
     border-color: var(--primary-color) !important;
     filter: brightness(0.97);
     box-shadow: 0 14px 28px rgba(var(--primary-rgb), 0.24);

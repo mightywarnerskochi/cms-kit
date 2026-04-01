@@ -13,7 +13,8 @@
     @php
         $theme = config('cms-kit.common.theme', []);
         $primaryColor = $theme['primary_color'] ?? '#dc3545';
-        $primaryGradient = $theme['primary_gradient'] ?? $primaryColor;
+        $primaryGradient = $theme['primary_gradient'] ?? null;
+        $primaryFill = $primaryGradient ?: $primaryColor;
         $normalizedPrimary = ltrim($primaryColor, '#');
         if (strlen($normalizedPrimary) === 3) {
             $normalizedPrimary = collect(str_split($normalizedPrimary))->map(fn ($char) => $char . $char)->implode('');
@@ -23,8 +24,13 @@
     <style>
         :root {
             --primary-color: {{ $primaryColor }};
-            --primary-gradient: {{ $primaryGradient }};
-            --heading-gradient: {{ $primaryGradient }};
+            --primary-gradient: {{ $primaryGradient ?: $primaryColor }};
+            --primary-fill: {{ $primaryFill }};
+            --heading-gradient: {{ $primaryFill }};
+            --theme-status-success-bg: rgba(25, 135, 84, 0.12);
+            --theme-status-success-text: #198754;
+            --theme-status-danger-bg: rgba(220, 53, 69, 0.12);
+            --theme-status-danger-text: #dc3545;
             --primary-rgb: {{ $primaryRed }}, {{ $primaryGreen }}, {{ $primaryBlue }};
             --secondary-color: {{ $theme['secondary_color'] ?? '#212529' }};
             --bg-color: {{ $theme['background_color'] ?? '#f4f7f6' }};

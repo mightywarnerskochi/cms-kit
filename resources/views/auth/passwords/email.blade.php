@@ -8,7 +8,8 @@
     @php
         $theme = config('cms-kit.common.theme', []);
         $primaryColor = $theme['primary_color'] ?? '#dc3545';
-        $primaryGradient = $theme['primary_gradient'] ?? $primaryColor;
+        $primaryGradient = $theme['primary_gradient'] ?? null;
+        $primaryFill = $primaryGradient ?: $primaryColor;
         $normalizedPrimary = ltrim($primaryColor, '#');
         if (strlen($normalizedPrimary) === 3) {
             $normalizedPrimary = collect(str_split($normalizedPrimary))->map(fn ($char) => $char . $char)->implode('');
@@ -18,8 +19,9 @@
     <style>
         :root {
             --primary-color: {{ $primaryColor }};
-            --primary-gradient: {{ $primaryGradient }};
-            --heading-gradient: {{ $primaryGradient }};
+            --primary-gradient: {{ $primaryGradient ?: $primaryColor }};
+            --primary-fill: {{ $primaryFill }};
+            --heading-gradient: {{ $primaryFill }};
             --primary-rgb: {{ $primaryRed }}, {{ $primaryGreen }}, {{ $primaryBlue }};
             --bg-color: {{ $theme['background_color'] ?? '#f0f2f5' }};
             --theme-border-color: rgba({{ $primaryRed }}, {{ $primaryGreen }}, {{ $primaryBlue }}, 0.24);

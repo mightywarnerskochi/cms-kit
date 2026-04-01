@@ -4,7 +4,7 @@ return [
     'name' => 'CMS Kit',
     'theme' => [
         'primary_color' => '#dc3545',
-        'primary_gradient' => 'linear-gradient(90deg, #dc3545 0%, #c82333 100%)',
+        'primary_gradient' => null,
         'secondary_color' => '#212529',
         'background_color' => '#f8f9fa',
         'sidebar_color' => '#343a40',

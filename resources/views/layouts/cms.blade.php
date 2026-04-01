@@ -11,7 +11,9 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     @php
-        $primaryColor = config('cms-kit.common.theme.primary_color', '#dc3545');
+        $theme = config('cms-kit.common.theme', []);
+        $primaryColor = $theme['primary_color'] ?? '#dc3545';
+        $primaryGradient = $theme['primary_gradient'] ?? $primaryColor;
         $normalizedPrimary = ltrim($primaryColor, '#');
         if (strlen($normalizedPrimary) === 3) {
             $normalizedPrimary = collect(str_split($normalizedPrimary))->map(fn ($char) => $char . $char)->implode('');
@@ -21,11 +23,17 @@
     <style>
         :root {
             --primary-color: {{ $primaryColor }};
+            --primary-gradient: {{ $primaryGradient }};
+            --heading-gradient: {{ $primaryGradient }};
             --primary-rgb: {{ $primaryRed }}, {{ $primaryGreen }}, {{ $primaryBlue }};
-            --secondary-color: {{ config('cms-kit.common.secondary_color', '#212529') }};
-            --bg-color: {{ config('cms-kit.common.background_color', '#f4f7f6') }};
-            --sidebar-color: {{ config('cms-kit.common.sidebar_color', '#1a1d21') }};
-            --text-color: {{ config('cms-kit.common.text_color', '#495057') }};
+            --secondary-color: {{ $theme['secondary_color'] ?? '#212529' }};
+            --bg-color: {{ $theme['background_color'] ?? '#f4f7f6' }};
+            --sidebar-color: {{ $theme['sidebar_color'] ?? '#1a1d21' }};
+            --text-color: {{ $theme['text_color'] ?? '#495057' }};
+            --theme-border-color: rgba({{ $primaryRed }}, {{ $primaryGreen }}, {{ $primaryBlue }}, 0.24);
+            --theme-border-strong: rgba({{ $primaryRed }}, {{ $primaryGreen }}, {{ $primaryBlue }}, 0.45);
+            --theme-soft-bg: rgba({{ $primaryRed }}, {{ $primaryGreen }}, {{ $primaryBlue }}, 0.08);
+            --theme-focus-ring: 0 0 0 0.2rem rgba({{ $primaryRed }}, {{ $primaryGreen }}, {{ $primaryBlue }}, 0.15);
             --card-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
             --header-bg: rgba(255, 255, 255, 0.8);
             --sidebar-width: 280px;

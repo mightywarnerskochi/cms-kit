@@ -5,10 +5,26 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ config('cms-kit.common.name', 'CMS Kit') }} - Reset Password</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    @php
+        $theme = config('cms-kit.common.theme', []);
+        $primaryColor = $theme['primary_color'] ?? '#dc3545';
+        $primaryGradient = $theme['primary_gradient'] ?? $primaryColor;
+        $normalizedPrimary = ltrim($primaryColor, '#');
+        if (strlen($normalizedPrimary) === 3) {
+            $normalizedPrimary = collect(str_split($normalizedPrimary))->map(fn ($char) => $char . $char)->implode('');
+        }
+        [$primaryRed, $primaryGreen, $primaryBlue] = sscanf($normalizedPrimary, '%02x%02x%02x') ?: [220, 53, 69];
+    @endphp
     <style>
         :root {
-            --primary-color: {{ config('cms-kit.common.theme.primary_color', '#dc3545') }};
-            --bg-color: #f0f2f5;
+            --primary-color: {{ $primaryColor }};
+            --primary-gradient: {{ $primaryGradient }};
+            --heading-gradient: {{ $primaryGradient }};
+            --primary-rgb: {{ $primaryRed }}, {{ $primaryGreen }}, {{ $primaryBlue }};
+            --bg-color: {{ $theme['background_color'] ?? '#f0f2f5' }};
+            --theme-border-color: rgba({{ $primaryRed }}, {{ $primaryGreen }}, {{ $primaryBlue }}, 0.24);
+            --theme-soft-bg: rgba({{ $primaryRed }}, {{ $primaryGreen }}, {{ $primaryBlue }}, 0.08);
+            --theme-focus-ring: 0 0 0 0.2rem rgba({{ $primaryRed }}, {{ $primaryGreen }}, {{ $primaryBlue }}, 0.15);
         }
     </style>
     <link rel="stylesheet" href="{{ asset('vendor/cms-kit/css/cms-auth.css') }}">

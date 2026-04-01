@@ -13,7 +13,7 @@ body {
     width: 100%;
     max-width: 400px;
     padding: 2.5rem;
-    border: none;
+    border: 1px solid var(--theme-border-color);
     border-radius: 1.5rem;
     box-shadow: 0 10px 25px rgba(0,0,0,0.05);
     background: rgba(255, 255, 255, 0.9);
@@ -21,22 +21,33 @@ body {
 }
 
 .btn-primary {
-    background-color: var(--primary-color);
-    border: none;
+    background: var(--primary-gradient);
+    border: 1px solid var(--primary-color);
     padding: 0.8rem;
     border-radius: 0.75rem;
     font-weight: 600;
+    box-shadow: 0 12px 24px rgba(var(--primary-rgb), 0.2);
 }
 
-.btn-primary:hover {
-    background-color: var(--primary-color);
-    opacity: 0.9;
+.btn-primary:hover,
+.btn-primary:focus,
+.btn-primary:active {
+    background: var(--primary-gradient) !important;
+    border-color: var(--primary-color) !important;
+    filter: brightness(0.97);
+    box-shadow: 0 14px 28px rgba(var(--primary-rgb), 0.24);
 }
 
 .form-control {
     padding: 0.8rem 1rem;
     border-radius: 0.75rem;
-    border: 1px solid #e1e5eb;
+    border: 1px solid var(--theme-border-color);
+    background: rgba(var(--primary-rgb), 0.04);
+}
+
+.form-control:focus {
+    border-color: var(--primary-color);
+    box-shadow: var(--theme-focus-ring);
 }
 
 .logo {
@@ -45,7 +56,15 @@ body {
 }
 
 .logo h3 {
-    color: var(--primary-color);
+    background: var(--heading-gradient);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
     font-weight: 800;
     margin-bottom: 0.5rem;
+}
+
+.text-decoration-none,
+.text-decoration-none:hover {
+    color: var(--primary-color);
 }

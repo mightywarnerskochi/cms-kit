@@ -157,8 +157,11 @@ class BannerController extends Controller
         // Handle Image
         if ($request->hasFile('image')) {
             $data['image'] = $request->file('image')->store('banners', 'public');
-            $data['image_alt'] = $request->input('image_alt');
         }
+
+        $data['image_alt'] = $resolvedBannerType === 'image'
+            ? $request->input('image_alt')
+            : null;
 
         // Handle Video File
         if ($resolvedBannerType === 'video' && $request->hasFile('video_file')) {
@@ -313,7 +316,9 @@ class BannerController extends Controller
             $data['video_url'] = null;
         }
 
-        $data['image_alt'] = $removeImage ? null : $request->input('image_alt');
+        $data['image_alt'] = $resolvedBannerType === 'image' && !$removeImage
+            ? $request->input('image_alt')
+            : null;
 
         // Social Proof Extra Fields + Config Extra Fields
         $extraFields = $request->only(['google_rating', 'google_review_count', 'google_avatars_alt']);

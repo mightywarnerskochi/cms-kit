@@ -217,9 +217,9 @@
                         </div>
                         @endif
                         @if(config('cms-kit.database.banners.items.image_alt', true))
-                        <div class="col-md-6">
+                        <div class="col-md-6 {{ old('banner_type', $banner->banner_type) !== 'image' ? 'd-none' : '' }}" id="image-alt-section">
                             <label class="form-label">Image Alt Text</label>
-                            <input type="text" name="image_alt" class="form-control" value="{{ $banner->image_alt }}">
+                            <input type="text" name="image_alt" id="image_alt" class="form-control" value="{{ old('image_alt', $banner->image_alt) }}">
                         </div>
                         @endif
                     </div>
@@ -310,16 +310,20 @@
 @push('scripts')
 <script>
 $(document).ready(function() {
-    // Banner Type Toggle
-    $('#banner_type').change(function() {
-        if ($(this).val() === 'video') {
-            $('#video-section').removeClass('d-none');
-            $('#image-section').addClass('d-none');
-        } else {
-            $('#image-section').removeClass('d-none');
-            $('#video-section').addClass('d-none');
+    function toggleBannerTypeSections() {
+        const isVideo = $('#banner_type').val() === 'video';
+        $('#video-section').toggleClass('d-none', !isVideo);
+        $('#image-section').toggleClass('d-none', isVideo);
+        $('#image-alt-section').toggleClass('d-none', isVideo);
+
+        if (isVideo) {
+            $('#image_alt').val('');
         }
-    });
+    }
+
+    // Banner Type Toggle
+    $('#banner_type').change(toggleBannerTypeSections);
+    toggleBannerTypeSections();
 
     // Video Source Toggle
     $('.video-source-toggle').change(function() {

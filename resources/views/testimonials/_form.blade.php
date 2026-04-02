@@ -9,7 +9,7 @@
 </div>
 
 @if($showLanguageUi)
-<ul class="nav nav-pills mb-4 bg-light p-2 rounded-3" id="testimonialFormTabs" role="tablist">
+<ul class="nav nav-pills mb-4 bg-light p-2 rounded-4 language-switcher-tabs" id="testimonialFormTabs" role="tablist">
     @foreach($languages as $lang)
     <li class="nav-item" role="presentation">
         <button class="nav-link {{ $loop->first ? 'active' : '' }} px-3 py-2 fw-medium" id="testimonial-tab-{{ $lang->code }}" data-bs-toggle="tab" data-bs-target="#testimonial-{{ $lang->code }}" type="button" role="tab">
@@ -20,7 +20,7 @@
 </ul>
 @endif
 
-<div class="tab-content mb-4" id="testimonialTabsContent">
+<div class="tab-content mb-4 language-switcher-content" id="testimonialTabsContent">
     @foreach($languages as $lang)
     @php $trans = $item->translations[$lang->code] ?? []; @endphp
     <div class="tab-pane fade {{ $loop->first ? 'show active' : '' }}" id="testimonial-{{ $lang->code }}" role="tabpanel">

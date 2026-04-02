@@ -55,7 +55,7 @@
                     </div>
                     <div class="card-body">
                         @if($showLanguageUi)
-                        <ul class="nav nav-pills mb-4 bg-light p-2 rounded-3" id="siteInfoTabs" role="tablist">
+                        <ul class="nav nav-pills mb-4 bg-light p-2 rounded-4 language-switcher-tabs" id="siteInfoTabs" role="tablist">
                             @foreach($languages as $lang)
                             <li class="nav-item" role="presentation">
                                 <button class="nav-link {{ $loop->first ? 'active' : '' }} px-4 py-2 fw-medium" id="site-tab-{{ $lang->code }}" data-bs-toggle="tab" data-bs-target="#site-panel-{{ $lang->code }}" type="button" role="tab">
@@ -66,7 +66,7 @@
                         </ul>
                         @endif
 
-                        <div class="tab-content" id="siteInfoTabsContent">
+                        <div class="tab-content language-switcher-content" id="siteInfoTabsContent">
                             @foreach($languages as $lang)
                             @php $trans = $translations[$lang->code] ?? []; @endphp
                             <div class="tab-pane fade {{ $loop->first ? 'show active' : '' }}" id="site-panel-{{ $lang->code }}" role="tabpanel">

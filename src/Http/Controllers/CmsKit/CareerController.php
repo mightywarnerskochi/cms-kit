@@ -76,6 +76,9 @@ class CareerController extends Controller
         $careerConfig = config('cms-kit.database.careers.items', []);
         $requiredFields = $careerConfig['required'] ?? [];
         $rules = [
+            'translations' => ['nullable', 'array'],
+            'translations.*.extra_fields' => ['nullable', 'array'],
+            'extra_fields' => ['nullable', 'array'],
             'order_index' => ['nullable', 'integer', 'min:1'],
             'status' => ['nullable', 'boolean'],
             'metadata.meta_title' => $this->optionalTextRule(),
@@ -144,6 +147,9 @@ class CareerController extends Controller
         $sectionConfig = config('cms-kit.database.careers.section', []);
         $section = SectionLabel::firstOrCreate(['section_key' => 'careers']);
         $rules = [
+            'translations' => ['nullable', 'array'],
+            'translations.*.extra_fields' => ['nullable', 'array'],
+            'extra_fields' => ['nullable', 'array'],
             'section_filters' => ['nullable', 'array'],
         ];
 
@@ -186,11 +192,21 @@ class CareerController extends Controller
     protected function normalizeTranslations(array $translations): array
     {
         $normalized = [];
+        $fieldConfig = config('cms-kit.database.careers.items.extra_fields', []);
+        $translatableExtraFields = collect($fieldConfig)
+            ->filter(fn ($field) => $field['translatable'] ?? false)
+            ->keys();
 
         foreach ($translations as $lang => $values) {
             foreach ($this->translatableFields as $field) {
                 $value = $values[$field] ?? null;
                 $normalized[$lang][$field] = is_string($value) ? trim($value) : $value;
+            }
+
+            $normalized[$lang]['extra_fields'] = [];
+            foreach ($translatableExtraFields as $fieldName) {
+                $value = data_get($values, "extra_fields.{$fieldName}");
+                $normalized[$lang]['extra_fields'][$fieldName] = is_string($value) ? trim($value) : $value;
             }
         }
 
@@ -223,6 +239,88 @@ class CareerController extends Controller
         foreach ($translations as $lang => $values) {
             $translations[$lang]['extra_fields'] = [];
             foreach ($translatableFields as $fieldName) {
+                $translations[$lang]['extra_fields'][$fieldName] = data_get($values, "extra_fields.{$fieldName}");
+            }
+        }
+
+        return $translations;
+    }
+
+    protected function mergeCareerItemTranslatableExtraFields(array $translations): array
+    {
+        $fieldConfig = config('cms-kit.database.careers.items.extra_fields', []);
+        $translatableFields = collect($fieldConfig)->filter(fn ($field) => $field['translatable'] ?? false)->keys();
+
+        foreach ($translations as $lang => $values) {
+            $translations[$lang]['extra_fields'] = [];
+            foreach ($translatableFields as $fieldName) {
+                $translations[$lang]['extra_fields'][$fieldName] = data_get($values, "extra_fields.{$fieldName}");
+            }
+        }
+
+        return $translations;
+    }
+
+    protected function resolveConfiguredExtraFields(Request $request, string $configKey, array $existingValues = [], string $storagePath = ''): array
+    {
+        $resolved = [];
+
+        foreach (config("cms-kit.database.{$configKey}.extra_fields", []) as $key => $field) {
+            if ($field['translatable'] ?? false) {
+                continue;
+            }
+
+            $existingValue = $existingValues[$key] ?? null;
+
+            if (($field['type'] ?? 'text') === 'file') {
+                if ($request->hasFile("extra_fields.{$key}")) {
+                    if ($storagePath !== '' && is_string($existingValue) && $existingValue !== '') {
+                        Storage::disk('public')->delete($existingValue);
+                    }
+
+                    $resolved[$key] = $request->file("extra_fields.{$key}")->store($storagePath, 'public');
+                    continue;
+                }
+
+                $resolved[$key] = $existingValue;
+                continue;
+            }
+
+            $resolved[$key] = $request->input("extra_fields.{$key}");
+        }
+
+        return $resolved;
+    }
+
+    protected function resolveConfiguredTranslatableExtraFields(Request $request, string $configKey, array $existingTranslations = [], string $storagePath = ''): array
+    {
+        $translations = $request->input('translations', []);
+        $fieldConfig = config("cms-kit.database.{$configKey}.extra_fields", []);
+
+        foreach ($translations as $lang => $values) {
+            $translations[$lang]['extra_fields'] = $translations[$lang]['extra_fields'] ?? [];
+
+            foreach ($fieldConfig as $fieldName => $field) {
+                if (!($field['translatable'] ?? false)) {
+                    continue;
+                }
+
+                $existingValue = data_get($existingTranslations, "{$lang}.extra_fields.{$fieldName}");
+
+                if (($field['type'] ?? 'text') === 'file') {
+                    if ($request->hasFile("translations.{$lang}.extra_fields.{$fieldName}")) {
+                        if ($storagePath !== '' && is_string($existingValue) && $existingValue !== '') {
+                            Storage::disk('public')->delete($existingValue);
+                        }
+
+                        $translations[$lang]['extra_fields'][$fieldName] = $request->file("translations.{$lang}.extra_fields.{$fieldName}")->store($storagePath, 'public');
+                        continue;
+                    }
+
+                    $translations[$lang]['extra_fields'][$fieldName] = $existingValue;
+                    continue;
+                }
+
                 $translations[$lang]['extra_fields'][$fieldName] = data_get($values, "extra_fields.{$fieldName}");
             }
         }
@@ -554,8 +652,13 @@ class CareerController extends Controller
             ['translations.*.title' => 'title']
         );
 
-        $translations = $this->normalizeTranslations($request->input('translations', []));
+        $translations = $this->mergeCareerItemTranslatableExtraFields(
+            $this->normalizeTranslations(
+                $this->resolveConfiguredTranslatableExtraFields($request, 'careers.items', [], 'careers/items/extra-fields')
+            )
+        );
         $order = $this->resolveOrderForCreate(Career::class, $request->filled('order_index') ? (int) $request->order_index : null);
+        $extraFields = $this->resolveConfiguredExtraFields($request, 'careers.items', [], 'careers/items/extra-fields');
 
         Career::where('order_index', '>=', $order)->increment('order_index');
 
@@ -576,7 +679,7 @@ class CareerController extends Controller
             'status' => $request->boolean('status', true),
             'translations' => $translations,
             'metadata' => $metadata,
-            'extra_fields' => [],
+            'extra_fields' => $extraFields,
         ]);
 
         return redirect()->route('cms.careers.vacancies.index')->with('success', 'Career created successfully.');
@@ -605,6 +708,12 @@ class CareerController extends Controller
 
         $metadata = $request->input('metadata', []);
         $existingMetadata = $career->metadata ?? [];
+        $extraFields = $this->resolveConfiguredExtraFields($request, 'careers.items', $career->extra_fields ?? [], 'careers/items/extra-fields');
+        $translations = $this->mergeCareerItemTranslatableExtraFields(
+            $this->normalizeTranslations(
+                $this->resolveConfiguredTranslatableExtraFields($request, 'careers.items', $career->translations ?? [], 'careers/items/extra-fields')
+            )
+        );
         if ($request->hasFile('metadata.og_image')) {
             if (!empty($existingMetadata['og_image'])) {
                 Storage::disk('public')->delete($existingMetadata['og_image']);
@@ -618,7 +727,7 @@ class CareerController extends Controller
         }
 
         $career->update([
-            'slug' => $this->resolveUniqueSlug($request, $this->normalizeTranslations($request->input('translations', [])), $career->id),
+            'slug' => $this->resolveUniqueSlug($request, $translations, $career->id),
             'job_type' => trim((string) ($validated['job_type'] ?? $career->job_type)),
             'department' => trim((string) ($validated['department'] ?? $career->department)),
             'location' => trim((string) ($validated['location'] ?? $career->location)),
@@ -626,8 +735,9 @@ class CareerController extends Controller
             'base' => trim((string) ($validated['base'] ?? $career->base)),
             'published_date' => $validated['published_date'] ?? optional($career->published_date)->toDateString(),
             'status' => $request->has('status') ? $request->boolean('status') : $career->status,
-            'translations' => $this->normalizeTranslations($request->input('translations', [])),
+            'translations' => $translations,
             'metadata' => $metadata,
+            'extra_fields' => $extraFields,
         ]);
 
         return redirect()->route('cms.careers.vacancies.index')->with('success', 'Career updated successfully.');
@@ -698,22 +808,19 @@ class CareerController extends Controller
         $section = SectionLabel::firstOrCreate(['section_key' => 'careers']);
         $data = [
             'translations' => $this->mergeCareerSectionTranslatableExtraFields(
-                $this->normalizeSectionTranslations($request->input('translations', []))
+                $this->normalizeSectionTranslations(
+                    $this->resolveConfiguredTranslatableExtraFields($request, 'careers.section', $section->translations ?? [], 'careers/section/extra-fields')
+                )
             ),
-            'extra_fields' => [
+            'extra_fields' => array_merge(
+                $this->resolveConfiguredExtraFields($request, 'careers.section', $section->extra_fields ?? [], 'careers/section/extra-fields'),
+                [
                 'filter_enabled' => ($sectionConfig['filter_enabled'] ?? true) ? $request->boolean('filter_enabled') : false,
                 'filters' => ($sectionConfig['filters'] ?? true) ? $this->normalizeSectionFilters($request->input('section_filters', [])) : [],
-            ],
+                ]
+            ),
             'banner_alt' => ($sectionConfig['banner_alt'] ?? true) ? trim((string) $request->input('banner_alt', '')) : '',
         ];
-
-        foreach (config('cms-kit.database.careers.section.extra_fields', []) as $key => $field) {
-            if ($field['translatable'] ?? false) {
-                continue;
-            }
-
-            $data['extra_fields'][$key] = $request->input("extra_fields.{$key}");
-        }
 
         if (($sectionConfig['banner'] ?? true) && $request->hasFile('banner')) {
             if ($section->banner) {

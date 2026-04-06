@@ -14,6 +14,7 @@
         $extraFields = config("cms-kit.database.{$configKey}.extra_fields", []);
     }
 
+    $supportedInputTypes = ['text', 'number', 'email', 'date', 'time', 'datetime-local', 'url', 'tel', 'color', 'password', 'month', 'week'];
     $translatableFields = collect($extraFields)
         ->filter(fn($field) => ($field['translatable'] ?? false));
 
@@ -31,6 +32,14 @@
                 $usesTinyMce = ($fieldConfig['editor'] ?? null) === 'tinymce';
                 $textareaClasses = trim('form-control' . ($usesTinyMce ? ' tinymce-extra-field' : '') . ' ' . ($errors->has("translations.{$lang->code}.extra_fields.{$fieldName}") ? 'is-invalid' : ''));
                 $columnClass = $fieldConfig['column_class'] ?? ($usesTinyMce ? 'col-12' : 'col-md-6');
+                $inputType = in_array($fieldType, $supportedInputTypes, true) ? $fieldType : 'text';
+                $inputAttributes = collect([
+                    'min' => $fieldConfig['min'] ?? null,
+                    'max' => $fieldConfig['max'] ?? null,
+                    'step' => $fieldConfig['step'] ?? null,
+                    'pattern' => $fieldConfig['pattern'] ?? null,
+                    'accept' => $fieldConfig['accept'] ?? null,
+                ])->filter(fn ($value) => $value !== null && $value !== '')->all();
             @endphp
             <div class="{{ $columnClass }}">
                 <label class="form-label">{{ $fieldConfig['label'] ?? ucfirst(str_replace('_', ' ', $fieldName)) }} {!! ($fieldConfig['required'] ?? false) ? '<span class="text-danger">*</span>' : '' !!}</label>
@@ -54,12 +63,8 @@
                         <input type="checkbox" name="translations[{{ $lang->code }}][extra_fields][{{ $fieldName }}]" value="1" class="form-check-input @error("translations.{$lang->code}.extra_fields.{$fieldName}") is-invalid @enderror" id="translatable-extra-field-{{ $lang->code }}-{{ $fieldName }}" {{ $fieldValue ? 'checked' : '' }} {{ ($fieldConfig['required'] ?? false) ? 'required' : '' }}>
                         <label class="form-check-label" for="translatable-extra-field-{{ $lang->code }}-{{ $fieldName }}">{{ $fieldConfig['placeholder'] ?? 'Enable' }}</label>
                     </div>
-                @elseif($fieldType === 'number')
-                    <input type="number" name="translations[{{ $lang->code }}][extra_fields][{{ $fieldName }}]" class="form-control @error("translations.{$lang->code}.extra_fields.{$fieldName}") is-invalid @enderror" value="{{ $fieldValue }}" placeholder="{{ $fieldConfig['placeholder'] ?? '' }}" {{ ($fieldConfig['required'] ?? false) ? 'required' : '' }}>
-                @elseif($fieldType === 'email')
-                    <input type="email" name="translations[{{ $lang->code }}][extra_fields][{{ $fieldName }}]" class="form-control @error("translations.{$lang->code}.extra_fields.{$fieldName}") is-invalid @enderror" value="{{ $fieldValue }}" placeholder="{{ $fieldConfig['placeholder'] ?? '' }}" {{ ($fieldConfig['required'] ?? false) ? 'required' : '' }}>
                 @else
-                    <input type="text" name="translations[{{ $lang->code }}][extra_fields][{{ $fieldName }}]" class="form-control @error("translations.{$lang->code}.extra_fields.{$fieldName}") is-invalid @enderror" value="{{ $fieldValue }}" placeholder="{{ $fieldConfig['placeholder'] ?? '' }}" {{ ($fieldConfig['required'] ?? false) ? 'required' : '' }}>
+                    <input type="{{ $inputType }}" name="translations[{{ $lang->code }}][extra_fields][{{ $fieldName }}]" class="form-control @error("translations.{$lang->code}.extra_fields.{$fieldName}") is-invalid @enderror" value="{{ $fieldValue }}" placeholder="{{ $fieldConfig['placeholder'] ?? '' }}" @foreach($inputAttributes as $attribute => $attributeValue) {{ $attribute }}="{{ $attributeValue }}" @endforeach {{ ($fieldConfig['required'] ?? false) ? 'required' : '' }}>
                 @endif
 
                 @if(isset($fieldConfig['helpText']))

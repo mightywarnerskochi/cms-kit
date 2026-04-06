@@ -237,6 +237,12 @@
                             </div>
                             @endif
                             @endforeach
+
+                            @include('cms-kit::partials.extra-fields-translatable', [
+                                'configKey' => 'careers.items',
+                                'lang' => $lang,
+                                'existingTranslations' => $item->translations ?? [],
+                            ])
                         </div>
                     </div>
                 @endforeach
@@ -338,6 +344,11 @@
                     </div>
                 </div>
             </div>
+
+            @include('cms-kit::partials.extra-fields-global', [
+                'configKey' => 'careers.items',
+                'existingValues' => $item->extra_fields ?? [],
+            ])
 
             <div class="mt-4 d-flex gap-2">
                 <button type="submit" class="btn btn-primary px-4">{{ $submitLabel }}</button>

@@ -169,6 +169,9 @@ class TestimonialController extends Controller
         foreach ($sectionConfig['extra_fields'] ?? [] as $key => $field) {
             $extra_fields[$key] = $request->input("extra_fields.{$key}");
         }
+        if ($sectionConfig['display_home'] ?? false) {
+            $extra_fields['display_home'] = $request->boolean('display_home');
+        }
         $data['extra_fields'] = $extra_fields;
 
         $section->update($data);

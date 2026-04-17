@@ -348,6 +348,7 @@ class BlogController extends Controller
                     $request->input('extra_fields', []),
                     [
                         'status' => $request->has('status'),
+                        'display_home' => ($sectionConfig['display_home'] ?? false) ? $request->boolean('display_home') : false,
                     ]
                 )
             ]

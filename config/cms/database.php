@@ -42,6 +42,7 @@ return [
             'banner' => true,
             'banner_alt' => true,
             'description' => true,
+            'display_home' => true,
             'extra_fields' => [],
             'required' => ['title'], // Section fields that are mandatory
         ],
@@ -170,6 +171,7 @@ return [
             'banner' => true,
             'banner_alt' => true,
             'status' => true,
+            'display_home' => true,
             'extra_fields' => [],
             'required' => ['title'],
         ],

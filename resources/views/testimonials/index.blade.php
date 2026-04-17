@@ -93,6 +93,14 @@
                         <label class="form-check-label" for="sectionStatus">Status</label>
                     </div>
                 </div>
+                @if(config('cms-kit.database.testimonials.section.display_home'))
+                <div class="col-md-3">
+                    <div class="form-check form-switch mb-2">
+                        <input class="form-check-input" type="checkbox" name="display_home" id="displayHome" value="1" {{ old('display_home', data_get($section->extra_fields, 'display_home', false)) ? 'checked' : '' }}>
+                        <label class="form-check-label" for="displayHome">Display Home</label>
+                    </div>
+                </div>
+                @endif
             </div>
 
             <div class="mt-3">

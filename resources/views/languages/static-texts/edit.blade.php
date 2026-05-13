@@ -1,10 +1,14 @@
 @extends('cms-kit::layouts.cms')
 
-@section('title', 'Static texts — ' . $language->name)
+@php
+    $localeUpper = strtoupper((string) $language->code);
+@endphp
+
+@section('title', 'Manage Static Text — ' . $language->name)
 
 @section('breadcrumbs')
     <li class="breadcrumb-item"><a href="{{ route('cms.languages.index') }}">Languages</a></li>
-    <li class="breadcrumb-item active" aria-current="page">Static texts — {{ $language->name }}</li>
+    <li class="breadcrumb-item active" aria-current="page">Static Text ({{ $localeUpper }})</li>
 @endsection
 
 @section('content')
@@ -25,46 +29,79 @@
 
         <div class="card glass-card border-0 shadow-sm mb-3">
             <div class="card-body p-4">
-                <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-2">
-                    <div>
-                        <h5 class="fw-bold text-primary mb-1">Static site texts — {{ $language->name }}</h5>
-                        <p class="text-muted small mb-0">
+                <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-2">
+                    <div class="flex-grow-1">
+                        <h4 class="fw-bold text-primary mb-2">Manage Static Text — {{ $language->name }} ({{ $localeUpper }})</h4>
+                        <p class="text-muted small mb-1">
                             @if($isMaster)
-                                You are editing the <strong>master</strong> file ({{ strtoupper($masterCode) }}). Keys are defined in the codebase (English JSON); edit <strong>values</strong> here only. Adding a language copies English keys into a new file so you can translate values.
+                                Master file (<strong>{{ strtoupper($masterCode) }}.json</strong>). Keys come from development — edit <strong>values</strong> here only.
                             @else
-                                Keys match English (read-only). Only <strong>values</strong> can be changed; they are saved to this language’s JSON file.
+                                Missing keys are auto-filled from English. Keys ending with <code class="small">.alt</code> or camelCase <code class="small">…Alt</code> stay English-only (accessibility copy).
                             @endif
                         </p>
+                        <p class="text-muted small mb-0"><code class="small">{{ $jsonFilePath }}</code></p>
                     </div>
-                    <code class="small text-break align-self-center" style="max-width: 100%;">{{ $jsonFilePath }}</code>
+                    <div class="flex-shrink-0">
+                        <a href="{{ route('cms.languages.index') }}" class="btn btn-outline-secondary">Back to Languages</a>
+                    </div>
                 </div>
             </div>
         </div>
 
         @can('languages.edit')
-            <form method="post" action="{{ route('cms.languages.static-texts.update', strtolower($language->code)) }}">
+            <form method="post" action="{{ route('cms.languages.translations.update', $language) }}" id="static-translations-form">
                 @csrf
                 @method('PUT')
                 <div class="card glass-card border-0 shadow-sm">
+                    <div class="card-body border-bottom bg-white py-3">
+                        <div class="row g-3 align-items-center">
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold text-muted mb-1">Search keys</label>
+                                <input type="search" class="form-control form-control-sm" id="static-text-key-search" autocomplete="off" placeholder="Type key name (e.g. listing.heroTitle)">
+                            </div>
+                            <div class="col-md-6 text-md-end">
+                                <button type="submit" class="btn btn-primary mt-3 mt-md-4">
+                                    <i class="fas fa-save me-1"></i> Save Translations
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                     <div class="card-body p-0">
                         <div class="table-responsive">
                             <table class="table mb-0 align-middle">
                                 <thead class="table-light">
                                     <tr>
                                         <th style="min-width: 220px;">Key</th>
-                                        <th>Value</th>
+                                        <th style="min-width: 240px;">Value ({{ $localeUpper }})</th>
+                                        @if(!$isMaster)
+                                            <th style="min-width: 220px;">English reference</th>
+                                        @endif
                                     </tr>
                                 </thead>
                                 <tbody>
                                     @foreach($flat as $k => $v)
-                                        <tr>
+                                        @php
+                                            $refEn = $englishFlat[$k] ?? '';
+                                            $altOnly = !$isMaster && ((bool) preg_match('/(^|\.)alt$/i', $k) || (bool) preg_match('/Alt$/', $k));
+                                        @endphp
+                                        <tr data-static-key-row data-key="{{ strtolower($k) }}">
                                             <td class="ps-4">
                                                 <input type="hidden" name="entries[{{ $loop->index }}][key]" value="{{ $k }}">
-                                                <span class="form-control-plaintext font-monospace small py-1">{{ $k }}</span>
+                                                <span class="form-control-plaintext font-monospace small py-1 text-danger">{{ $k }}</span>
                                             </td>
-                                            <td class="pe-4">
-                                                <textarea class="form-control form-control-sm" name="entries[{{ $loop->index }}][value]" rows="2">{{ $v }}</textarea>
+                                            <td class="@if(!$isMaster) border-end @endif">
+                                                @if($altOnly)
+                                                    <textarea class="form-control form-control-sm bg-light" rows="2" readonly>{{ $refEn }}</textarea>
+                                                    <input type="hidden" name="entries[{{ $loop->index }}][value]" value="{{ $refEn }}">
+                                                @else
+                                                    <textarea class="form-control form-control-sm" name="entries[{{ $loop->index }}][value]" rows="2">{{ $v }}</textarea>
+                                                @endif
                                             </td>
+                                            @if(!$isMaster)
+                                                <td class="pe-4">
+                                                    <span class="form-control-plaintext small py-1 text-muted">{{ $refEn }}</span>
+                                                </td>
+                                            @endif
                                         </tr>
                                     @endforeach
                                 </tbody>
@@ -72,33 +109,43 @@
                         </div>
                     </div>
                     <div class="card-footer bg-white border-0 d-flex justify-content-between align-items-center flex-wrap gap-2 py-3">
-                        <a href="{{ route('cms.languages.index') }}" class="btn btn-outline-secondary">Back to languages</a>
+                        <a href="{{ route('cms.languages.index') }}" class="btn btn-outline-secondary">Back to Languages</a>
                         <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-save me-1"></i> Save to JSON file
+                            <i class="fas fa-save me-1"></i> Save Translations
                         </button>
                     </div>
                 </div>
             </form>
         @else
             <div class="card glass-card border-0 shadow-sm">
+                <div class="card-body border-bottom py-3">
+                    <input type="search" class="form-control form-control-sm" id="static-text-key-search" autocomplete="off" placeholder="Search keys">
+                </div>
                 <div class="card-body p-0">
                     <div class="table-responsive">
                         <table class="table mb-0">
                             <thead class="table-light">
                                 <tr>
                                     <th class="ps-4">Key</th>
-                                    <th class="pe-4">Value</th>
+                                    <th>Value ({{ $localeUpper }})</th>
+                                    @if(!$isMaster)
+                                        <th class="pe-4">English reference</th>
+                                    @endif
                                 </tr>
                             </thead>
                             <tbody>
                                 @forelse($flat as $k => $v)
-                                    <tr>
-                                        <td class="ps-4 font-monospace small">{{ $k }}</td>
-                                        <td class="pe-4"><pre class="small mb-0 text-wrap">{{ $v }}</pre></td>
+                                    @php $refEn = $englishFlat[$k] ?? ''; @endphp
+                                    <tr data-static-key-row data-key="{{ strtolower($k) }}">
+                                        <td class="ps-4 font-monospace small text-danger">{{ $k }}</td>
+                                        <td><pre class="small mb-0 text-wrap">{{ $v }}</pre></td>
+                                        @if(!$isMaster)
+                                            <td class="pe-4 text-muted small">{{ $refEn }}</td>
+                                        @endif
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="2" class="text-center text-muted py-4">No keys in this file yet.</td>
+                                        <td colspan="{{ $isMaster ? 2 : 3 }}" class="text-center text-muted py-4">No keys in this file yet.</td>
                                     </tr>
                                 @endforelse
                             </tbody>
@@ -106,11 +153,27 @@
                     </div>
                 </div>
                 <div class="card-footer bg-white border-0 py-3">
-                    <a href="{{ route('cms.languages.index') }}" class="btn btn-outline-secondary">Back to languages</a>
+                    <a href="{{ route('cms.languages.index') }}" class="btn btn-outline-secondary">Back to Languages</a>
                 </div>
             </div>
         @endcan
     </div>
 </div>
 
+@push('scripts')
+<script>
+(function() {
+    var inputs = document.querySelectorAll('#static-text-key-search');
+    inputs.forEach(function(input) {
+        input.addEventListener('input', function() {
+            var q = (input.value || '').toLowerCase().trim();
+            document.querySelectorAll('[data-static-key-row]').forEach(function(row) {
+                var key = (row.getAttribute('data-key') || '');
+                row.style.display = (!q || key.indexOf(q) !== -1) ? '' : 'none';
+            });
+        });
+    });
+})();
+</script>
+@endpush
 @endsection

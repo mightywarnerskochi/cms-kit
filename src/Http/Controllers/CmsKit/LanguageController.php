@@ -64,8 +64,8 @@ class LanguageController extends Controller
                     $langCode = strtolower((string) $row->code);
                     $vueTpl = config('cms-kit.static_translations.vue_editor_url');
                     $staticTextsUrl = is_string($vueTpl) && trim($vueTpl) !== ''
-                        ? str_replace(['{code}', '{CODE}'], [$langCode, strtoupper($langCode)], trim($vueTpl))
-                        : route('cms.languages.static-texts.edit', $langCode);
+                        ? str_replace(['{code}', '{CODE}', '{id}'], [$langCode, strtoupper($langCode), (string) $row->id], trim($vueTpl))
+                        : route('cms.languages.translations', $row->id);
                     $staticBtn = '<a href="' . e($staticTextsUrl) . '" class="btn btn-sm btn-outline-primary border me-1" title="Static site texts (' . e($langCode) . ')"><i class="fas fa-file-lines"></i></a>';
                     $editBtn = '<button class="btn btn-sm btn-light border me-1 edit-language" data-id="' . $row->id . '" data-name="' . e($row->name) . '" data-code="' . e($row->code) . '" data-flag-url="' . e($flagUrl) . '" data-flag-alt="' . e($row->flag_alt ?? '') . '"><i class="fas fa-edit text-primary"></i></button>';
                     $deleteBtn = '';

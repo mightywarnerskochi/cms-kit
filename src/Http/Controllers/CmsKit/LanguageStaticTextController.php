@@ -19,12 +19,63 @@ class LanguageStaticTextController extends Controller
         return redirect()->route('cms.languages.index');
     }
 
+    /**
+     * Legacy URL; redirects to /languages/{id}/translations.
+     */
     public function edit(string $code)
+    {
+        $language = Language::query()->whereRaw('LOWER(code) = ?', [strtolower($code)])->firstOrFail();
+
+        return redirect()->route('cms.languages.translations', $language);
+    }
+
+    public function translations(Language $language)
+    {
+        return $this->renderTranslationsEditor($language);
+    }
+
+    public function updateTranslations(Request $request, Language $language)
+    {
+        $code = strtolower((string) $language->code);
+        $this->persistTranslations($request, $code);
+
+        return $this->redirectAfterSave($language, $code);
+    }
+
+    /**
+     * Legacy PUT /languages/static-texts/{code}.
+     */
+    public function update(Request $request, string $code)
     {
         $code = strtolower($code);
         $language = Language::query()->whereRaw('LOWER(code) = ?', [$code])->firstOrFail();
+        $this->persistTranslations($request, $code);
+
+        return $this->redirectAfterSave($language, $code);
+    }
+
+    protected function redirectAfterSave(Language $language, string $code): \Illuminate\Http\RedirectResponse
+    {
+        $masterCode = $this->staticTranslations->masterCode();
+        if ($code === $masterCode) {
+            return redirect()
+                ->route('cms.languages.translations', $language)
+                ->with('success', 'English (master) saved. Other language files were synchronized with any new keys.');
+        }
+
+        return redirect()
+            ->route('cms.languages.translations', $language)
+            ->with('success', 'Translations saved for ' . strtoupper($code) . '.');
+    }
+
+    protected function renderTranslationsEditor(Language $language): \Illuminate\Contracts\View\View
+    {
+        $code = strtolower((string) $language->code);
         $masterCode = $this->staticTranslations->masterCode();
         $isMaster = $code === $masterCode;
+
+        $englishTree = $this->staticTranslations->readMaster();
+        $englishFlat = $this->staticTranslations->flatten($englishTree);
 
         $data = $this->staticTranslations->read($code);
         $flat = $this->staticTranslations->flatten($data);
@@ -46,14 +97,20 @@ class LanguageStaticTextController extends Controller
         }
         ksort($flat);
 
-        $jsonFilePath = str_replace('\\', '/', $this->staticTranslations->pathForCode(strtolower((string) $language->code)));
+        $jsonFilePath = str_replace('\\', '/', $this->staticTranslations->pathForCode($code));
 
-        return view('cms-kit::languages.static-texts.edit', compact('language', 'flat', 'isMaster', 'masterCode', 'jsonFilePath'));
+        return view('cms-kit::languages.static-texts.edit', [
+            'language' => $language,
+            'flat' => $flat,
+            'englishFlat' => $englishFlat,
+            'isMaster' => $isMaster,
+            'masterCode' => $masterCode,
+            'jsonFilePath' => $jsonFilePath,
+        ]);
     }
 
-    public function update(Request $request, string $code)
+    protected function persistTranslations(Request $request, string $code): void
     {
-        $code = strtolower($code);
         Language::query()->whereRaw('LOWER(code) = ?', [$code])->firstOrFail();
 
         $masterCode = $this->staticTranslations->masterCode();
@@ -89,6 +146,15 @@ class LanguageStaticTextController extends Controller
             }
         }
 
+        if ($code !== $masterCode) {
+            $masterFlat = $this->staticTranslations->flatten($this->staticTranslations->readMaster());
+            foreach ($normalized as $key => $val) {
+                if ($this->isEnglishOnlyAltKey($key)) {
+                    $normalized[$key] = $masterFlat[$key] ?? '';
+                }
+            }
+        }
+
         if ($code === $masterCode) {
             $this->validateEnglishKeys($normalized);
             $this->assertMasterKeysMatchFile($normalized);
@@ -102,9 +168,7 @@ class LanguageStaticTextController extends Controller
                 }
             }
 
-            return redirect()
-                ->route('cms.languages.static-texts.edit', $code)
-                ->with('success', 'English (master) static texts saved. Other languages were synchronized with any new keys.');
+            return;
         }
 
         $english = $this->staticTranslations->readMaster();
@@ -116,10 +180,15 @@ class LanguageStaticTextController extends Controller
         $tree = $this->staticTranslations->unflatten($normalized);
         $tree = $this->staticTranslations->mergeWithMaster($english, $tree);
         $this->staticTranslations->write($code, $tree);
+    }
 
-        return redirect()
-            ->route('cms.languages.static-texts.edit', $code)
-            ->with('success', 'Static texts saved for ' . strtoupper($code) . '.');
+    /**
+     * Keys treated as English-only (accessibility ALT copy); values stay aligned with the master file for non-English locales.
+     */
+    protected function isEnglishOnlyAltKey(string $key): bool
+    {
+        return (bool) preg_match('/(^|\.)alt$/i', $key)
+            || (bool) preg_match('/Alt$/', $key);
     }
 
     /**

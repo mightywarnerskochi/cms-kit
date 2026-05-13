@@ -80,7 +80,7 @@
                             <div class="collapse sidebar-submenu @if(request()->routeIs('cms.languages.*') || request()->routeIs('cms.site-information.*')) show @endif" id="settingsMenu">
                                 <nav class="nav flex-column">
                                     @if(config('cms-kit.common.modules.languages', true) && $cmsUser->can('languages.view'))
-                                    <a class="nav-link py-2 @if(request()->routeIs('cms.languages.index') || request()->routeIs('cms.languages.static-texts.*')) active @endif" href="{{ route('cms.languages.index') }}">
+                                    <a class="nav-link py-2 @if(request()->routeIs('cms.languages.index') || request()->routeIs('cms.languages.static-texts.*') || request()->routeIs('cms.languages.translations*')) active @endif" href="{{ route('cms.languages.index') }}">
                                         Languages
                                     </a>
                                     @endif

@@ -73,6 +73,12 @@ Route::middleware(['web'])->group(function () {
                         ->middleware('cms.permission:languages.edit')
                         ->name('cms.languages.static-texts.update');
 
+                    Route::get('/languages/{language}/translations', [LanguageStaticTextController::class, 'translations'])
+                        ->name('cms.languages.translations');
+                    Route::put('/languages/{language}/translations', [LanguageStaticTextController::class, 'updateTranslations'])
+                        ->middleware('cms.permission:languages.edit')
+                        ->name('cms.languages.translations.update');
+
                     Route::get('/languages', [LanguageController::class, 'index'])->name('cms.languages.index');
                     Route::post('/languages', [LanguageController::class, 'store'])->name('cms.languages.store')->middleware('cms.permission:languages.edit');
                     Route::put('/languages/{id}', [LanguageController::class, 'update'])->name('cms.languages.update')->middleware('cms.permission:languages.edit');

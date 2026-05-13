@@ -28,7 +28,7 @@
             <div class="alert alert-light border-start border-primary border-4 py-2 mb-4">
                 <small class="text-muted mb-0 d-block">English stays as the permanent default language and cannot be deleted.</small>
                 <small class="text-muted d-block mt-2 mb-0">
-                    Static site texts: use the <i class="fas fa-file-lines"></i> icon in each row’s Actions column (per language). Configure <code>vue_editor_url</code> in static translations config to open your Vue app; otherwise it opens the built-in editor. Keys come from development; only values are edited here.
+                    Static texts: use the <i class="fas fa-file-lines"></i> icon in Actions — it opens <strong>Manage static text</strong> for that language (URL ends with <code>/languages/&lt;numeric-id&gt;/translations</code>). Configure <code>vue_editor_url</code> with placeholders <code>{id}</code> or <code>{code}</code> to open your Vue app instead. Keys come from development; you edit values (English reference column on non-English locales).
                 </small>
             </div>
             <form action="{{ route('cms.languages.store') }}" method="POST" enctype="multipart/form-data">

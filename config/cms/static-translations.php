@@ -21,7 +21,8 @@ return [
     |--------------------------------------------------------------------------
     |
     | When non-empty, the file icon opens this URL instead of the Blade editor.
-    | Use {code} for the lowercase locale (en, ar) and {CODE} for uppercase.
+    | Placeholders: {code} lowercase locale, {CODE} uppercase, {id} language row id
+    | (matches /languages/{id}/translations).
     |
     | Define this in PHP—no env needed. Examples after merging config in your app:
     |
@@ -31,7 +32,7 @@ return [
     |
     |   'vue_editor_url' => url(config('cms-kit.common.auth.prefix', 'admin') . '#/static-texts/{code}'),
     |
-    | Leave null or '' to use the built-in Laravel static-texts edit route.
+    | Leave null or '' to use the built-in Blade editor at /languages/{id}/translations.
     |
     */
     'vue_editor_url' => null,

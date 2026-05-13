@@ -14,9 +14,6 @@
 @section('content')
 <div class="row">
     <div class="col-12">
-        @if(session('success'))
-            <div class="alert alert-success border-0 shadow-sm">{{ session('success') }}</div>
-        @endif
         @if($errors->any())
             <div class="alert alert-danger border-0 shadow-sm">
                 <ul class="mb-0">
@@ -54,17 +51,8 @@
                 @method('PUT')
                 <div class="card glass-card border-0 shadow-sm">
                     <div class="card-body border-bottom bg-white py-3">
-                        <div class="row g-3 align-items-center">
-                            <div class="col-md-6">
-                                <label class="form-label small fw-bold text-muted mb-1">Search keys</label>
-                                <input type="search" class="form-control form-control-sm" id="static-text-key-search" autocomplete="off" placeholder="Type key name (e.g. listing.heroTitle)">
-                            </div>
-                            <div class="col-md-6 text-md-end">
-                                <button type="submit" class="btn btn-primary mt-3 mt-md-4">
-                                    <i class="fas fa-save me-1"></i> Save Translations
-                                </button>
-                            </div>
-                        </div>
+                        <label class="form-label small fw-bold text-muted mb-1">Search keys</label>
+                        <input type="search" class="form-control form-control-sm" id="static-text-key-search" autocomplete="off" placeholder="Type key name (e.g. listing.heroTitle)" style="max-width: 28rem;">
                     </div>
                     <div class="card-body p-0">
                         <div class="table-responsive">

@@ -66,7 +66,7 @@ class LanguageController extends Controller
                     $staticTextsUrl = is_string($vueTpl) && trim($vueTpl) !== ''
                         ? str_replace(['{code}', '{CODE}'], [$langCode, strtoupper($langCode)], trim($vueTpl))
                         : route('cms.languages.static-texts.edit', $langCode);
-                    $staticBtn = '<a href="' . e($staticTextsUrl) . '" class="btn btn-sm btn-light border me-1" title="Static site texts"><i class="fas fa-file-lines text-secondary"></i></a>';
+                    $staticBtn = '<a href="' . e($staticTextsUrl) . '" class="btn btn-sm btn-outline-primary border me-1" title="Static site texts (' . e($langCode) . ')"><i class="fas fa-file-lines"></i></a>';
                     $editBtn = '<button class="btn btn-sm btn-light border me-1 edit-language" data-id="' . $row->id . '" data-name="' . e($row->name) . '" data-code="' . e($row->code) . '" data-flag-url="' . e($flagUrl) . '" data-flag-alt="' . e($row->flag_alt ?? '') . '"><i class="fas fa-edit text-primary"></i></button>';
                     $deleteBtn = '';
                     if (!$row->is_default && !$this->isEnglishLanguage($row)) {

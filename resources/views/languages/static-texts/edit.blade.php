@@ -4,8 +4,7 @@
 
 @section('breadcrumbs')
     <li class="breadcrumb-item"><a href="{{ route('cms.languages.index') }}">Languages</a></li>
-    <li class="breadcrumb-item"><a href="{{ route('cms.languages.static-texts.index') }}">Static site texts</a></li>
-    <li class="breadcrumb-item active" aria-current="page">{{ $language->name }}</li>
+    <li class="breadcrumb-item active" aria-current="page">Static texts — {{ $language->name }}</li>
 @endsection
 
 @section('content')
@@ -73,7 +72,7 @@
                         </div>
                     </div>
                     <div class="card-footer bg-white border-0 d-flex justify-content-between align-items-center flex-wrap gap-2 py-3">
-                        <a href="{{ route('cms.languages.static-texts.index') }}" class="btn btn-outline-secondary">Back to list</a>
+                        <a href="{{ route('cms.languages.index') }}" class="btn btn-outline-secondary">Back to languages</a>
                         <button type="submit" class="btn btn-primary">
                             <i class="fas fa-save me-1"></i> Save to JSON file
                         </button>
@@ -107,7 +106,7 @@
                     </div>
                 </div>
                 <div class="card-footer bg-white border-0 py-3">
-                    <a href="{{ route('cms.languages.static-texts.index') }}" class="btn btn-outline-secondary">Back to list</a>
+                    <a href="{{ route('cms.languages.index') }}" class="btn btn-outline-secondary">Back to languages</a>
                 </div>
             </div>
         @endcan

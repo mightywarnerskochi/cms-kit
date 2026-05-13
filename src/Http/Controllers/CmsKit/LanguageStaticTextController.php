@@ -16,11 +16,7 @@ class LanguageStaticTextController extends Controller
 
     public function index()
     {
-        $languages = Language::query()->orderBy('name')->get();
-        $masterCode = $this->staticTranslations->masterCode();
-        $directory = $this->staticTranslations->directory();
-
-        return view('cms-kit::languages.static-texts.index', compact('languages', 'masterCode', 'directory'));
+        return redirect()->route('cms.languages.index');
     }
 
     public function edit(string $code)

@@ -95,6 +95,7 @@ class LanguageStaticTextController extends Controller
 
         if ($code === $masterCode) {
             $this->validateEnglishKeys($normalized);
+            $this->assertMasterKeysMatchFile($normalized);
             $tree = $this->staticTranslations->unflatten($normalized);
             $this->staticTranslations->write($code, $tree);
 
@@ -145,5 +146,27 @@ class LanguageStaticTextController extends Controller
         if ($errors !== []) {
             throw ValidationException::withMessages(['entries' => $errors]);
         }
+    }
+
+    /**
+     * Master saves may only update values for keys already present on disk (keys are maintained in development).
+     *
+     * @param  array<string, string>  $normalized
+     */
+    protected function assertMasterKeysMatchFile(array $normalized): void
+    {
+        $masterFlat = $this->staticTranslations->flatten($this->staticTranslations->readMaster());
+        $onDisk = array_keys($masterFlat);
+        $submitted = array_keys($normalized);
+        sort($onDisk);
+        sort($submitted);
+        if ($onDisk === $submitted) {
+            return;
+        }
+        throw ValidationException::withMessages([
+            'entries' => [
+                'Keys must match the master JSON file exactly. Add or remove keys in the codebase, reload this page, then edit values.',
+            ],
+        ]);
     }
 }

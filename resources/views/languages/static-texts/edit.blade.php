@@ -31,9 +31,9 @@
                         <h5 class="fw-bold text-primary mb-1">Static site texts — {{ $language->name }}</h5>
                         <p class="text-muted small mb-0">
                             @if($isMaster)
-                                You are editing the <strong>master</strong> file ({{ strtoupper($masterCode) }}). Add keys here first; they propagate to other languages when you save.
+                                You are editing the <strong>master</strong> file ({{ strtoupper($masterCode) }}). Keys are defined in the codebase (English JSON); edit <strong>values</strong> here only. Adding a language copies English keys into a new file so you can translate values.
                             @else
-                                Keys match the English master. Values are saved to this language’s JSON file only.
+                                Keys match English (read-only). Only <strong>values</strong> can be changed; they are saved to this language’s JSON file.
                             @endif
                         </p>
                     </div>
@@ -56,16 +56,12 @@
                                         <th>Value</th>
                                     </tr>
                                 </thead>
-                                <tbody id="entries-body">
+                                <tbody>
                                     @foreach($flat as $k => $v)
                                         <tr>
                                             <td class="ps-4">
-                                                @if($isMaster)
-                                                    <input type="text" class="form-control form-control-sm font-monospace" name="entries[{{ $loop->index }}][key]" value="{{ $k }}" required autocomplete="off">
-                                                @else
-                                                    <input type="hidden" name="entries[{{ $loop->index }}][key]" value="{{ $k }}">
-                                                    <span class="form-control-plaintext font-monospace small py-1">{{ $k }}</span>
-                                                @endif
+                                                <input type="hidden" name="entries[{{ $loop->index }}][key]" value="{{ $k }}">
+                                                <span class="form-control-plaintext font-monospace small py-1">{{ $k }}</span>
                                             </td>
                                             <td class="pe-4">
                                                 <textarea class="form-control form-control-sm" name="entries[{{ $loop->index }}][value]" rows="2">{{ $v }}</textarea>
@@ -75,13 +71,6 @@
                                 </tbody>
                             </table>
                         </div>
-                        @if($isMaster)
-                            <div class="p-3 border-top bg-light">
-                                <button type="button" class="btn btn-sm btn-outline-primary" id="add-static-key">
-                                    <i class="fas fa-plus me-1"></i> Add key
-                                </button>
-                            </div>
-                        @endif
                     </div>
                     <div class="card-footer bg-white border-0 d-flex justify-content-between align-items-center flex-wrap gap-2 py-3">
                         <a href="{{ route('cms.languages.static-texts.index') }}" class="btn btn-outline-secondary">Back to list</a>
@@ -125,28 +114,4 @@
     </div>
 </div>
 
-@if($isMaster && $cmsUser->can('languages.edit'))
-@push('scripts')
-<script>
-(function() {
-    const tbody = document.getElementById('entries-body');
-    const btn = document.getElementById('add-static-key');
-    if (!tbody || !btn) return;
-    let idx = {{ count($flat) }};
-    btn.addEventListener('click', function() {
-        const tr = document.createElement('tr');
-        tr.innerHTML =
-            '<td class="ps-4">' +
-            '<input type="text" class="form-control form-control-sm font-monospace" name="entries[' + idx + '][key]" value="" placeholder="e.g. hero.title" autocomplete="off">' +
-            '</td>' +
-            '<td class="pe-4">' +
-            '<textarea class="form-control form-control-sm" name="entries[' + idx + '][value]" rows="2" placeholder="Text for this key"></textarea>' +
-            '</td>';
-        tbody.appendChild(tr);
-        idx++;
-    });
-})();
-</script>
-@endpush
-@endif
 @endsection

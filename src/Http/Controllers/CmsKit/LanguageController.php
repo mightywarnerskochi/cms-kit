@@ -61,12 +61,18 @@ class LanguageController extends Controller
                 })
                 ->addColumn('actions', function ($row) {
                     $flagUrl = $row->flag_image ? asset('storage/' . $row->flag_image) : '';
+                    $langCode = strtolower((string) $row->code);
+                    $vueTpl = config('cms-kit.static_translations.vue_editor_url');
+                    $staticTextsUrl = is_string($vueTpl) && trim($vueTpl) !== ''
+                        ? str_replace(['{code}', '{CODE}'], [$langCode, strtoupper($langCode)], trim($vueTpl))
+                        : route('cms.languages.static-texts.edit', $langCode);
+                    $staticBtn = '<a href="' . e($staticTextsUrl) . '" class="btn btn-sm btn-light border me-1" title="Static site texts"><i class="fas fa-file-lines text-secondary"></i></a>';
                     $editBtn = '<button class="btn btn-sm btn-light border me-1 edit-language" data-id="' . $row->id . '" data-name="' . e($row->name) . '" data-code="' . e($row->code) . '" data-flag-url="' . e($flagUrl) . '" data-flag-alt="' . e($row->flag_alt ?? '') . '"><i class="fas fa-edit text-primary"></i></button>';
                     $deleteBtn = '';
                     if (!$row->is_default && !$this->isEnglishLanguage($row)) {
                         $deleteBtn = '<form action="' . route('cms.languages.destroy', $row->id) . '" method="POST" style="display:inline;" onsubmit="return confirm(\'Delete this language?\')">' . csrf_field() . method_field('DELETE') . '<button type="submit" class="btn btn-sm btn-light border text-danger"><i class="fas fa-trash"></i></button></form>';
                     }
-                    return '<div class="text-end">' . $editBtn . $deleteBtn . '</div>';
+                    return '<div class="text-end">' . $staticBtn . $editBtn . $deleteBtn . '</div>';
                 })
                 ->rawColumns(['flag_thumb', 'status_badge', 'default_badge', 'actions'])
                 ->make(true);

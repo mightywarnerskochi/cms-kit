@@ -14,4 +14,25 @@ return [
     'subdirectory' => 'cms-static',
 
     'master_code' => 'en',
+
+    /*
+    |--------------------------------------------------------------------------
+    | Vue (SPA) static texts editor URL
+    |--------------------------------------------------------------------------
+    |
+    | When non-empty, the file icon opens this URL instead of the Blade editor.
+    | Use {code} for the lowercase locale (en, ar) and {CODE} for uppercase.
+    |
+    | Define this in PHP—no env needed. Examples after merging config in your app:
+    |
+    |   'vue_editor_url' => rtrim(config('app.url'), '/') . '/admin#/static-texts/{code}',
+    |
+    | Or reuse your CMS path prefix:
+    |
+    |   'vue_editor_url' => url(config('cms-kit.common.auth.prefix', 'admin') . '#/static-texts/{code}'),
+    |
+    | Leave null or '' to use the built-in Laravel static-texts edit route.
+    |
+    */
+    'vue_editor_url' => null,
 ];

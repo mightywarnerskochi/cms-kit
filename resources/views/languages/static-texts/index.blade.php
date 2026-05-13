@@ -8,6 +8,9 @@
 @endsection
 
 @section('content')
+@php
+    $vueStaticTpl = config('cms-kit.static_translations.vue_editor_url');
+@endphp
 <div class="row">
     <div class="col-12">
         <div class="card glass-card border-0 shadow-sm mb-4">
@@ -15,7 +18,7 @@
                 <h5 class="fw-bold text-primary mb-2">Static site texts</h5>
                 <p class="text-muted mb-4">
                     These JSON files hold copy that is not stored in the CMS database (for example labels used only on the public site).
-                    <strong>{{ strtoupper($masterCode) }}.json</strong> is the master: new keys are added there first. Other languages stay aligned with that structure; when you add keys to English, missing keys are filled from English until you translate them.
+                    <strong>{{ strtoupper($masterCode) }}.json</strong> is the master; new keys are added during front-end development. In the panel you edit <strong>values</strong> only. Adding a language creates a new JSON file by copying English keys so you can translate the values.
                 </p>
 
                 <div class="table-responsive">
@@ -29,10 +32,15 @@
                         </thead>
                         <tbody>
                             @foreach($languages as $lang)
-                                @php $c = strtolower($lang->code); @endphp
+                                @php
+                                    $c = strtolower($lang->code);
+                                    $editHref = is_string($vueStaticTpl) && trim($vueStaticTpl) !== ''
+                                        ? str_replace(['{code}', '{CODE}'], [$c, strtoupper($c)], trim($vueStaticTpl))
+                                        : route('cms.languages.static-texts.edit', $c);
+                                @endphp
                                 <tr>
                                     <td class="ps-0 align-middle">
-                                        <a href="{{ route('cms.languages.static-texts.edit', $c) }}" class="fw-semibold text-decoration-none">
+                                        <a href="{{ $editHref }}" class="fw-semibold text-decoration-none">
                                             {{ $lang->name }}
                                             @if($c === strtolower($masterCode))
                                                 <span class="badge bg-primary ms-1">Master</span>
@@ -41,8 +49,8 @@
                                     </td>
                                     <td class="align-middle"><code class="text-primary">{{ $c }}</code></td>
                                     <td class="text-end pe-0 align-middle">
-                        <a href="{{ route('cms.languages.static-texts.edit', $c) }}" class="btn btn-sm btn-primary">Open</a>
-                    </td>
+                                        <a href="{{ $editHref }}" class="btn btn-sm btn-light border" title="Edit values"><i class="fas fa-file-lines text-secondary"></i></a>
+                                    </td>
                                 </tr>
                             @endforeach
                         </tbody>

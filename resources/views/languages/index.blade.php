@@ -28,8 +28,7 @@
             <div class="alert alert-light border-start border-primary border-4 py-2 mb-4">
                 <small class="text-muted mb-0 d-block">English stays as the permanent default language and cannot be deleted.</small>
                 <small class="text-muted d-block mt-2 mb-0">
-                    <a href="{{ route('cms.languages.static-texts.index') }}" class="text-decoration-none">Static site texts</a>
-                    — edit JSON copy used outside the CMS database (master file: English).
+                    Static site texts: use the <i class="fas fa-file-lines"></i> icon in the table (opens your Vue editor when configured), or the <a href="{{ route('cms.languages.static-texts.index') }}" class="text-decoration-none">Static site texts</a> page. Keys come from development; only values are edited here.
                 </small>
             </div>
             <form action="{{ route('cms.languages.store') }}" method="POST" enctype="multipart/form-data">

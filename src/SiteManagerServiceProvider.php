@@ -57,6 +57,13 @@ class SiteManagerServiceProvider extends ServiceProvider
         // Register Observers
         $this->registerSitemapObservers();
 
+        if (config('cms-kit.url_redirects.middleware_enabled', true)) {
+            $this->app->make(\Illuminate\Routing\Router::class)->prependMiddlewareToGroup(
+                config('cms-kit.url_redirects.web_middleware_group', 'web'),
+                \CMS\SiteManager\Http\Middleware\ApplyUrlRedirects::class
+            );
+        }
+
         // Publish Assets
         $this->publishes([
             __DIR__ . '/../resources/css/sitemap.css' => public_path('vendor/cms-kit/css/sitemap.css'),

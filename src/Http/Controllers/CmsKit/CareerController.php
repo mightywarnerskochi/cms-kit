@@ -726,8 +726,11 @@ class CareerController extends Controller
             $metadata['og_image'] = $existingMetadata['og_image'] ?? null;
         }
 
+        $newSlug = $this->resolveUniqueSlug($request, $translations, $career->id);
+        app(\CMS\SiteManager\Services\UrlRedirectService::class)->recordSlugChange('career', $career->slug, $newSlug, auth('cms')->id());
+
         $career->update([
-            'slug' => $this->resolveUniqueSlug($request, $translations, $career->id),
+            'slug' => $newSlug,
             'job_type' => trim((string) ($validated['job_type'] ?? $career->job_type)),
             'department' => trim((string) ($validated['department'] ?? $career->department)),
             'location' => trim((string) ($validated['location'] ?? $career->location)),
@@ -746,6 +749,7 @@ class CareerController extends Controller
     public function destroy($id)
     {
         $career = Career::findOrFail($id);
+        app(\CMS\SiteManager\Services\UrlRedirectService::class)->recordDeletion('career', $career->slug, auth('cms')->id());
         $order = $career->order_index;
 
         $career->delete();
@@ -853,6 +857,11 @@ class CareerController extends Controller
 
         if ($action === 'delete') {
             abort_unless(auth('cms')->user()?->can('careers.delete'), 403);
+            $careers = Career::whereIn('id', $ids)->get();
+            $redirectSvc = app(\CMS\SiteManager\Services\UrlRedirectService::class);
+            foreach ($careers as $career) {
+                $redirectSvc->recordDeletion('career', $career->slug, auth('cms')->id());
+            }
             Career::whereIn('id', $ids)->delete();
             $this->normalizeOrderIndex(Career::class);
         }

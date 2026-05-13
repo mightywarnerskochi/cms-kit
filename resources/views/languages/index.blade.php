@@ -25,11 +25,11 @@
                 </div>
                 <h5 class="fw-bold mb-0">Add New Language</h5>
             </div>
-            <div class="alert alert-light border-start border-primary border-4 py-2 mb-4">
-                <small class="text-muted mb-0 d-block">English stays as the permanent default language and cannot be deleted.</small>
-                <small class="text-muted d-block mt-2 mb-0">
-                    Static texts: use the <i class="fas fa-file-lines"></i> icon in Actions — it opens <strong>Manage static text</strong> for that language (URL ends with <code>/languages/&lt;numeric-id&gt;/translations</code>). Configure <code>vue_editor_url</code> with placeholders <code>{id}</code> or <code>{code}</code> to open your Vue app instead. Keys come from development; you edit values (English reference column on non-English locales).
-                </small>
+            <div class="alert alert-light border-start border-primary border-4 py-2 px-3 mb-4 small text-muted lh-sm">
+                <p class="mb-2 mb-lg-1">English stays as the permanent default language and cannot be deleted.</p>
+                <p class="mb-0">
+                    Static texts: use the <i class="fas fa-file-lines"></i> icon in Actions — it opens <strong>Manage static text</strong> for that language (URL ends with <code class="small">/languages/&lt;numeric-id&gt;/translations</code>). Configure <code class="small">vue_editor_url</code> with placeholders <code class="small">{id}</code> or <code class="small">{code}</code> to open your Vue app instead. Keys come from development; you edit values (English reference column on non-English locales).
+                </p>
             </div>
             <form action="{{ route('cms.languages.store') }}" method="POST" enctype="multipart/form-data">
                     @csrf

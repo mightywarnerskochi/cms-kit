@@ -234,6 +234,9 @@ class BlogController extends Controller
             $data['slug'] = Str::slug($request->slug);
         }
 
+        $newSlug = $data['slug'] ?? $blog->slug;
+        app(\CMS\SiteManager\Services\UrlRedirectService::class)->recordSlugChange('blog', $blog->slug, $newSlug, auth('cms')->id());
+
         $imageFields = ['feature_image', 'detail_image', 'banner_image', 'image_3', 'image_4'];
         foreach ($imageFields as $field) {
             if ($request->hasFile($field)) {
@@ -278,6 +281,7 @@ class BlogController extends Controller
     public function destroy($id)
     {
         $blog = Blog::findOrFail($id);
+        app(\CMS\SiteManager\Services\UrlRedirectService::class)->recordDeletion('blog', $blog->slug, auth('cms')->id());
         $order = $blog->order_index;
         $imageFields = ['feature_image', 'detail_image', 'banner_image', 'image_3', 'image_4'];
         foreach ($imageFields as $field) {
@@ -368,6 +372,10 @@ class BlogController extends Controller
 
         if ($action === 'delete') {
             $blogs = Blog::whereIn('id', $ids)->get();
+            $redirectSvc = app(\CMS\SiteManager\Services\UrlRedirectService::class);
+            foreach ($blogs as $blog) {
+                $redirectSvc->recordDeletion('blog', $blog->slug, auth('cms')->id());
+            }
             foreach ($blogs as $blog) {
                 $imageFields = ['feature_image', 'detail_image', 'banner_image', 'image_3', 'image_4'];
                 foreach ($imageFields as $field) {

@@ -7,4 +7,5 @@ return [
     'pages'    => require __DIR__ . '/cms/pages.php',
     'permissions' => require __DIR__ . '/cms/permissions.php',
     'static_translations' => require __DIR__ . '/cms/static-translations.php',
+    'url_redirects' => require __DIR__ . '/cms/url_redirects.php',
 ];

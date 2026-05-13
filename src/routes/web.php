@@ -12,6 +12,8 @@ use CMS\SiteManager\Http\Controllers\CmsKit\BannerController;
 use CMS\SiteManager\Http\Controllers\CmsKit\CareerController;
 use CMS\SiteManager\Http\Controllers\CmsKit\CareerCandidateController;
 use CMS\SiteManager\Http\Controllers\CmsKit\CareerDepartmentController;
+use CMS\SiteManager\Http\Controllers\CmsKit\UrlRedirectController;
+use CMS\SiteManager\Http\Controllers\CmsKit\UrlMissLogController;
 use Illuminate\Support\Facades\Redirect;
 
 Route::middleware(['web'])->group(function () {
@@ -95,6 +97,19 @@ Route::middleware(['web'])->group(function () {
                     Route::get('/metadata/{id}/edit', [MetadataController::class, 'edit'])->name('cms.metadata.edit')->middleware('cms.permission:metadata.edit');
                     Route::put('/metadata/{id}', [MetadataController::class, 'update'])->name('cms.metadata.update')->middleware('cms.permission:metadata.edit');
                 }
+            });
+
+            Route::middleware(['cms.permission:url-redirects.view'])->group(function () {
+                Route::get('/seo/url-redirects', [UrlRedirectController::class, 'index'])->name('cms.url-redirects.index');
+                Route::get('/seo/url-redirects/create', [UrlRedirectController::class, 'create'])->middleware('cms.permission:url-redirects.edit')->name('cms.url-redirects.create');
+                Route::post('/seo/url-redirects', [UrlRedirectController::class, 'store'])->middleware('cms.permission:url-redirects.edit')->name('cms.url-redirects.store');
+                Route::get('/seo/url-redirects/{url_redirect}/edit', [UrlRedirectController::class, 'edit'])->middleware('cms.permission:url-redirects.edit')->name('cms.url-redirects.edit');
+                Route::put('/seo/url-redirects/{url_redirect}', [UrlRedirectController::class, 'update'])->middleware('cms.permission:url-redirects.edit')->name('cms.url-redirects.update');
+                Route::delete('/seo/url-redirects/{url_redirect}', [UrlRedirectController::class, 'destroy'])->middleware('cms.permission:url-redirects.edit')->name('cms.url-redirects.destroy');
+
+                Route::get('/seo/missing-urls', [UrlMissLogController::class, 'index'])->name('cms.url-miss-logs.index');
+                Route::delete('/seo/missing-urls/{url_miss_log}', [UrlMissLogController::class, 'destroy'])->middleware('cms.permission:url-redirects.edit')->name('cms.url-miss-logs.destroy');
+                Route::post('/seo/missing-urls/clear', [UrlMissLogController::class, 'clear'])->middleware('cms.permission:url-redirects.edit')->name('cms.url-miss-logs.clear');
             });
 
             // Site Information

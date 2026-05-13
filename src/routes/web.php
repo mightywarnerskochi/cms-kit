@@ -6,6 +6,7 @@ use CMS\SiteManager\Http\Controllers\CmsKit\AuthController;
 use CMS\SiteManager\Http\Controllers\CmsKit\ForgotPasswordController;
 use CMS\SiteManager\Http\Controllers\CmsKit\ResetPasswordController;
 use CMS\SiteManager\Http\Controllers\CmsKit\LanguageController;
+use CMS\SiteManager\Http\Controllers\CmsKit\LanguageStaticTextController;
 use CMS\SiteManager\Http\Controllers\CmsKit\MetadataController;
 use CMS\SiteManager\Http\Controllers\CmsKit\BannerController;
 use CMS\SiteManager\Http\Controllers\CmsKit\CareerController;
@@ -65,6 +66,13 @@ Route::middleware(['web'])->group(function () {
             // Languages
             Route::middleware(['cms.permission:languages.view'])->group(function () {
                 if (config('cms-kit.common.modules.languages', true)) {
+                    Route::get('/languages/static-texts', [LanguageStaticTextController::class, 'index'])->name('cms.languages.static-texts.index');
+                    Route::get('/languages/static-texts/{code}/edit', [LanguageStaticTextController::class, 'edit'])
+                        ->name('cms.languages.static-texts.edit');
+                    Route::put('/languages/static-texts/{code}', [LanguageStaticTextController::class, 'update'])
+                        ->middleware('cms.permission:languages.edit')
+                        ->name('cms.languages.static-texts.update');
+
                     Route::get('/languages', [LanguageController::class, 'index'])->name('cms.languages.index');
                     Route::post('/languages', [LanguageController::class, 'store'])->name('cms.languages.store')->middleware('cms.permission:languages.edit');
                     Route::put('/languages/{id}', [LanguageController::class, 'update'])->name('cms.languages.update')->middleware('cms.permission:languages.edit');

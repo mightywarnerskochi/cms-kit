@@ -6,4 +6,5 @@ return [
     'images'   => require __DIR__ . '/cms/images.php',
     'pages'    => require __DIR__ . '/cms/pages.php',
     'permissions' => require __DIR__ . '/cms/permissions.php',
+    'static_translations' => require __DIR__ . '/cms/static-translations.php',
 ];

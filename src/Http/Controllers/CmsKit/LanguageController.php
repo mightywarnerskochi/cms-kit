@@ -3,6 +3,7 @@
 namespace CMS\SiteManager\Http\Controllers\CmsKit;
 
 use CMS\SiteManager\Models\CmsKit\Language;
+use CMS\SiteManager\Services\StaticTranslationService;
 use CMS\SiteManager\Support\ValidatesImageDimensions;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
@@ -11,6 +12,10 @@ use Illuminate\Support\Facades\Storage;
 class LanguageController extends Controller
 {
     use ValidatesImageDimensions;
+
+    public function __construct(
+        protected StaticTranslationService $staticTranslations
+    ) {}
 
     protected function isEnglishLanguage(Language $language): bool
     {
@@ -92,13 +97,16 @@ class LanguageController extends Controller
             $data['flag_image'] = $request->file('flag_image')->store('languages/flags', 'public');
         }
 
-        Language::create($data);
+        $language = Language::create($data);
+        $this->staticTranslations->copyMasterToNewLanguage(strtolower((string) $language->code));
+
         return redirect()->back()->with('success', 'Language added.');
     }
 
     public function update(Request $request, $id)
     {
         $language = Language::findOrFail($id);
+        $previousCode = strtolower((string) $language->code);
         $isEnglish = $this->isEnglishLanguage($language);
 
         $flagConfig = config('cms-kit.images.languages.flag', []);
@@ -134,6 +142,12 @@ class LanguageController extends Controller
                 'is_default' => true,
                 'status' => true,
             ]);
+        }
+
+        $language->refresh();
+        $newCode = strtolower((string) $language->code);
+        if (!$isEnglish && $newCode !== $previousCode) {
+            $this->staticTranslations->renameLanguageFile($previousCode, $newCode);
         }
 
         return redirect()->back()->with('success', 'Language updated.');
@@ -177,6 +191,7 @@ class LanguageController extends Controller
         if ($language->flag_image) {
             Storage::disk('public')->delete($language->flag_image);
         }
+        $this->staticTranslations->deleteLanguageFile(strtolower((string) $language->code));
         $language->delete();
         return redirect()->back()->with('success', 'Language deleted.');
     }

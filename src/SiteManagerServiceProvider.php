@@ -65,11 +65,18 @@ class SiteManagerServiceProvider extends ServiceProvider
             __DIR__ . '/../resources/css/cms-modules.css' => public_path('vendor/cms-kit/css/cms-modules.css'),
         ], 'cms-kit-assets');
 
+        // Publish default static translation JSON (optional; English is also bootstrapped from the package if missing)
+        $staticLangTarget = function_exists('lang_path')
+            ? lang_path(trim((string) config('cms-kit.static_translations.subdirectory', 'cms-static'), '/\\'))
+            : resource_path('lang/' . trim((string) config('cms-kit.static_translations.subdirectory', 'cms-static'), '/\\'));
+        $this->publishes([
+            __DIR__ . '/../resources/lang/cms-static' => $staticLangTarget,
+        ], 'cms-kit-static-lang');
+
         // Publish Views (optional for user customization)
         $this->publishes([
             __DIR__ . '/../resources/views' => resource_path('views/vendor/cms-kit'),
         ], 'cms-kit-views');
-
     }
 
     /**

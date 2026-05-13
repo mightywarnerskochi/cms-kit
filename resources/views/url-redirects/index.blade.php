@@ -8,7 +8,10 @@
 
 @section('content')
 <div class="mb-3 d-flex flex-wrap justify-content-between align-items-center gap-2">
-    <p class="text-muted small mb-0">Database 301/302/410 rules checked before your app returns 404. Hits counted when matched.</p>
+    <p class="text-muted small mb-0">
+        Rules run as HTTP middleware on normal page requests (GET/HEAD). If hits stay at 0, clear config cache (<code>php artisan config:clear</code>) and ensure your app runs this package’s middleware (global registration is enabled by default).
+        Multilingual URLs like <code>/en/about</code> need either the same path stored or <code>locale_prefixes</code> in config so <code>/about</code> rules match.
+    </p>
     @can('url-redirects.edit')
         <a href="{{ route('cms.url-redirects.create') }}" class="btn btn-primary btn-sm"><i class="fas fa-plus me-1"></i> Add redirect</a>
     @endcan

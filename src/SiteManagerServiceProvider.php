@@ -57,12 +57,7 @@ class SiteManagerServiceProvider extends ServiceProvider
         // Register Observers
         $this->registerSitemapObservers();
 
-        if (config('cms-kit.url_redirects.middleware_enabled', true)) {
-            $this->app->make(\Illuminate\Routing\Router::class)->prependMiddlewareToGroup(
-                config('cms-kit.url_redirects.web_middleware_group', 'web'),
-                \CMS\SiteManager\Http\Middleware\ApplyUrlRedirects::class
-            );
-        }
+        $this->registerUrlRedirectMiddleware();
 
         // Publish Assets
         $this->publishes([
@@ -134,6 +129,48 @@ class SiteManagerServiceProvider extends ServiceProvider
                 $model::observe(\CMS\SiteManager\Observers\SitemapObserver::class);
             }
         }
+    }
+
+    protected function registerUrlRedirectMiddleware(): void
+    {
+        if (!config('cms-kit.url_redirects.middleware_enabled', true)) {
+            return;
+        }
+
+        $middlewareClass = \CMS\SiteManager\Http\Middleware\ApplyUrlRedirects::class;
+
+        $this->app->booted(function () use ($middlewareClass) {
+            if ($this->app->runningInConsole()) {
+                return;
+            }
+
+            static $cmsKitRedirectMiddlewareRegistered = false;
+            if ($cmsKitRedirectMiddlewareRegistered) {
+                return;
+            }
+            $cmsKitRedirectMiddlewareRegistered = true;
+
+            if (!config('cms-kit.url_redirects.register_global_middleware', true)) {
+                $this->app->make(\Illuminate\Routing\Router::class)->prependMiddlewareToGroup(
+                    config('cms-kit.url_redirects.web_middleware_group', 'web'),
+                    $middlewareClass
+                );
+
+                return;
+            }
+
+            $kernel = $this->app->make(\Illuminate\Contracts\Http\Kernel::class);
+            if (method_exists($kernel, 'prependMiddleware')) {
+                $kernel->prependMiddleware($middlewareClass);
+
+                return;
+            }
+
+            $this->app->make(\Illuminate\Routing\Router::class)->prependMiddlewareToGroup(
+                config('cms-kit.url_redirects.web_middleware_group', 'web'),
+                $middlewareClass
+            );
+        });
     }
 
     protected function registerAppOverrides(): void

@@ -11,6 +11,17 @@ return [
 
     'middleware_enabled' => true,
 
+    /**
+     * Register on the HTTP Kernel global stack (recommended for Laravel 10/11).
+     * Falls back to prepending the "web" group if the kernel has no prependMiddleware().
+     */
+    'register_global_middleware' => true,
+
+    /**
+     * Optional first URL segment treated as locale, e.g. ['en','ar'] matches /en/about → also lookup /about.
+     */
+    'locale_prefixes' => [],
+
     'log_404s' => true,
 
     /**

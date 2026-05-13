@@ -7,7 +7,6 @@ use CMS\SiteManager\Models\CmsKit\UrlRedirect;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
-use Symfony\Component\HttpFoundation\Response;
 
 class UrlRedirectService
 {
@@ -31,41 +30,70 @@ class UrlRedirectService
         return $path === '//' ? '/' : $path;
     }
 
-    public function tryRedirect(Request $request): ?Response
+    public function tryRedirect(Request $request): ?\Symfony\Component\HttpFoundation\Response
     {
         if (!$this->isAvailable()) {
             return null;
         }
 
-        $path = self::normalizePath($request->path());
-        $row = UrlRedirect::query()
-            ->where('is_active', true)
-            ->where('old_path', $path)
-            ->first();
+        foreach ($this->pathsToTry($request) as $path) {
+            $row = UrlRedirect::query()
+                ->where('is_active', true)
+                ->where('old_path', $path)
+                ->first();
 
-        if (!$row) {
-            return null;
+            if (!$row) {
+                continue;
+            }
+
+            $row->increment('hit_count');
+            $row->forceFill(['last_hit_at' => now()])->save();
+
+            $code = (int) $row->status_code;
+
+            if ($code === 410) {
+                return response('Gone', 410);
+            }
+
+            $target = trim((string) $row->new_url);
+            if ($target === '') {
+                return response('Gone', 410);
+            }
+
+            if (preg_match('#^https?://#i', $target)) {
+                return redirect()->away($target)->setStatusCode($this->allowedRedirectCode($code));
+            }
+
+            return redirect()->to($target)->setStatusCode($this->allowedRedirectCode($code));
         }
 
-        $row->increment('hit_count');
-        $row->forceFill(['last_hit_at' => now()])->save();
+        return null;
+    }
 
-        $code = (int) $row->status_code;
+    /**
+     * @return array<int, string>
+     */
+    public function pathsToTry(Request $request): array
+    {
+        $paths = [];
+        $paths[] = self::normalizePath($request->path());
 
-        if ($code === 410) {
-            return response('Gone', 410);
+        $localePrefixes = config('cms-kit.url_redirects.locale_prefixes', []);
+        $segments = array_values(array_filter(explode('/', trim($request->path(), '/')), fn ($s) => $s !== ''));
+
+        if ($localePrefixes !== [] && count($segments) >= 2) {
+            $first = strtolower($segments[0]);
+            foreach ($localePrefixes as $prefix) {
+                if ($first === strtolower((string) $prefix)) {
+                    array_shift($segments);
+                    $paths[] = self::normalizePath(implode('/', $segments));
+
+                    break;
+                }
+            }
         }
 
-        $target = trim((string) $row->new_url);
-        if ($target === '') {
-            return response('Gone', 410);
-        }
-
-        if (preg_match('#^https?://#i', $target)) {
-            return redirect()->away($target)->setStatusCode($this->allowedRedirectCode($code));
-        }
-
-        return redirect()->to($target)->setStatusCode($this->allowedRedirectCode($code));
+        return array_values(array_unique($paths));
     }
 
     public function logMiss(Request $request): void

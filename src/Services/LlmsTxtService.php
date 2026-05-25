@@ -15,7 +15,7 @@ class LlmsTxtService
     public function generate($model = null, bool $isDeletion = false): void
     {
         if ($model) {
-            $this->partialUpdate($model, $isDeletion);
+            $this->fullGenerate();
             return;
         }
 
@@ -103,37 +103,35 @@ class LlmsTxtService
     protected function writeGeneratedPages(array $pages): void
     {
         $pages = $this->uniquePages($pages);
+        $pages = array_values(array_filter($pages, fn ($page) => (bool) ($page['has_metadata'] ?? false)));
         usort($pages, fn ($a, $b) => strcmp($a['url'], $b['url']));
 
-        $content = file_exists($this->path()) ? (file_get_contents($this->path()) ?: '') : $this->defaultContent();
-        $block = $this->buildGeneratedBlock($pages);
-
-        if ($this->extractGeneratedBlock($content) !== null) {
-            $content = preg_replace(
-                '/' . preg_quote($this->marker('start'), '/') . '.*?' . preg_quote($this->marker('end'), '/') . '/s',
-                $block,
-                $content
-            );
-        } else {
-            $content = rtrim($content) . PHP_EOL . PHP_EOL . $block . PHP_EOL;
-        }
-
-        file_put_contents($this->path(), $content);
+        file_put_contents($this->path(), $this->buildGeneratedContent($pages));
     }
 
-    protected function defaultContent(): string
+    protected function buildGeneratedContent(array $pages): string
     {
         $siteName = config('app.name', 'Website');
-        $siteUrl = rtrim(config('app.url'), '/');
+        $description = $this->homeMetaDescription();
+        $lines = ["# {$siteName}"];
 
-        return "# {$siteName}\n\n> Official website for {$siteName}. This file gives AI assistants a concise overview of important public pages and resources.\n\nSource: {$siteUrl}\n\nAdd manual guidance, brand notes, contact context, or citation preferences here.";
+        if ($description !== '') {
+            $lines[] = '';
+            $lines[] = '> ' . $description;
+        }
+
+        $block = $this->buildGeneratedBlock($pages);
+        if ($block !== '') {
+            $lines[] = '';
+            $lines[] = $block;
+        }
+
+        return rtrim(implode(PHP_EOL, $lines)) . PHP_EOL;
     }
 
     protected function buildGeneratedBlock(array $pages): string
     {
-        $lines = [
-            $this->marker('start'),
-        ];
+        $lines = [];
 
         foreach ($this->groupPages($pages) as $section => $sectionPages) {
             $lines[] = '## ' . $section;
@@ -144,10 +142,7 @@ class LlmsTxtService
             $lines[] = '';
         }
 
-        $lines[] = 'Last generated: ' . now()->toIso8601String();
-        $lines[] = $this->marker('end');
-
-        return implode(PHP_EOL, $lines);
+        return rtrim(implode(PHP_EOL, $lines));
     }
 
     protected function groupPages(array $pages): array
@@ -279,7 +274,7 @@ class LlmsTxtService
         return [
             'title' => $title ?: $this->titleFromUrl($url),
             'url' => $url,
-            'description' => $description ?: $this->descriptionFromUrl($url),
+            'description' => $description ?: '',
             'has_metadata' => $hasMetadata,
         ];
     }
@@ -409,7 +404,7 @@ class LlmsTxtService
             $unique[$this->normalizeUrlKey($url)] = [
                 'title' => trim($page['title'] ?? '') ?: $this->titleFromUrl($url),
                 'url' => $url,
-                'description' => trim($page['description'] ?? '') ?: $this->descriptionFromUrl($url),
+                'description' => trim($page['description'] ?? ''),
                 'has_metadata' => $hasMetadata,
             ];
         }
@@ -451,10 +446,7 @@ class LlmsTxtService
                 continue;
             }
 
-            $title = $this->firstMetadataValue($metadata, ['meta_title', 'og_title', 'page_name']);
-            $description = $this->firstMetadataValue($metadata, ['meta_description', 'og_description']);
-
-            if ($title === '' && $description === '') {
+            if (!$this->metadataHasSeoContent($metadata)) {
                 return null;
             }
 
@@ -468,15 +460,34 @@ class LlmsTxtService
     {
         $title = $this->firstMetadataValue($metadata, ['meta_title', 'og_title', 'page_name']);
         $description = $this->firstMetadataValue($metadata, ['meta_description', 'og_description']);
+        $hasMetadata = $this->metadataHasSeoContent($metadata);
 
         return [
             'title' => $title !== '' ? $title : $this->titleFromUrl($url),
             'url' => $url,
             'description' => $description !== ''
                 ? $this->limitText(strip_tags($description), 180)
-                : $this->descriptionFromUrl($url),
-            'has_metadata' => $title !== '' || $description !== '',
+                : '',
+            'has_metadata' => $hasMetadata,
         ];
+    }
+
+    protected function metadataHasSeoContent($metadata): bool
+    {
+        return $this->firstMetadataValue($metadata, ['meta_title', 'og_title', 'meta_description', 'og_description']) !== '';
+    }
+
+    protected function homeMetaDescription(): string
+    {
+        foreach ($this->metadataRows() as $metadata) {
+            if ((string) ($metadata->page_key ?? '') !== 'home') {
+                continue;
+            }
+
+            return $this->firstMetadataValue($metadata, ['meta_description', 'og_description']);
+        }
+
+        return '';
     }
 
     protected function metadataRows()

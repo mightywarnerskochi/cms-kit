@@ -5,9 +5,13 @@ namespace CMS\SiteManager\Services;
 use DOMDocument;
 use DOMXPath;
 use Illuminate\Database\Eloquent\Model;
+use CMS\SiteManager\Models\CmsKit\Metadata;
+use Throwable;
 
 class LlmsTxtService
 {
+    protected $metadataRows;
+
     public function generate($model = null, bool $isDeletion = false): void
     {
         if ($model) {
@@ -205,19 +209,31 @@ class LlmsTxtService
 
     protected function pageFromModel($model, string $url): array
     {
+        $title = $this->resolveModelTitle($model);
+        $description = $this->resolveModelDescription($model);
+        $hasMetadata = $title !== null || $description !== null;
+
         return [
-            'title' => $this->resolveModelTitle($model) ?: $this->titleFromUrl($url),
+            'title' => $title ?: $this->titleFromUrl($url),
             'url' => $url,
-            'description' => $this->resolveModelDescription($model) ?: $this->descriptionFromUrl($url),
+            'description' => $description ?: ($hasMetadata ? '' : $this->descriptionFromUrl($url)),
+            'has_metadata' => $hasMetadata,
         ];
     }
 
     protected function pageFromUrl(string $url): array
     {
+        $metadataPage = $this->pageFromMetadata($url);
+
+        if ($metadataPage) {
+            return $metadataPage;
+        }
+
         return [
             'title' => $this->titleFromUrl($url),
             'url' => $url,
             'description' => $this->descriptionFromUrl($url),
+            'has_metadata' => false,
         ];
     }
 
@@ -254,8 +270,23 @@ class LlmsTxtService
 
     protected function resolveModelTitle($model): ?string
     {
-        foreach (['llms_title', 'meta_title', 'title', 'name', 'heading', 'question'] as $field) {
-            $value = $this->stringValue($model->{$field} ?? null);
+        foreach ([
+            'metadata.meta_title',
+            'metadata.og_title',
+            'llms_title',
+            'meta_title',
+            'og_title',
+            'title',
+            'name',
+            'heading',
+            'question',
+            'translations.en.title',
+            'translations.en.name',
+        ] as $field) {
+            $value = str_contains($field, '.')
+                ? $this->stringValue($this->nestedValue($model, $field))
+                : $this->stringValue($model->{$field} ?? null);
+
             if ($value !== '') {
                 return $value;
             }
@@ -266,8 +297,24 @@ class LlmsTxtService
 
     protected function resolveModelDescription($model): ?string
     {
-        foreach (['llms_description', 'meta_description', 'short_description', 'description', 'excerpt', 'summary'] as $field) {
-            $value = $this->stringValue($model->{$field} ?? null);
+        foreach ([
+            'metadata.meta_description',
+            'metadata.og_description',
+            'llms_description',
+            'meta_description',
+            'og_description',
+            'short_description',
+            'description',
+            'excerpt',
+            'summary',
+            'translations.en.short_description',
+            'translations.en.description',
+            'translations.en.content',
+        ] as $field) {
+            $value = str_contains($field, '.')
+                ? $this->stringValue($this->nestedValue($model, $field))
+                : $this->stringValue($model->{$field} ?? null);
+
             if ($value !== '') {
                 return $this->limitText(strip_tags($value), 180);
             }
@@ -307,10 +354,13 @@ class LlmsTxtService
                 continue;
             }
 
-            $unique[$url] = [
+            $hasMetadata = (bool) ($page['has_metadata'] ?? false);
+
+            $unique[$this->normalizeUrlKey($url)] = [
                 'title' => trim($page['title'] ?? '') ?: $this->titleFromUrl($url),
                 'url' => $url,
-                'description' => trim($page['description'] ?? '') ?: $this->descriptionFromUrl($url),
+                'description' => trim($page['description'] ?? '') ?: ($hasMetadata ? '' : $this->descriptionFromUrl($url)),
+                'has_metadata' => $hasMetadata,
             ];
         }
 
@@ -342,6 +392,118 @@ class LlmsTxtService
         }
 
         return "Information about {$title} from {$siteName}.";
+    }
+
+    protected function pageFromMetadata(string $url): ?array
+    {
+        foreach ($this->metadataRows() as $metadata) {
+            if (!$this->metadataMatchesUrl($metadata, $url)) {
+                continue;
+            }
+
+            $title = $this->firstMetadataValue($metadata, ['meta_title', 'og_title', 'page_name']);
+            $description = $this->firstMetadataValue($metadata, ['meta_description', 'og_description']);
+
+            if ($title === '' && $description === '') {
+                return null;
+            }
+
+            return [
+                'title' => $title !== '' ? $title : $this->titleFromUrl($url),
+                'url' => $url,
+                'description' => $description !== '' ? $this->limitText(strip_tags($description), 180) : '',
+                'has_metadata' => true,
+            ];
+        }
+
+        return null;
+    }
+
+    protected function metadataRows()
+    {
+        if ($this->metadataRows !== null) {
+            return $this->metadataRows;
+        }
+
+        try {
+            $this->metadataRows = Metadata::query()->get();
+        } catch (Throwable $e) {
+            $this->metadataRows = collect();
+        }
+
+        return $this->metadataRows;
+    }
+
+    protected function metadataMatchesUrl($metadata, string $url): bool
+    {
+        $target = $this->normalizeUrlKey($url);
+
+        foreach ($this->metadataUrlCandidates($metadata) as $candidate) {
+            if ($this->normalizeUrlKey($candidate) === $target) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    protected function metadataUrlCandidates($metadata): array
+    {
+        $urls = [];
+
+        foreach ((array) ($metadata->canonical_url ?? []) as $canonicalUrl) {
+            $canonicalUrl = $this->stringValue($canonicalUrl);
+            if ($canonicalUrl !== '') {
+                $urls[] = $canonicalUrl;
+            }
+        }
+
+        $pageKey = trim((string) ($metadata->page_key ?? ''), '/');
+        if ($pageKey !== '') {
+            $baseUrl = rtrim(config('app.url'), '/');
+            $urls[] = $pageKey === 'home' ? $baseUrl . '/' : $baseUrl . '/' . $pageKey;
+        }
+
+        return $urls;
+    }
+
+    protected function firstMetadataValue($metadata, array $fields): string
+    {
+        foreach ($fields as $field) {
+            $value = $this->stringValue($metadata->{$field} ?? null);
+            if ($value !== '') {
+                return $value;
+            }
+        }
+
+        return '';
+    }
+
+    protected function nestedValue($source, string $path)
+    {
+        $value = $source;
+
+        foreach (explode('.', $path) as $segment) {
+            if (is_object($value)) {
+                $value = $value->{$segment} ?? null;
+            } elseif (is_array($value)) {
+                $value = $value[$segment] ?? null;
+            } else {
+                return null;
+            }
+        }
+
+        return $value;
+    }
+
+    protected function normalizeUrlKey(string $url): string
+    {
+        $parts = parse_url($url);
+        $scheme = strtolower($parts['scheme'] ?? parse_url(config('app.url'), PHP_URL_SCHEME) ?? 'http');
+        $host = strtolower($parts['host'] ?? parse_url(config('app.url'), PHP_URL_HOST) ?? '');
+        $path = '/' . trim($parts['path'] ?? '/', '/');
+
+        return rtrim($scheme . '://' . $host . $path, '/') ?: $scheme . '://' . $host;
     }
 
     protected function stringValue($value): string

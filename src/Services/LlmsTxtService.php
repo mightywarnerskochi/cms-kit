@@ -296,16 +296,10 @@ class LlmsTxtService
             'llms_title',
             'meta_title',
             'og_title',
-            'title',
-            'name',
-            'heading',
-            'question',
-            'translations.title',
-            'translations.name',
         ] as $field) {
             $value = str_contains($field, '.')
                 ? $this->stringValue($this->nestedValue($model, $field))
-                : $this->stringValue($model->{$field} ?? null);
+                : $this->stringValue($this->modelAttribute($model, $field));
 
             if ($value !== '') {
                 return $value;
@@ -323,17 +317,10 @@ class LlmsTxtService
             'llms_description',
             'meta_description',
             'og_description',
-            'short_description',
-            'description',
-            'excerpt',
-            'summary',
-            'translations.short_description',
-            'translations.description',
-            'translations.content',
         ] as $field) {
             $value = str_contains($field, '.')
                 ? $this->stringValue($this->nestedValue($model, $field))
-                : $this->stringValue($model->{$field} ?? null);
+                : $this->stringValue($this->modelAttribute($model, $field));
 
             if ($value !== '') {
                 return $this->limitText(strip_tags($value), 180);
@@ -515,7 +502,7 @@ class LlmsTxtService
 
         foreach (explode('.', $path) as $segment) {
             if (is_object($value)) {
-                $value = $value->{$segment} ?? null;
+                $value = $this->objectValue($value, $segment);
             } elseif (is_array($value)) {
                 if (array_key_exists($segment, $value)) {
                     $value = $value[$segment];
@@ -529,6 +516,32 @@ class LlmsTxtService
         }
 
         return $value;
+    }
+
+    protected function modelAttribute($model, string $field)
+    {
+        if ($model instanceof Model) {
+            return $model->getAttribute($field);
+        }
+
+        return $this->objectValue($model, $field);
+    }
+
+    protected function objectValue($source, string $field)
+    {
+        if ($source instanceof Model) {
+            return $source->getAttribute($field);
+        }
+
+        if ($source instanceof \Illuminate\Support\Collection) {
+            return $source->get($field);
+        }
+
+        if ($source instanceof \ArrayAccess) {
+            return $source[$field] ?? null;
+        }
+
+        return $source->{$field} ?? null;
     }
 
     protected function localizedArrayValue(array $value)

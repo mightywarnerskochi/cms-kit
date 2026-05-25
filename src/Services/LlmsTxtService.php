@@ -133,20 +133,63 @@ class LlmsTxtService
     {
         $lines = [
             $this->marker('start'),
-            '## Key Pages',
-            '',
         ];
 
-        foreach ($pages as $page) {
-            $description = $page['description'] !== '' ? ': ' . $page['description'] : '';
-            $lines[] = '- [' . $this->escapeMarkdownLinkText($page['title']) . '](' . $page['url'] . ')' . $description;
+        foreach ($this->groupPages($pages) as $section => $sectionPages) {
+            $lines[] = '## ' . $section;
+            foreach ($sectionPages as $page) {
+                $description = $page['description'] !== '' ? ': ' . $page['description'] : '';
+                $lines[] = '- [' . $this->escapeMarkdownLinkText($page['title']) . '](' . $page['url'] . ')' . $description;
+            }
+            $lines[] = '';
         }
 
-        $lines[] = '';
         $lines[] = 'Last generated: ' . now()->toIso8601String();
         $lines[] = $this->marker('end');
 
         return implode(PHP_EOL, $lines);
+    }
+
+    protected function groupPages(array $pages): array
+    {
+        $groups = [];
+
+        foreach ($pages as $page) {
+            $section = $this->sectionTitleForUrl($page['url']);
+            $groups[$section][] = $page;
+        }
+
+        uksort($groups, function ($a, $b) {
+            if ($a === 'Home') {
+                return -1;
+            }
+
+            if ($b === 'Home') {
+                return 1;
+            }
+
+            return strcmp($a, $b);
+        });
+
+        foreach ($groups as &$sectionPages) {
+            usort($sectionPages, fn ($a, $b) => strcmp($a['url'], $b['url']));
+        }
+
+        return $groups;
+    }
+
+    protected function sectionTitleForUrl(string $url): string
+    {
+        $path = trim(parse_url($url, PHP_URL_PATH) ?? '', '/');
+
+        if ($path === '') {
+            return 'Home';
+        }
+
+        $segments = array_values(array_filter(explode('/', $path)));
+        $section = $segments[0] ?? 'Home';
+
+        return ucwords(str_replace(['-', '_'], ' ', urldecode($section)));
     }
 
     protected function extractGeneratedBlock(string $content): ?string

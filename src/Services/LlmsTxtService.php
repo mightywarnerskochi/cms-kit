@@ -301,29 +301,42 @@ class LlmsTxtService
             return $model->getLlmsUrl();
         }
 
+        $configUrl = $this->resolveConfiguredModelUrl($model);
+        if ($configUrl) {
+            return $configUrl;
+        }
+
         if (method_exists($model, 'getSitemapUrl')) {
             return $model->getSitemapUrl();
         }
 
-        if (isset($model->url)) {
-            return $model->url;
-        }
-
-        $class = get_class($model);
-        $modelConfig = $this->modelsConfig()[$class] ?? null;
-
-        if ($modelConfig && isset($modelConfig['url_prefix'])) {
-            $baseUrl = rtrim(config('app.url'), '/');
-            $prefix = '/' . trim($modelConfig['url_prefix'], '/');
-            $slugField = $modelConfig['slug_field'] ?? 'slug';
-            $slug = $model->{$slugField} ?? null;
-
-            if ($slug) {
-                return $baseUrl . $prefix . '/' . ltrim($slug, '/');
-            }
+        $url = $this->modelAttribute($model, 'url');
+        if ($url) {
+            return $url;
         }
 
         return null;
+    }
+
+    protected function resolveConfiguredModelUrl($model): ?string
+    {
+        $class = get_class($model);
+        $modelConfig = $this->modelsConfig()[$class] ?? null;
+
+        if (!$modelConfig || !isset($modelConfig['url_prefix'])) {
+            return null;
+        }
+
+        $baseUrl = rtrim(config('app.url'), '/');
+        $prefix = '/' . trim($modelConfig['url_prefix'], '/');
+        $slugField = $modelConfig['slug_field'] ?? 'slug';
+        $slug = $this->stringValue($this->modelAttribute($model, $slugField));
+
+        if ($slug === '') {
+            return null;
+        }
+
+        return $baseUrl . $prefix . '/' . ltrim($slug, '/');
     }
 
     protected function resolveModelTitle($model): ?string
@@ -335,10 +348,15 @@ class LlmsTxtService
             'meta_title',
             'og_title',
         ] as $field) {
-            $value = str_contains($field, '.')
-                ? $this->stringValue($this->nestedValue($model, $field))
-                : $this->stringValue($this->modelAttribute($model, $field));
+            $value = $this->modelFieldValue($model, $field);
 
+            if ($value !== '') {
+                return $value;
+            }
+        }
+
+        foreach (['meta_title', 'og_title', 'title', 'name'] as $field) {
+            $value = $this->translatedModelValue($model, $field);
             if ($value !== '') {
                 return $value;
             }
@@ -356,16 +374,28 @@ class LlmsTxtService
             'meta_description',
             'og_description',
         ] as $field) {
-            $value = str_contains($field, '.')
-                ? $this->stringValue($this->nestedValue($model, $field))
-                : $this->stringValue($this->modelAttribute($model, $field));
+            $value = $this->modelFieldValue($model, $field);
 
             if ($value !== '') {
                 return $this->limitText(strip_tags($value), 180);
             }
         }
 
+        foreach (['meta_description', 'og_description', 'description'] as $field) {
+            $value = $this->translatedModelValue($model, $field);
+            if ($value !== '') {
+                return $this->limitText(strip_tags($value), 180);
+            }
+        }
+
         return null;
+    }
+
+    protected function modelFieldValue($model, string $field): string
+    {
+        return str_contains($field, '.')
+            ? $this->stringValue($this->nestedValue($model, $field))
+            : $this->stringValue($this->modelAttribute($model, $field));
     }
 
     protected function modelsConfig(): array
@@ -548,6 +578,104 @@ class LlmsTxtService
         }
 
         return '';
+    }
+
+    protected function translatedModelValue($model, string $field): string
+    {
+        foreach ([app()->getLocale(), config('app.fallback_locale'), 'en', null] as $locale) {
+            if (method_exists($model, 'getTranslation')) {
+                try {
+                    $value = $locale === null
+                        ? $model->getTranslation($field)
+                        : $model->getTranslation($field, $locale);
+
+                    $value = $this->stringValue($value);
+                    if ($value !== '') {
+                        return $value;
+                    }
+                } catch (Throwable $e) {
+                    // Keep trying other generic translation sources.
+                }
+            }
+        }
+
+        $translations = $this->modelAttribute($model, 'translations');
+        $value = $this->translationCollectionValue($translations, $field);
+        if ($value !== '') {
+            return $value;
+        }
+
+        $loadedTranslations = $this->loadedRelationValue($model, 'translations');
+        $value = $this->translationCollectionValue($loadedTranslations, $field);
+        if ($value !== '') {
+            return $value;
+        }
+
+        if (method_exists($model, 'translations')) {
+            try {
+                $value = $this->translationCollectionValue($model->translations()->get(), $field);
+                if ($value !== '') {
+                    return $value;
+                }
+            } catch (Throwable $e) {
+                return '';
+            }
+        }
+
+        return '';
+    }
+
+    protected function translationCollectionValue($translations, string $field): string
+    {
+        if (!$translations) {
+            return '';
+        }
+
+        if (is_array($translations)) {
+            $localized = $this->localizedArrayValue($translations);
+            if (is_array($localized)) {
+                return $this->stringValue($localized[$field] ?? null);
+            }
+
+            return $this->stringValue($translations[$field] ?? null);
+        }
+
+        if ($translations instanceof \Illuminate\Support\Collection) {
+            foreach ([app()->getLocale(), config('app.fallback_locale'), 'en'] as $locale) {
+                $row = $translations->first(function ($item) use ($locale) {
+                    return in_array($locale, [
+                        $this->stringValue($this->objectValue($item, 'locale')),
+                        $this->stringValue($this->objectValue($item, 'language')),
+                        $this->stringValue($this->objectValue($item, 'lang')),
+                        $this->stringValue($this->objectValue($item, 'code')),
+                        $this->stringValue($this->objectValue($item, 'language_code')),
+                    ], true);
+                });
+
+                $value = $this->stringValue($row ? $this->objectValue($row, $field) : null);
+                if ($value !== '') {
+                    return $value;
+                }
+            }
+
+            foreach ($translations as $row) {
+                $value = $this->stringValue($this->objectValue($row, $field));
+                if ($value !== '') {
+                    return $value;
+                }
+            }
+        }
+
+        return '';
+    }
+
+    protected function loadedRelationValue($model, string $relation)
+    {
+        if (!$model instanceof Model || !$model->relationLoaded($relation)) {
+            return null;
+        }
+
+        return $model->getRelation($relation);
     }
 
     protected function nestedValue($source, string $path)

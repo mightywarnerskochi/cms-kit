@@ -3,16 +3,19 @@
 namespace CMS\SiteManager\Http\Controllers\CmsKit;
 
 use CMS\SiteManager\Services\LlmsTxtService;
+use CMS\SiteManager\Services\SitemapService;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 
 class LlmsTxtController extends Controller
 {
     protected $llmsTxtService;
+    protected $sitemapService;
 
-    public function __construct(LlmsTxtService $llmsTxtService)
+    public function __construct(LlmsTxtService $llmsTxtService, SitemapService $sitemapService)
     {
         $this->llmsTxtService = $llmsTxtService;
+        $this->sitemapService = $sitemapService;
     }
 
     public function index()
@@ -24,6 +27,7 @@ class LlmsTxtController extends Controller
 
     public function generate()
     {
+        $this->sitemapService->generate();
         $this->llmsTxtService->generate();
 
         return redirect()->back()->with('success', 'llms.txt generated successfully.');

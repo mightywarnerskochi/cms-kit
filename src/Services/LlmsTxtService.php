@@ -30,12 +30,23 @@ class LlmsTxtService
 
     protected function fullGenerate(): void
     {
+        $this->ensureSitemapExists();
+
         $pages = array_merge(
             $this->pagesFromSitemap(),
             $this->pagesFromConfiguredModels()
         );
 
         $this->writeGeneratedPages($pages);
+    }
+
+    protected function ensureSitemapExists(): void
+    {
+        if (file_exists(public_path('sitemap.xml'))) {
+            return;
+        }
+
+        app(SitemapService::class)->generate();
     }
 
     protected function partialUpdate($model, bool $isDeletion): void

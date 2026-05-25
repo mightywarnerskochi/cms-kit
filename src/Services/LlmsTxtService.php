@@ -30,13 +30,12 @@ class LlmsTxtService
 
     protected function fullGenerate(): void
     {
-        $urls = $this->urlsFromSitemap();
+        $pages = array_merge(
+            $this->pagesFromSitemap(),
+            $this->pagesFromConfiguredModels()
+        );
 
-        if (empty($urls)) {
-            $urls = $this->urlsFromConfiguredModels();
-        }
-
-        $this->writeGeneratedUrls($urls);
+        $this->writeGeneratedPages($pages);
     }
 
     protected function partialUpdate($model, bool $isDeletion): void
@@ -47,18 +46,18 @@ class LlmsTxtService
             return;
         }
 
-        $urls = $this->readGeneratedUrls();
+        $pages = $this->readGeneratedPages();
 
         if ($isDeletion) {
-            $urls = array_values(array_filter($urls, fn ($existingUrl) => $existingUrl !== $url));
-        } elseif (!in_array($url, $urls, true)) {
-            $urls[] = $url;
+            $pages = array_values(array_filter($pages, fn ($page) => $page['url'] !== $url));
+        } else {
+            $pages[] = $this->pageFromModel($model, $url);
         }
 
-        $this->writeGeneratedUrls($urls);
+        $this->writeGeneratedPages($pages);
     }
 
-    protected function readGeneratedUrls(): array
+    protected function readGeneratedPages(): array
     {
         if (!file_exists($this->path())) {
             return [];
@@ -67,18 +66,31 @@ class LlmsTxtService
         $content = file_get_contents($this->path()) ?: '';
         $generated = $this->extractGeneratedBlock($content) ?? $content;
 
-        preg_match_all('/^\s*-\s+(?:\[[^\]]+\]\()?<?(https?:\/\/[^)\s>]+)>?\)?\s*$/mi', $generated, $matches);
+        $pages = [];
+        preg_match_all('/^\s*-\s+\[([^\]]+)\]\((https?:\/\/[^)]+)\)(?::\s*(.*))?\s*$/mi', $generated, $linkMatches, PREG_SET_ORDER);
+        foreach ($linkMatches as $match) {
+            $pages[] = [
+                'title' => trim($match[1]),
+                'url' => trim($match[2]),
+                'description' => trim($match[3] ?? ''),
+            ];
+        }
 
-        return $this->uniqueUrls($matches[1] ?? []);
+        preg_match_all('/^\s*-\s+<?(https?:\/\/[^\s>]+)>?\s*$/mi', $generated, $urlMatches);
+        foreach ($urlMatches[1] ?? [] as $url) {
+            $pages[] = $this->pageFromUrl($url);
+        }
+
+        return $this->uniquePages($pages);
     }
 
-    protected function writeGeneratedUrls(array $urls): void
+    protected function writeGeneratedPages(array $pages): void
     {
-        $urls = $this->uniqueUrls($urls);
-        sort($urls);
+        $pages = $this->uniquePages($pages);
+        usort($pages, fn ($a, $b) => strcmp($a['url'], $b['url']));
 
         $content = file_exists($this->path()) ? (file_get_contents($this->path()) ?: '') : $this->defaultContent();
-        $block = $this->buildGeneratedBlock($urls);
+        $block = $this->buildGeneratedBlock($pages);
 
         if ($this->extractGeneratedBlock($content) !== null) {
             $content = preg_replace(
@@ -96,20 +108,22 @@ class LlmsTxtService
     protected function defaultContent(): string
     {
         $siteName = config('app.name', 'Website');
+        $siteUrl = rtrim(config('app.url'), '/');
 
-        return "# {$siteName}\n\nAdd manual LLM notes above or below the generated URL section.";
+        return "# {$siteName}\n\n> Official website for {$siteName}. This file gives AI assistants a concise overview of important public pages and resources.\n\nSource: {$siteUrl}\n\nAdd manual guidance, brand notes, contact context, or citation preferences here.";
     }
 
-    protected function buildGeneratedBlock(array $urls): string
+    protected function buildGeneratedBlock(array $pages): string
     {
         $lines = [
             $this->marker('start'),
-            '## Generated URLs',
+            '## Key Pages',
             '',
         ];
 
-        foreach ($urls as $url) {
-            $lines[] = '- ' . $url;
+        foreach ($pages as $page) {
+            $description = $page['description'] !== '' ? ': ' . $page['description'] : '';
+            $lines[] = '- [' . $this->escapeMarkdownLinkText($page['title']) . '](' . $page['url'] . ')' . $description;
         }
 
         $lines[] = '';
@@ -130,7 +144,7 @@ class LlmsTxtService
         return $matches[1];
     }
 
-    protected function urlsFromSitemap(): array
+    protected function pagesFromSitemap(): array
     {
         $path = public_path('sitemap.xml');
 
@@ -148,34 +162,52 @@ class LlmsTxtService
         $xpath = new DOMXPath($xml);
         $xpath->registerNamespace('s', 'http://www.sitemaps.org/schemas/sitemap/0.9');
 
-        $urls = [];
+        $pages = [];
         foreach ($xpath->query('//s:url/s:loc') as $loc) {
-            $urls[] = trim($loc->nodeValue);
+            $pages[] = $this->pageFromUrl(trim($loc->nodeValue));
         }
 
-        return $this->uniqueUrls($urls);
+        return $this->uniquePages($pages);
     }
 
-    protected function urlsFromConfiguredModels(): array
+    protected function pagesFromConfiguredModels(): array
     {
-        $urls = [];
+        $pages = [];
 
         foreach ($this->modelsConfig() as $class => $modelConfig) {
             if (!class_exists($class) || !is_subclass_of($class, Model::class)) {
                 continue;
             }
 
-            $class::query()->chunkById(100, function ($models) use (&$urls) {
+            $class::query()->chunkById(100, function ($models) use (&$pages) {
                 foreach ($models as $model) {
                     $url = $this->resolveModelUrl($model);
                     if ($url) {
-                        $urls[] = $url;
+                        $pages[] = $this->pageFromModel($model, $url);
                     }
                 }
             });
         }
 
-        return $this->uniqueUrls($urls);
+        return $this->uniquePages($pages);
+    }
+
+    protected function pageFromModel($model, string $url): array
+    {
+        return [
+            'title' => $this->resolveModelTitle($model) ?: $this->titleFromUrl($url),
+            'url' => $url,
+            'description' => $this->resolveModelDescription($model) ?: $this->descriptionFromUrl($url),
+        ];
+    }
+
+    protected function pageFromUrl(string $url): array
+    {
+        return [
+            'title' => $this->titleFromUrl($url),
+            'url' => $url,
+            'description' => $this->descriptionFromUrl($url),
+        ];
     }
 
     protected function resolveModelUrl($model): ?string
@@ -209,6 +241,30 @@ class LlmsTxtService
         return null;
     }
 
+    protected function resolveModelTitle($model): ?string
+    {
+        foreach (['llms_title', 'meta_title', 'title', 'name', 'heading', 'question'] as $field) {
+            $value = $this->stringValue($model->{$field} ?? null);
+            if ($value !== '') {
+                return $value;
+            }
+        }
+
+        return null;
+    }
+
+    protected function resolveModelDescription($model): ?string
+    {
+        foreach (['llms_description', 'meta_description', 'short_description', 'description', 'excerpt', 'summary'] as $field) {
+            $value = $this->stringValue($model->{$field} ?? null);
+            if ($value !== '') {
+                return $this->limitText(strip_tags($value), 180);
+            }
+        }
+
+        return null;
+    }
+
     protected function modelsConfig(): array
     {
         $models = config('cms.sitemap.models', []);
@@ -228,6 +284,89 @@ class LlmsTxtService
     protected function uniqueUrls(array $urls): array
     {
         return array_values(array_unique(array_filter(array_map('trim', $urls))));
+    }
+
+    protected function uniquePages(array $pages): array
+    {
+        $unique = [];
+
+        foreach ($pages as $page) {
+            $url = trim($page['url'] ?? '');
+            if ($url === '') {
+                continue;
+            }
+
+            $unique[$url] = [
+                'title' => trim($page['title'] ?? '') ?: $this->titleFromUrl($url),
+                'url' => $url,
+                'description' => trim($page['description'] ?? '') ?: $this->descriptionFromUrl($url),
+            ];
+        }
+
+        return array_values($unique);
+    }
+
+    protected function titleFromUrl(string $url): string
+    {
+        $path = trim(parse_url($url, PHP_URL_PATH) ?? '', '/');
+
+        if ($path === '') {
+            return 'Home';
+        }
+
+        $segments = array_filter(explode('/', $path));
+        $lastSegment = end($segments) ?: $path;
+        $title = str_replace(['-', '_'], ' ', urldecode($lastSegment));
+
+        return ucwords($title);
+    }
+
+    protected function descriptionFromUrl(string $url): string
+    {
+        $title = $this->titleFromUrl($url);
+        $siteName = config('app.name', 'Website');
+
+        if ($title === 'Home') {
+            return "Main homepage for {$siteName}.";
+        }
+
+        return "Information about {$title} from {$siteName}.";
+    }
+
+    protected function stringValue($value): string
+    {
+        if (is_array($value)) {
+            foreach ($value as $item) {
+                $itemValue = $this->stringValue($item);
+                if ($itemValue !== '') {
+                    return $itemValue;
+                }
+            }
+
+            return '';
+        }
+
+        if (!is_scalar($value)) {
+            return '';
+        }
+
+        return trim((string) $value);
+    }
+
+    protected function limitText(string $value, int $limit): string
+    {
+        $value = trim(preg_replace('/\s+/', ' ', $value) ?? '');
+
+        if (mb_strlen($value) <= $limit) {
+            return $value;
+        }
+
+        return rtrim(mb_substr($value, 0, $limit - 3)) . '...';
+    }
+
+    protected function escapeMarkdownLinkText(string $value): string
+    {
+        return str_replace([']', '['], ['\]', '\['], $value);
     }
 
     protected function marker(string $key): string

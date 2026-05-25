@@ -1,12 +1,13 @@
 @php
     $redirectModel = $redirect ?? null;
+    $oldPathValue = old('old_path', $redirectModel?->old_path ?? request('old_path', ''));
 @endphp
 
 <div class="mb-3">
     <label class="form-label small fw-bold text-muted text-uppercase">Old path <span class="text-danger">*</span></label>
     <input type="text" name="old_path" class="form-control @error('old_path') is-invalid @enderror" required
            placeholder="/blog/old-slug"
-           value="{{ old('old_path', $redirectModel?->old_path ?? '') }}">
+           value="{{ $oldPathValue }}">
     @error('old_path')<div class="invalid-feedback">{{ $message }}</div>@enderror
     <small class="text-muted">Path only (leading slash), no domain — e.g. <code>/products/old-item</code></small>
 </div>

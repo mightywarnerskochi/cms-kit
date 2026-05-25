@@ -55,6 +55,11 @@
                         <td class="small text-muted text-break" style="max-width: 280px;">{{ \Illuminate\Support\Str::limit($m->last_referer ?? '—', 120) }}</td>
                         <td class="text-end pe-4">
                             @can('url-redirects.edit')
+                                <a href="{{ route('cms.url-redirects.create', ['old_path' => $m->path]) }}"
+                                   class="btn btn-sm btn-light border text-primary"
+                                   title="Create redirect for this 404">
+                                    <i class="fas fa-random"></i>
+                                </a>
                                 <form action="{{ route('cms.url-miss-logs.destroy', $m) }}" method="POST" class="d-inline" onsubmit="return confirm('Remove this row?');">
                                     @csrf
                                     @method('DELETE')

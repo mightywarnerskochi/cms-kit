@@ -38,6 +38,7 @@ class LlmsTxtService
 
         $pages = array_merge(
             $this->pagesFromSitemap(),
+            $this->pagesFromMetadata(),
             $this->pagesFromConfiguredModels()
         );
 
@@ -207,6 +208,25 @@ class LlmsTxtService
         return $this->uniquePages($pages);
     }
 
+    protected function pagesFromMetadata(): array
+    {
+        $pages = [];
+
+        foreach ($this->metadataRows() as $metadata) {
+            foreach ($this->metadataUrlCandidates($metadata) as $url) {
+                $url = $this->stringValue($url);
+                if ($url === '') {
+                    continue;
+                }
+
+                $pages[] = $this->pageFromMetadataRow($metadata, $url);
+                break;
+            }
+        }
+
+        return $this->uniquePages($pages);
+    }
+
     protected function pageFromModel($model, string $url): array
     {
         $title = $this->resolveModelTitle($model);
@@ -216,7 +236,7 @@ class LlmsTxtService
         return [
             'title' => $title ?: $this->titleFromUrl($url),
             'url' => $url,
-            'description' => $description ?: ($hasMetadata ? '' : $this->descriptionFromUrl($url)),
+            'description' => $description ?: $this->descriptionFromUrl($url),
             'has_metadata' => $hasMetadata,
         ];
     }
@@ -359,7 +379,7 @@ class LlmsTxtService
             $unique[$this->normalizeUrlKey($url)] = [
                 'title' => trim($page['title'] ?? '') ?: $this->titleFromUrl($url),
                 'url' => $url,
-                'description' => trim($page['description'] ?? '') ?: ($hasMetadata ? '' : $this->descriptionFromUrl($url)),
+                'description' => trim($page['description'] ?? '') ?: $this->descriptionFromUrl($url),
                 'has_metadata' => $hasMetadata,
             ];
         }
@@ -408,15 +428,25 @@ class LlmsTxtService
                 return null;
             }
 
-            return [
-                'title' => $title !== '' ? $title : $this->titleFromUrl($url),
-                'url' => $url,
-                'description' => $description !== '' ? $this->limitText(strip_tags($description), 180) : '',
-                'has_metadata' => true,
-            ];
+            return $this->pageFromMetadataRow($metadata, $url);
         }
 
         return null;
+    }
+
+    protected function pageFromMetadataRow($metadata, string $url): array
+    {
+        $title = $this->firstMetadataValue($metadata, ['meta_title', 'og_title', 'page_name']);
+        $description = $this->firstMetadataValue($metadata, ['meta_description', 'og_description']);
+
+        return [
+            'title' => $title !== '' ? $title : $this->titleFromUrl($url),
+            'url' => $url,
+            'description' => $description !== ''
+                ? $this->limitText(strip_tags($description), 180)
+                : $this->descriptionFromUrl($url),
+            'has_metadata' => $title !== '' || $description !== '',
+        ];
     }
 
     protected function metadataRows()

@@ -300,8 +300,8 @@ class LlmsTxtService
             'name',
             'heading',
             'question',
-            'translations.en.title',
-            'translations.en.name',
+            'translations.title',
+            'translations.name',
         ] as $field) {
             $value = str_contains($field, '.')
                 ? $this->stringValue($this->nestedValue($model, $field))
@@ -327,9 +327,9 @@ class LlmsTxtService
             'description',
             'excerpt',
             'summary',
-            'translations.en.short_description',
-            'translations.en.description',
-            'translations.en.content',
+            'translations.short_description',
+            'translations.description',
+            'translations.content',
         ] as $field) {
             $value = str_contains($field, '.')
                 ? $this->stringValue($this->nestedValue($model, $field))
@@ -517,13 +517,33 @@ class LlmsTxtService
             if (is_object($value)) {
                 $value = $value->{$segment} ?? null;
             } elseif (is_array($value)) {
-                $value = $value[$segment] ?? null;
+                if (array_key_exists($segment, $value)) {
+                    $value = $value[$segment];
+                } else {
+                    $localized = $this->localizedArrayValue($value);
+                    $value = is_array($localized) && array_key_exists($segment, $localized) ? $localized[$segment] : null;
+                }
             } else {
                 return null;
             }
         }
 
         return $value;
+    }
+
+    protected function localizedArrayValue(array $value)
+    {
+        foreach ([app()->getLocale(), config('app.fallback_locale'), 'en'] as $locale) {
+            if ($locale && array_key_exists($locale, $value)) {
+                return $value[$locale];
+            }
+        }
+
+        foreach ($value as $item) {
+            return $item;
+        }
+
+        return null;
     }
 
     protected function normalizeUrlKey(string $url): string
@@ -539,14 +559,15 @@ class LlmsTxtService
     protected function stringValue($value): string
     {
         if (is_array($value)) {
-            foreach ($value as $item) {
-                $itemValue = $this->stringValue($item);
-                if ($itemValue !== '') {
-                    return $itemValue;
-                }
-            }
+            return $this->stringValueFromArray($value);
+        }
 
-            return '';
+        if ($value instanceof \Illuminate\Support\Collection) {
+            return $this->stringValueFromArray($value->all());
+        }
+
+        if ($value instanceof \ArrayAccess) {
+            return $this->stringValueFromArray((array) $value);
         }
 
         if (!is_scalar($value)) {
@@ -554,6 +575,27 @@ class LlmsTxtService
         }
 
         return trim((string) $value);
+    }
+
+    protected function stringValueFromArray(array $value): string
+    {
+        foreach ([app()->getLocale(), config('app.fallback_locale'), 'en'] as $locale) {
+            if ($locale && array_key_exists($locale, $value)) {
+                $localeValue = $this->stringValue($value[$locale]);
+                if ($localeValue !== '') {
+                    return $localeValue;
+                }
+            }
+        }
+
+        foreach ($value as $item) {
+            $itemValue = $this->stringValue($item);
+            if ($itemValue !== '') {
+                return $itemValue;
+            }
+        }
+
+        return '';
     }
 
     protected function limitText(string $value, int $limit): string

@@ -123,10 +123,13 @@ class SiteManagerServiceProvider extends ServiceProvider
     protected function registerSitemapObservers()
     {
         $models = config('cms.sitemap.models', []);
+        $registered = [];
+
         foreach ($models as $key => $value) {
             $model = is_numeric($key) ? $value : $key;
-            if (class_exists($model)) {
+            if (class_exists($model) && !in_array($model, $registered, true)) {
                 $model::observe(\CMS\SiteManager\Observers\SitemapObserver::class);
+                $registered[] = $model;
             }
         }
     }

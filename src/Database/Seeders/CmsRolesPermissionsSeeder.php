@@ -46,6 +46,8 @@ class CmsRolesPermissionsSeeder extends Seeder
             'roles.create', 'roles.view', 'roles.edit', 'roles.delete', 
             'permissions.create', 'permissions.view', 'permissions.edit', 'permissions.delete', 
             'sitemap.view', 'sitemap.edit',
+            'robots-txt.view', 'robots-txt.edit',
+            'llms-txt.view', 'llms-txt.edit',
             'banners.view', 'banners.edit', 'banners.create', 'banners.delete', 
             'faqs.view', 'faqs.edit', 'faqs.create', 'faqs.delete', 
             'enquiries.view', 'enquiries.show', 'enquiries.delete', 'enquiries.export',

@@ -95,16 +95,16 @@
                     @endif
 
                     {{-- SEO Group --}}
-                    @if((config('cms-kit.common.modules.metadata', true) && $cmsUser->can('metadata.view')) || $cmsUser->can('sitemap.view') || $cmsUser->can('url-redirects.view'))
+                    @if((config('cms-kit.common.modules.metadata', true) && $cmsUser->can('metadata.view')) || $cmsUser->can('sitemap.view') || $cmsUser->can('robots-txt.view') || $cmsUser->can('llms-txt.view') || $cmsUser->can('url-redirects.view'))
                     <div class="nav-item sidebar-group">
-                        <a class="nav-link d-flex align-items-center sidebar-group-toggle @if(request()->routeIs('cms.metadata.*') || request()->routeIs('cms.sitemap.*') || request()->routeIs('cms.url-redirects.*') || request()->routeIs('cms.url-miss-logs.*')) active @endif" 
+                        <a class="nav-link d-flex align-items-center sidebar-group-toggle @if(request()->routeIs('cms.metadata.*') || request()->routeIs('cms.sitemap.*') || request()->routeIs('cms.robots-txt.*') || request()->routeIs('cms.llms-txt.*') || request()->routeIs('cms.url-redirects.*') || request()->routeIs('cms.url-miss-logs.*')) active @endif" 
                            data-bs-toggle="collapse" href="#seoMenu" role="button" 
-                           aria-expanded="@if(request()->routeIs('cms.metadata.*') || request()->routeIs('cms.sitemap.*') || request()->routeIs('cms.url-redirects.*') || request()->routeIs('cms.url-miss-logs.*')) true @else false @endif">
+                           aria-expanded="@if(request()->routeIs('cms.metadata.*') || request()->routeIs('cms.sitemap.*') || request()->routeIs('cms.robots-txt.*') || request()->routeIs('cms.llms-txt.*') || request()->routeIs('cms.url-redirects.*') || request()->routeIs('cms.url-miss-logs.*')) true @else false @endif">
                             <i class="fas fa-search"></i>
                             <span>SEO Management</span>
                             <i class="fas fa-chevron-down ms-auto sidebar-chevron"></i>
                         </a>
-                        <div class="collapse sidebar-submenu @if(request()->routeIs('cms.metadata.*') || request()->routeIs('cms.sitemap.*') || request()->routeIs('cms.url-redirects.*') || request()->routeIs('cms.url-miss-logs.*')) show @endif" id="seoMenu">
+                        <div class="collapse sidebar-submenu @if(request()->routeIs('cms.metadata.*') || request()->routeIs('cms.sitemap.*') || request()->routeIs('cms.robots-txt.*') || request()->routeIs('cms.llms-txt.*') || request()->routeIs('cms.url-redirects.*') || request()->routeIs('cms.url-miss-logs.*')) show @endif" id="seoMenu">
                             <nav class="nav flex-column">
                                 @if(config('cms-kit.common.modules.metadata', true) && $cmsUser->can('metadata.view'))
                                 <a class="nav-link py-2 @if(request()->routeIs('cms.metadata.*')) active @endif" href="{{ route('cms.metadata.index') }}">
@@ -114,6 +114,16 @@
                                 @if($cmsUser->can('sitemap.view'))
                                 <a class="nav-link py-2 @if(request()->routeIs('cms.sitemap.*')) active @endif" href="{{ route('cms.sitemap.index') }}">
                                     Sitemap Generator
+                                </a>
+                                @endif
+                                @if($cmsUser->can('robots-txt.view'))
+                                <a class="nav-link py-2 @if(request()->routeIs('cms.robots-txt.*')) active @endif" href="{{ route('cms.robots-txt.index') }}">
+                                    Robots.txt Editor
+                                </a>
+                                @endif
+                                @if($cmsUser->can('llms-txt.view'))
+                                <a class="nav-link py-2 @if(request()->routeIs('cms.llms-txt.*')) active @endif" href="{{ route('cms.llms-txt.index') }}">
+                                    LLMs.txt Generator
                                 </a>
                                 @endif
                                 @if($cmsUser->can('url-redirects.view'))

@@ -154,6 +154,19 @@ Route::middleware(['web'])->group(function () {
                 Route::post('/sitemap/update', [\CMS\SiteManager\Http\Controllers\CmsKit\SitemapController::class, 'update'])->name('cms.sitemap.update')->middleware('cms.permission:sitemap.edit');
             });
 
+            Route::middleware(['cms.permission:robots-txt.view'])->group(function () {
+                Route::get('/seo/robots-txt', [\CMS\SiteManager\Http\Controllers\CmsKit\RobotsTxtController::class, 'index'])->name('cms.robots-txt.index');
+                Route::get('/seo/robots-txt/edit', [\CMS\SiteManager\Http\Controllers\CmsKit\RobotsTxtController::class, 'edit'])->name('cms.robots-txt.edit')->middleware('cms.permission:robots-txt.edit');
+                Route::post('/seo/robots-txt/update', [\CMS\SiteManager\Http\Controllers\CmsKit\RobotsTxtController::class, 'update'])->name('cms.robots-txt.update')->middleware('cms.permission:robots-txt.edit');
+            });
+
+            Route::middleware(['cms.permission:llms-txt.view'])->group(function () {
+                Route::get('/seo/llms-txt', [\CMS\SiteManager\Http\Controllers\CmsKit\LlmsTxtController::class, 'index'])->name('cms.llms-txt.index');
+                Route::get('/seo/llms-txt/generate', [\CMS\SiteManager\Http\Controllers\CmsKit\LlmsTxtController::class, 'generate'])->name('cms.llms-txt.generate')->middleware('cms.permission:llms-txt.edit');
+                Route::get('/seo/llms-txt/edit', [\CMS\SiteManager\Http\Controllers\CmsKit\LlmsTxtController::class, 'edit'])->name('cms.llms-txt.edit')->middleware('cms.permission:llms-txt.edit');
+                Route::post('/seo/llms-txt/update', [\CMS\SiteManager\Http\Controllers\CmsKit\LlmsTxtController::class, 'update'])->name('cms.llms-txt.update')->middleware('cms.permission:llms-txt.edit');
+            });
+
             // FAQs
             Route::middleware(['cms.permission:faqs.view'])->group(function () {
                 if (config('cms-kit.common.modules.faqs', true)) {

@@ -56,7 +56,7 @@ class CmsRolesPermissionsSeeder extends Seeder
             'newsletter.view', 'newsletter.delete',
             'blogs.view', 'blogs.create', 'blogs.edit', 'blogs.delete',
             'careers.view', 'careers.create', 'careers.edit', 'careers.delete', 'careers.show', 'careers.export',
-            'url-redirects.view', 'url-redirects.edit',
+            'url-redirects.view', 'url-redirects.edit','url-miss-logs.view', 'url-miss-logs.edit','robots-txt.view','robots-txt.edit','llms-txt.view','llms-txt.edit',
         ];
 
         foreach ($extraPermissions as $perm) {

@@ -95,7 +95,7 @@
                     @endif
 
                     {{-- SEO Group --}}
-                    @if((config('cms-kit.common.modules.metadata', true) && $cmsUser->can('metadata.view')) || $cmsUser->can('sitemap.view') || $cmsUser->can('robots-txt.view') || $cmsUser->can('llms-txt.view') || $cmsUser->can('url-redirects.view'))
+                    @if((config('cms-kit.common.modules.metadata', true) && $cmsUser->can('metadata.view')) || $cmsUser->can('sitemap.view') || $cmsUser->can('robots-txt.view') || $cmsUser->can('llms-txt.view') || $cmsUser->can('url-redirects.view') || $cmsUser->can('url-miss-logs.view'))
                     <div class="nav-item sidebar-group">
                         <a class="nav-link d-flex align-items-center sidebar-group-toggle @if(request()->routeIs('cms.metadata.*') || request()->routeIs('cms.sitemap.*') || request()->routeIs('cms.robots-txt.*') || request()->routeIs('cms.llms-txt.*') || request()->routeIs('cms.url-redirects.*') || request()->routeIs('cms.url-miss-logs.*')) active @endif" 
                            data-bs-toggle="collapse" href="#seoMenu" role="button" 
@@ -130,6 +130,8 @@
                                 <a class="nav-link py-2 @if(request()->routeIs('cms.url-redirects.*')) active @endif" href="{{ route('cms.url-redirects.index') }}">
                                     URL redirects
                                 </a>
+                                @endif
+                                @if($cmsUser->can('url-miss-logs.view'))
                                 <a class="nav-link py-2 @if(request()->routeIs('cms.url-miss-logs.*')) active @endif" href="{{ route('cms.url-miss-logs.index') }}">
                                     404 log
                                 </a>

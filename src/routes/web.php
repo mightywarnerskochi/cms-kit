@@ -107,9 +107,12 @@ Route::middleware(['web'])->group(function () {
                 Route::put('/seo/url-redirects/{url_redirect}', [UrlRedirectController::class, 'update'])->middleware('cms.permission:url-redirects.edit')->name('cms.url-redirects.update');
                 Route::delete('/seo/url-redirects/{url_redirect}', [UrlRedirectController::class, 'destroy'])->middleware('cms.permission:url-redirects.edit')->name('cms.url-redirects.destroy');
 
+            });
+
+            Route::middleware(['cms.permission:url-miss-logs.view'])->group(function () {
                 Route::get('/seo/missing-urls', [UrlMissLogController::class, 'index'])->name('cms.url-miss-logs.index');
-                Route::delete('/seo/missing-urls/{url_miss_log}', [UrlMissLogController::class, 'destroy'])->middleware('cms.permission:url-redirects.edit')->name('cms.url-miss-logs.destroy');
-                Route::post('/seo/missing-urls/clear', [UrlMissLogController::class, 'clear'])->middleware('cms.permission:url-redirects.edit')->name('cms.url-miss-logs.clear');
+                Route::delete('/seo/missing-urls/{url_miss_log}', [UrlMissLogController::class, 'destroy'])->middleware('cms.permission:url-miss-logs.edit')->name('cms.url-miss-logs.destroy');
+                Route::post('/seo/missing-urls/clear', [UrlMissLogController::class, 'clear'])->middleware('cms.permission:url-miss-logs.edit')->name('cms.url-miss-logs.clear');
             });
 
             // Site Information

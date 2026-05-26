@@ -9,7 +9,7 @@
 @section('content')
 <div class="mb-3 d-flex flex-wrap justify-content-between align-items-center gap-2">
     <p class="text-muted small mb-0">Aggregated missing paths after middleware runs (GET/HEAD only). Use to spot broken inbound links.</p>
-    @can('url-redirects.edit')
+    @can('url-miss-logs.edit')
         <form action="{{ route('cms.url-miss-logs.clear') }}" method="POST" class="d-inline" onsubmit="return confirm('Clear entire 404 log?');">
             @csrf
             <div class="form-check form-check-inline mb-0 me-2">
@@ -54,12 +54,14 @@
                         <td class="text-center small">{{ $m->last_seen_at?->format('Y-m-d H:i') ?? '—' }}</td>
                         <td class="small text-muted text-break" style="max-width: 280px;">{{ \Illuminate\Support\Str::limit($m->last_referer ?? '—', 120) }}</td>
                         <td class="text-end pe-4">
-                            @can('url-redirects.edit')
+                            @can('url-miss-logs.edit')
+                                @can('url-redirects.edit')
                                 <a href="{{ route('cms.url-redirects.create', ['old_path' => $m->path]) }}"
                                    class="btn btn-sm btn-light border text-primary"
                                    title="Create redirect for this 404">
                                     <i class="fas fa-random"></i>
                                 </a>
+                                @endcan
                                 <form action="{{ route('cms.url-miss-logs.destroy', $m) }}" method="POST" class="d-inline" onsubmit="return confirm('Remove this row?');">
                                     @csrf
                                     @method('DELETE')
